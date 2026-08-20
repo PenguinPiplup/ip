@@ -4,7 +4,7 @@ This repository is a starter template for a greenfield Java project used in an i
 
 # Default user context
 
-Unless the user says otherwise, assume that you are assisting a student working on a project in this repository. If the user identifies themselves as an instructor or another project stakeholder, adapt your response to that role.
+Unless the user says otherwise, assume that you are assisting a student working on a project in this repository.
 
 # Student profile
 
@@ -23,6 +23,8 @@ Unless the user says otherwise, assume that you are assisting a student working 
   * When faced with a design choice, choose the simplest option that is sufficient for the requirements, while briefly explaining relevant more advanced alternatives.
 
 # Project-specific requirements
+
+* Do not make any changes to the code until the student has reviewed the code.
 
 ## Java version:
 
