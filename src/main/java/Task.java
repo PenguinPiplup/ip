@@ -6,6 +6,11 @@
  * A single task in the user's list: what the task is, and whether it is done.
  * Keeping the two together means they can no longer fall out of step,
  * which was a risk while they lived in two separate arrays.
+ *
+ * <p>This is also the base class for the three kinds of task the bot supports:
+ * {@link Todo}, {@link Deadline} and {@link Event}. Everything they have in
+ * common lives here, so the bot can hold them all in one {@code Task[]} and
+ * call {@code toString()} without knowing which kind it is holding.</p>
  */
 public class Task {
     /**

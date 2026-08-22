@@ -6,10 +6,10 @@ import java.util.Scanner;
 
 /**
  * A simple command line chatbot.
- * It greets the user, stores whatever text is typed as a task,
- * lists the stored tasks on the {@code list} command,
- * marks a task as done on the {@code mark <number>} command,
- * reverses that on the {@code unmark <number>} command,
+ * It greets the user, stores three kinds of task -- {@code todo},
+ * {@code deadline} and {@code event} -- lists the stored tasks on the
+ * {@code list} command, marks a task as done on the {@code mark <number>}
+ * command, reverses that on the {@code unmark <number>} command,
  * and exits when the user types {@code bye}.
  */
 public class PiplupBot {
@@ -25,6 +25,24 @@ public class PiplupBot {
     /** Command that reverses a task's done status, e.g. {@code unmark 2}. */
     private static final String UNMARK_COMMAND = "unmark";
 
+    /** Command that adds a task with no date attached, e.g. {@code todo borrow book}. */
+    private static final String TODO_COMMAND = "todo";
+
+    /** Command that adds a task with a due date, e.g. {@code deadline return book /by Sunday}. */
+    private static final String DEADLINE_COMMAND = "deadline";
+
+    /** Command that adds a task with a start and an end, e.g. {@code event meeting /from Mon 2pm /to 4pm}. */
+    private static final String EVENT_COMMAND = "event";
+
+    /**
+     * Keywords that separate the parts of a deadline or an event.
+     * They are surrounded by spaces so that a description containing the word
+     * "from" or the characters "/by" is not mistaken for a separator.
+     */
+    private static final String BY_SEPARATOR = " /by ";
+    private static final String FROM_SEPARATOR = " /from ";
+    private static final String TO_SEPARATOR = " /to ";
+
     /** Maximum number of tasks that can be stored, as allowed by the requirements. */
     private static final int MAX_TASKS = 100;
 
@@ -35,8 +53,10 @@ public class PiplupBot {
     /**
      * Stored tasks. Only the first {@code taskCount} slots hold real data;
      * the rest are still {@code null}.
-     * Each Task carries its own description and done status, so there is no
-     * longer a second array to keep in step with this one.
+     * The array is declared as {@code Task[]} but holds {@link Todo},
+     * {@link Deadline} and {@link Event} objects. This is polymorphism at work:
+     * the bot stores and prints them all through the shared {@code Task} type,
+     * and each object's own {@code toString()} decides how it appears.
      */
     private static final Task[] tasks = new Task[MAX_TASKS];
 
@@ -59,14 +79,103 @@ public class PiplupBot {
     }
 
     /**
-     * Stores a task and confirms it to the user. New tasks start out not done.
+     * Stores a task and confirms it to the user.
+     * It takes a {@code Task} rather than a description, so the same method
+     * works for every kind of task without needing to know which one it got.
      *
-     * @param description the text to remember
+     * @param task the task to remember
      */
-    private static void addTask(String description) {
-        tasks[taskCount] = new Task(description);
+    private static void addTask(Task task) {
+        tasks[taskCount] = task;
         taskCount++;
-        reply("added: " + description);
+        reply("Got it. I've added this task:",
+                "  " + task,
+                "Now you have " + taskCount + " tasks in the list.");
+    }
+
+    /**
+     * Returns whatever the user typed after a command word, with the spaces
+     * around it removed, e.g. {@code "borrow book"} from {@code "todo borrow book"}.
+     *
+     * @param input   the whole line the user typed
+     * @param command the command word at the start of {@code input}
+     * @return the rest of the line, possibly empty
+     */
+    private static String argumentOf(String input, String command) {
+        return input.substring(command.length()).trim();
+    }
+
+    /**
+     * Handles {@code todo <description>}.
+     *
+     * @param input the whole line the user typed
+     */
+    private static void handleTodo(String input) {
+        String description = argumentOf(input, TODO_COMMAND);
+        if (description.isEmpty()) {
+            reply("A todo needs a description, e.g. todo borrow book.");
+            return;
+        }
+        addTask(new Todo(description));
+    }
+
+    /**
+     * Handles {@code deadline <description> /by <when>}.
+     * The date is stored as plain text; turning it into a real date is a later step.
+     *
+     * @param input the whole line the user typed
+     */
+    private static void handleDeadline(String input) {
+        String details = argumentOf(input, DEADLINE_COMMAND);
+        String hint = "A deadline needs a /by part, e.g. deadline return book /by Sunday.";
+
+        int separator = details.indexOf(BY_SEPARATOR);
+        if (separator < 0) {
+            reply(hint);
+            return;
+        }
+
+        String description = details.substring(0, separator).trim();
+        String by = details.substring(separator + BY_SEPARATOR.length()).trim();
+        // Reject the command unless there is text on both sides of "/by", so a
+        // half-typed line reports a hint instead of storing a nameless task.
+        if (description.isEmpty() || by.isEmpty()) {
+            reply(hint);
+            return;
+        }
+        addTask(new Deadline(description, by));
+    }
+
+    /**
+     * Handles {@code event <description> /from <start> /to <end>}.
+     * The times are stored as plain text, as for deadlines.
+     *
+     * @param input the whole line the user typed
+     */
+    private static void handleEvent(String input) {
+        String details = argumentOf(input, EVENT_COMMAND);
+        String hint = "An event needs a /from and a /to part, "
+                + "e.g. event project meeting /from Mon 2pm /to 4pm.";
+
+        int fromSeparator = details.indexOf(FROM_SEPARATOR);
+        // Look for "/to" only after "/from", so that a description containing
+        // "/to" earlier in the line cannot be mistaken for the separator.
+        int toSeparator = fromSeparator < 0
+                ? -1
+                : details.indexOf(TO_SEPARATOR, fromSeparator + FROM_SEPARATOR.length());
+        if (fromSeparator < 0 || toSeparator < 0) {
+            reply(hint);
+            return;
+        }
+
+        String description = details.substring(0, fromSeparator).trim();
+        String from = details.substring(fromSeparator + FROM_SEPARATOR.length(), toSeparator).trim();
+        String to = details.substring(toSeparator + TO_SEPARATOR.length()).trim();
+        if (description.isEmpty() || from.isEmpty() || to.isEmpty()) {
+            reply(hint);
+            return;
+        }
+        addTask(new Event(description, from, to));
     }
 
     /**
@@ -156,9 +265,17 @@ public class PiplupBot {
                 handleStatusCommand(input, MARK_COMMAND, true);
             } else if (input.startsWith(UNMARK_COMMAND + " ")) {
                 handleStatusCommand(input, UNMARK_COMMAND, false);
+            } else if (input.equals(TODO_COMMAND) || input.startsWith(TODO_COMMAND + " ")) {
+                handleTodo(input);
+            } else if (input.equals(DEADLINE_COMMAND) || input.startsWith(DEADLINE_COMMAND + " ")) {
+                handleDeadline(input);
+            } else if (input.equals(EVENT_COMMAND) || input.startsWith(EVENT_COMMAND + " ")) {
+                handleEvent(input);
             } else if (!input.isEmpty()) {
-                // Anything that isn't a known command becomes a stored task.
-                addTask(input);
+                // Every task now has a type, so a line naming no command is a typo
+                // rather than a task. Saying so beats silently storing it.
+                reply("Sorry, I don't know what \"" + input + "\" means.",
+                        "Try: todo, deadline, event, list, mark, unmark, or bye.");
             }
         }
     }

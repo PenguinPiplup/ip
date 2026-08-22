@@ -10,6 +10,7 @@
 
 # Claude files
 /.claude/
+test/ui-test-plan.md
 
 # Gradle build files
 /.gradle/
