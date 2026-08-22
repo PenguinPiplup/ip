@@ -9,6 +9,7 @@ import java.util.Scanner;
  * It greets the user, stores whatever text is typed as a task,
  * lists the stored tasks on the {@code list} command,
  * marks a task as done on the {@code mark <number>} command,
+ * reverses that on the {@code unmark <number>} command,
  * and exits when the user types {@code bye}.
  */
 public class PiplupBot {
@@ -20,6 +21,9 @@ public class PiplupBot {
 
     /** Command that marks a task as done; expects a task number after it, e.g. {@code mark 2}. */
     private static final String MARK_COMMAND = "mark";
+
+    /** Command that reverses a task's done status, e.g. {@code unmark 2}. */
+    private static final String UNMARK_COMMAND = "unmark";
 
     /** Maximum number of tasks that can be stored, as allowed by the requirements. */
     private static final int MAX_TASKS = 100;
@@ -98,11 +102,14 @@ public class PiplupBot {
     }
 
     /**
-     * Marks the task at the given position as done and confirms it to the user.
+     * Sets the done status of the task at the given position and confirms it to the user.
+     * One method covers both directions because marking and unmarking differ only
+     * in the value stored and the wording of the confirmation.
      *
      * @param taskNumber the task's position as shown by {@code list}, counting from 1
+     * @param done       {@code true} to mark the task done, {@code false} to reverse it
      */
-    private static void markTask(int taskNumber) {
+    private static void setTaskStatus(int taskNumber, boolean done) {
         // Guard against numbers that do not name a stored task, so a typo
         // reports a message instead of crashing the program.
         if (taskNumber < 1 || taskNumber > taskCount) {
@@ -111,8 +118,29 @@ public class PiplupBot {
         }
 
         int index = taskNumber - 1;
-        isDone[index] = true;
-        reply("Nice! I've marked this task as done:", "  " + formatTask(index));
+        isDone[index] = done;
+        String confirmation = done
+                ? "Nice! I've marked this task as done:"
+                : "OK, I've marked this task as not done yet:";
+        reply(confirmation, "  " + formatTask(index));
+    }
+
+    /**
+     * Reads the task number that follows a {@code mark} or {@code unmark} command
+     * and applies the requested status to that task.
+     *
+     * @param input   the whole line the user typed
+     * @param command the command word at the start of {@code input}
+     * @param done    the status to apply to the task named by the number
+     */
+    private static void handleStatusCommand(String input, String command, boolean done) {
+        // Everything after the command word should be the task number.
+        String argument = input.substring(command.length() + 1).trim();
+        try {
+            setTaskStatus(Integer.parseInt(argument), done);
+        } catch (NumberFormatException e) {
+            reply("Please give me a task number, e.g. " + command + " 2.");
+        }
     }
 
     public static void main(String[] args) {
@@ -138,13 +166,9 @@ public class PiplupBot {
             } else if (input.equals(LIST_COMMAND)) {
                 listTasks();
             } else if (input.startsWith(MARK_COMMAND + " ")) {
-                // Everything after "mark " should be the task number.
-                String argument = input.substring(MARK_COMMAND.length() + 1).trim();
-                try {
-                    markTask(Integer.parseInt(argument));
-                } catch (NumberFormatException e) {
-                    reply("Please give me a task number, e.g. mark 2.");
-                }
+                handleStatusCommand(input, MARK_COMMAND, true);
+            } else if (input.startsWith(UNMARK_COMMAND + " ")) {
+                handleStatusCommand(input, UNMARK_COMMAND, false);
             } else if (!input.isEmpty()) {
                 // Anything that isn't a known command becomes a stored task.
                 addTask(input);
