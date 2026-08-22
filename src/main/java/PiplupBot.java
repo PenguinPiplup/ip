@@ -231,7 +231,9 @@ public class PiplupBot {
      */
     private static void handleStatusCommand(String input, String command, boolean done) {
         // Everything after the command word should be the task number.
-        String argument = input.substring(command.length() + 1).trim();
+        // argumentOf() copes with the word on its own, e.g. a bare "mark", which
+        // leaves an empty argument that parseInt rejects like any other non-number.
+        String argument = argumentOf(input, command);
         try {
             setTaskStatus(Integer.parseInt(argument), done);
         } catch (NumberFormatException e) {
@@ -261,9 +263,11 @@ public class PiplupBot {
                 break;
             } else if (input.equals(LIST_COMMAND)) {
                 listTasks();
-            } else if (input.startsWith(MARK_COMMAND + " ")) {
+            } else if (input.equals(MARK_COMMAND) || input.startsWith(MARK_COMMAND + " ")) {
+                // Accept the word on its own as well, so a forgotten number is
+                // answered with a hint rather than an unknown-command message.
                 handleStatusCommand(input, MARK_COMMAND, true);
-            } else if (input.startsWith(UNMARK_COMMAND + " ")) {
+            } else if (input.equals(UNMARK_COMMAND) || input.startsWith(UNMARK_COMMAND + " ")) {
                 handleStatusCommand(input, UNMARK_COMMAND, false);
             } else if (input.equals(TODO_COMMAND) || input.startsWith(TODO_COMMAND + " ")) {
                 handleTodo(input);
