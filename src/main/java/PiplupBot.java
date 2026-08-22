@@ -35,16 +35,10 @@ public class PiplupBot {
     /**
      * Stored tasks. Only the first {@code taskCount} slots hold real data;
      * the rest are still {@code null}.
+     * Each Task carries its own description and done status, so there is no
+     * longer a second array to keep in step with this one.
      */
-    private static final String[] tasks = new String[MAX_TASKS];
-
-    /**
-     * Completion status of each task, kept in step with {@code tasks}:
-     * {@code isDone[i]} describes {@code tasks[i]}.
-     * A boolean array is used instead of a Task class because the requirements
-     * do not allow new classes; a Task class would be the tidier design otherwise.
-     */
-    private static final boolean[] isDone = new boolean[MAX_TASKS];
+    private static final Task[] tasks = new Task[MAX_TASKS];
 
     /** Number of tasks currently stored, and the index of the next free slot. */
     private static int taskCount = 0;
@@ -65,26 +59,14 @@ public class PiplupBot {
     }
 
     /**
-     * Formats one task as a status box followed by its description, e.g. {@code [X] read book}.
-     *
-     * @param index zero-based position of the task in {@code tasks}
-     * @return the task rendered for display
-     */
-    private static String formatTask(int index) {
-        String statusBox = isDone[index] ? "[X]" : "[ ]";
-        return statusBox + " " + tasks[index];
-    }
-
-    /**
      * Stores a task and confirms it to the user. New tasks start out not done.
      *
-     * @param task the text to remember
+     * @param description the text to remember
      */
-    private static void addTask(String task) {
-        tasks[taskCount] = task;
-        isDone[taskCount] = false;
+    private static void addTask(String description) {
+        tasks[taskCount] = new Task(description);
         taskCount++;
-        reply("added: " + task);
+        reply("added: " + description);
     }
 
     /**
@@ -96,7 +78,7 @@ public class PiplupBot {
         String[] lines = new String[taskCount + 1];
         lines[0] = "Here are the tasks in your list:";
         for (int i = 0; i < taskCount; i++) {
-            lines[i + 1] = (i + 1) + "." + formatTask(i);
+            lines[i + 1] = (i + 1) + "." + tasks[i];
         }
         reply(lines);
     }
@@ -117,12 +99,17 @@ public class PiplupBot {
             return;
         }
 
-        int index = taskNumber - 1;
-        isDone[index] = done;
+        Task task = tasks[taskNumber - 1];
+        if (done) {
+            task.markAsDone();
+        } else {
+            task.markAsNotDone();
+        }
+
         String confirmation = done
                 ? "Nice! I've marked this task as done:"
                 : "OK, I've marked this task as not done yet:";
-        reply(confirmation, "  " + formatTask(index));
+        reply(confirmation, "  " + task);
     }
 
     /**
