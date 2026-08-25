@@ -10,6 +10,7 @@ import java.util.Scanner;
  * {@code deadline} and {@code event} -- lists the stored tasks on the
  * {@code list} command, marks a task as done on the {@code mark <number>}
  * command, reverses that on the {@code unmark <number>} command,
+ * removes a task on the {@code delete <number>} command,
  * and exits when the user types {@code bye}.
  */
 public class PiplupBot {
@@ -24,6 +25,9 @@ public class PiplupBot {
 
     /** Command that reverses a task's done status, e.g. {@code unmark 2}. */
     private static final String UNMARK_COMMAND = "unmark";
+
+    /** Command that removes a task from the list, e.g. {@code delete 3}. */
+    private static final String DELETE_COMMAND = "delete";
 
     /** Command that adds a task with no date attached, e.g. {@code todo borrow book}. */
     private static final String TODO_COMMAND = "todo";
@@ -192,6 +196,48 @@ public class PiplupBot {
     }
 
     /**
+     * Checks that a number names one of the stored tasks.
+     * Both {@code mark}/{@code unmark} and {@code delete} need this same guard,
+     * so a typed-in number can never read or write past the end of the array.
+     *
+     * @param taskNumber the task's position as shown by {@code list}, counting from 1
+     * @throws PiplupBotException if no stored task has that number
+     */
+    private static void requireTaskNumber(int taskNumber) throws PiplupBotException {
+        if (taskNumber < 1 || taskNumber > taskCount) {
+            throw new PiplupBotException("There is no task numbered " + taskNumber + ".");
+        }
+    }
+
+    /**
+     * Removes the task at the given position and confirms it to the user.
+     * The tasks that followed it are each shifted one slot towards the front, so
+     * the numbering stays contiguous: after deleting task 3, the old task 4
+     * becomes task 3. (A {@code java.util.ArrayList} would do this shifting for
+     * us, but the list is a plain array at this stage of the project.)
+     *
+     * @param taskNumber the task's position as shown by {@code list}, counting from 1
+     * @throws PiplupBotException if no stored task has that number
+     */
+    private static void deleteTask(int taskNumber) throws PiplupBotException {
+        requireTaskNumber(taskNumber);
+
+        // Remember the task before it is overwritten, so it can still be shown.
+        Task removedTask = tasks[taskNumber - 1];
+        for (int i = taskNumber - 1; i < taskCount - 1; i++) {
+            tasks[i] = tasks[i + 1];
+        }
+        // The last slot now holds a second copy of the task before it. Clearing it
+        // keeps the array honest: only the first taskCount slots hold real data.
+        tasks[taskCount - 1] = null;
+        taskCount--;
+
+        reply("Noted. I've removed this task:",
+                "  " + removedTask,
+                "Now you have " + taskCount + " tasks in the list.");
+    }
+
+    /**
      * Sets the done status of the task at the given position and confirms it to the user.
      * One method covers both directions because marking and unmarking differ only
      * in the value stored and the wording of the confirmation.
@@ -201,11 +247,7 @@ public class PiplupBot {
      * @throws PiplupBotException if no stored task has that number
      */
     private static void setTaskStatus(int taskNumber, boolean isTaskDone) throws PiplupBotException {
-        // Guard against numbers that do not name a stored task, so a typo
-        // reports an error instead of crashing the program.
-        if (taskNumber < 1 || taskNumber > taskCount) {
-            throw new PiplupBotException("There is no task numbered " + taskNumber + ".");
-        }
+        requireTaskNumber(taskNumber);
 
         Task task = tasks[taskNumber - 1];
         if (isTaskDone) {
@@ -221,31 +263,29 @@ public class PiplupBot {
     }
 
     /**
-     * Reads the task number that follows a {@code mark} or {@code unmark} command
-     * and applies the requested status to that task.
+     * Reads the task number that follows a command such as {@code mark},
+     * {@code unmark} or {@code delete}.
+     * It only reads the number; what happens to the task it names is left to the
+     * caller, which is why all three commands can share this one method.
      *
-     * @param input      the whole line the user typed
-     * @param command    the command word at the start of {@code input}
-     * @param isTaskDone the status to apply to the task named by the number
-     * @throws PiplupBotException if what follows the command word is not a
-     *                            number, or names no stored task
+     * @param input   the whole line the user typed
+     * @param command the command word at the start of {@code input}
+     * @return the number typed after the command word
+     * @throws PiplupBotException if what follows the command word is not a number
      */
-    private static void handleStatusCommand(String input, String command, boolean isTaskDone)
-            throws PiplupBotException {
+    private static int parseTaskNumber(String input, String command) throws PiplupBotException {
         // Everything after the command word should be the task number.
         // argumentOf() copes with the word on its own, e.g. a bare "mark", which
         // leaves an empty argument that parseInt rejects like any other non-number.
         String argument = argumentOf(input, command);
 
-        int taskNumber;
         try {
-            taskNumber = Integer.parseInt(argument);
+            return Integer.parseInt(argument);
         } catch (NumberFormatException e) {
             // Translate Java's own exception into the bot's own kind, so that the
             // main loop has just one kind of error to report.
             throw new PiplupBotException("Please give me a task number, e.g. " + command + " 2.");
         }
-        setTaskStatus(taskNumber, isTaskDone);
     }
 
     public static void main(String[] args) {
@@ -278,9 +318,11 @@ public class PiplupBot {
                 } else if (input.equals(MARK_COMMAND) || input.startsWith(MARK_COMMAND + " ")) {
                     // Accept the word on its own as well, so a forgotten number is
                     // answered with a hint rather than an unknown-command message.
-                    handleStatusCommand(input, MARK_COMMAND, true);
+                    setTaskStatus(parseTaskNumber(input, MARK_COMMAND), true);
                 } else if (input.equals(UNMARK_COMMAND) || input.startsWith(UNMARK_COMMAND + " ")) {
-                    handleStatusCommand(input, UNMARK_COMMAND, false);
+                    setTaskStatus(parseTaskNumber(input, UNMARK_COMMAND), false);
+                } else if (input.equals(DELETE_COMMAND) || input.startsWith(DELETE_COMMAND + " ")) {
+                    deleteTask(parseTaskNumber(input, DELETE_COMMAND));
                 } else if (input.equals(TODO_COMMAND) || input.startsWith(TODO_COMMAND + " ")) {
                     handleTodo(input);
                 } else if (input.equals(DEADLINE_COMMAND) || input.startsWith(DEADLINE_COMMAND + " ")) {
@@ -291,7 +333,7 @@ public class PiplupBot {
                     // Every task now has a type, so a line naming no command is a typo
                     // rather than a task. Saying so beats silently storing it.
                     throw new PiplupBotException("Sorry, I don't know what \"" + input + "\" means.",
-                            "Try: todo, deadline, event, list, mark, unmark, or bye.");
+                            "Try: todo, deadline, event, list, mark, unmark, delete, or bye.");
                 }
             } catch (PiplupBotException e) {
                 // The bot explains the problem and carries on with the next line,
