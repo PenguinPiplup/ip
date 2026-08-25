@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Scanner;
 
 /**
@@ -47,25 +48,24 @@ public class PiplupBot {
     private static final String FROM_SEPARATOR = " /from ";
     private static final String TO_SEPARATOR = " /to ";
 
-    /** Maximum number of tasks that can be stored, as allowed by the requirements. */
-    private static final int MAX_TASKS = 100;
-
     /** Horizontal line that separates the bot's replies from the user's input. */
     private static final String DIVIDER =
             "    ____________________________________________________________";
 
     /**
-     * Stored tasks. Only the first {@code taskCount} slots hold real data;
-     * the rest are still {@code null}.
-     * The array is declared as {@code Task[]} but holds {@link Todo},
-     * {@link Deadline} and {@link Event} objects. This is polymorphism at work:
-     * the bot stores and prints them all through the shared {@code Task} type,
-     * and each object's own {@code toString()} decides how it appears.
+     * Stored tasks, in the order the user added them.
+     * An {@code ArrayList} grows as tasks are added and closes the gap itself
+     * when one is removed, so there is no fixed limit on how many tasks fit and
+     * no separate count to keep in step with the contents: {@code tasks.size()}
+     * is always the truth.
+     *
+     * <p>The list is declared as holding {@code Task} but actually holds
+     * {@link Todo}, {@link Deadline} and {@link Event} objects. This is
+     * polymorphism at work: the bot stores and prints them all through the
+     * shared {@code Task} type, and each object's own {@code toString()}
+     * decides how it appears.</p>
      */
-    private static final Task[] tasks = new Task[MAX_TASKS];
-
-    /** Number of tasks currently stored, and the index of the next free slot. */
-    private static int taskCount = 0;
+    private static final ArrayList<Task> tasks = new ArrayList<>();
 
     /**
      * Prints one or more lines wrapped between horizontal lines.
@@ -90,11 +90,10 @@ public class PiplupBot {
      * @param task the task to remember
      */
     private static void addTask(Task task) {
-        tasks[taskCount] = task;
-        taskCount++;
+        tasks.add(task);
         reply("Got it. I've added this task:",
                 "  " + task,
-                "Now you have " + taskCount + " tasks in the list.");
+                "Now you have " + tasks.size() + " tasks in the list.");
     }
 
     /**
@@ -187,34 +186,36 @@ public class PiplupBot {
     private static void listTasks() {
         // Build the reply one line per task (plus the heading), so reply() can frame
         // them all inside a single pair of dividers.
-        String[] lines = new String[taskCount + 1];
+        String[] lines = new String[tasks.size() + 1];
         lines[0] = "Here are the tasks in your list:";
-        for (int i = 0; i < taskCount; i++) {
-            lines[i + 1] = (i + 1) + "." + tasks[i];
+        for (int i = 0; i < tasks.size(); i++) {
+            lines[i + 1] = (i + 1) + "." + tasks.get(i);
         }
         reply(lines);
     }
 
     /**
      * Checks that a number names one of the stored tasks.
-     * Both {@code mark}/{@code unmark} and {@code delete} need this same guard,
-     * so a typed-in number can never read or write past the end of the array.
+     * Both {@code mark}/{@code unmark} and {@code delete} need this same guard.
+     * {@code ArrayList} would throw {@code IndexOutOfBoundsException} on a bad
+     * index anyway; checking first lets the bot explain the problem in its own
+     * words instead of ending the conversation with a stack trace.
      *
      * @param taskNumber the task's position as shown by {@code list}, counting from 1
      * @throws PiplupBotException if no stored task has that number
      */
     private static void requireTaskNumber(int taskNumber) throws PiplupBotException {
-        if (taskNumber < 1 || taskNumber > taskCount) {
+        if (taskNumber < 1 || taskNumber > tasks.size()) {
             throw new PiplupBotException("There is no task numbered " + taskNumber + ".");
         }
     }
 
     /**
      * Removes the task at the given position and confirms it to the user.
-     * The tasks that followed it are each shifted one slot towards the front, so
-     * the numbering stays contiguous: after deleting task 3, the old task 4
-     * becomes task 3. (A {@code java.util.ArrayList} would do this shifting for
-     * us, but the list is a plain array at this stage of the project.)
+     * {@code ArrayList.remove} shifts the tasks that followed it one place
+     * towards the front, so the numbering stays contiguous: after deleting
+     * task 3, the old task 4 becomes task 3. It also hands back the task it
+     * removed, which is what the confirmation shows.
      *
      * @param taskNumber the task's position as shown by {@code list}, counting from 1
      * @throws PiplupBotException if no stored task has that number
@@ -222,19 +223,10 @@ public class PiplupBot {
     private static void deleteTask(int taskNumber) throws PiplupBotException {
         requireTaskNumber(taskNumber);
 
-        // Remember the task before it is overwritten, so it can still be shown.
-        Task removedTask = tasks[taskNumber - 1];
-        for (int i = taskNumber - 1; i < taskCount - 1; i++) {
-            tasks[i] = tasks[i + 1];
-        }
-        // The last slot now holds a second copy of the task before it. Clearing it
-        // keeps the array honest: only the first taskCount slots hold real data.
-        tasks[taskCount - 1] = null;
-        taskCount--;
-
+        Task removedTask = tasks.remove(taskNumber - 1);
         reply("Noted. I've removed this task:",
                 "  " + removedTask,
-                "Now you have " + taskCount + " tasks in the list.");
+                "Now you have " + tasks.size() + " tasks in the list.");
     }
 
     /**
@@ -249,7 +241,7 @@ public class PiplupBot {
     private static void setTaskStatus(int taskNumber, boolean isTaskDone) throws PiplupBotException {
         requireTaskNumber(taskNumber);
 
-        Task task = tasks[taskNumber - 1];
+        Task task = tasks.get(taskNumber - 1);
         if (isTaskDone) {
             task.markAsDone();
         } else {
