@@ -109,12 +109,12 @@ public class PiplupBot {
      * Handles {@code todo <description>}.
      *
      * @param input the whole line the user typed
+     * @throws PiplupBotException if no description follows the command word
      */
-    private static void handleTodo(String input) {
+    private static void handleTodo(String input) throws PiplupBotException {
         String description = argumentOf(input, TODO_COMMAND);
         if (description.isEmpty()) {
-            reply("A todo needs a description, e.g. todo borrow book.");
-            return;
+            throw new PiplupBotException("A todo needs a description, e.g. todo borrow book.");
         }
         addTask(new Todo(description));
     }
@@ -124,15 +124,15 @@ public class PiplupBot {
      * The date is stored as plain text; turning it into a real date is a later step.
      *
      * @param input the whole line the user typed
+     * @throws PiplupBotException if the description or the {@code /by} part is missing
      */
-    private static void handleDeadline(String input) {
+    private static void handleDeadline(String input) throws PiplupBotException {
         String details = argumentOf(input, DEADLINE_COMMAND);
         String hint = "A deadline needs a /by part, e.g. deadline return book /by Sunday.";
 
         int separator = details.indexOf(BY_SEPARATOR);
         if (separator < 0) {
-            reply(hint);
-            return;
+            throw new PiplupBotException(hint);
         }
 
         String description = details.substring(0, separator).trim();
@@ -140,8 +140,7 @@ public class PiplupBot {
         // Reject the command unless there is text on both sides of "/by", so a
         // half-typed line reports a hint instead of storing a nameless task.
         if (description.isEmpty() || by.isEmpty()) {
-            reply(hint);
-            return;
+            throw new PiplupBotException(hint);
         }
         addTask(new Deadline(description, by));
     }
@@ -151,8 +150,10 @@ public class PiplupBot {
      * The times are stored as plain text, as for deadlines.
      *
      * @param input the whole line the user typed
+     * @throws PiplupBotException if the description, the {@code /from} part
+     *                            or the {@code /to} part is missing
      */
-    private static void handleEvent(String input) {
+    private static void handleEvent(String input) throws PiplupBotException {
         String details = argumentOf(input, EVENT_COMMAND);
         String hint = "An event needs a /from and a /to part, "
                 + "e.g. event project meeting /from Mon 2pm /to 4pm.";
@@ -164,16 +165,14 @@ public class PiplupBot {
                 ? -1
                 : details.indexOf(TO_SEPARATOR, fromSeparator + FROM_SEPARATOR.length());
         if (fromSeparator < 0 || toSeparator < 0) {
-            reply(hint);
-            return;
+            throw new PiplupBotException(hint);
         }
 
         String description = details.substring(0, fromSeparator).trim();
         String from = details.substring(fromSeparator + FROM_SEPARATOR.length(), toSeparator).trim();
         String to = details.substring(toSeparator + TO_SEPARATOR.length()).trim();
         if (description.isEmpty() || from.isEmpty() || to.isEmpty()) {
-            reply(hint);
-            return;
+            throw new PiplupBotException(hint);
         }
         addTask(new Event(description, from, to));
     }
@@ -198,24 +197,24 @@ public class PiplupBot {
      * in the value stored and the wording of the confirmation.
      *
      * @param taskNumber the task's position as shown by {@code list}, counting from 1
-     * @param done       {@code true} to mark the task done, {@code false} to reverse it
+     * @param isTaskDone {@code true} to mark the task done, {@code false} to reverse it
+     * @throws PiplupBotException if no stored task has that number
      */
-    private static void setTaskStatus(int taskNumber, boolean done) {
+    private static void setTaskStatus(int taskNumber, boolean isTaskDone) throws PiplupBotException {
         // Guard against numbers that do not name a stored task, so a typo
-        // reports a message instead of crashing the program.
+        // reports an error instead of crashing the program.
         if (taskNumber < 1 || taskNumber > taskCount) {
-            reply("There is no task numbered " + taskNumber + ".");
-            return;
+            throw new PiplupBotException("There is no task numbered " + taskNumber + ".");
         }
 
         Task task = tasks[taskNumber - 1];
-        if (done) {
+        if (isTaskDone) {
             task.markAsDone();
         } else {
             task.markAsNotDone();
         }
 
-        String confirmation = done
+        String confirmation = isTaskDone
                 ? "Nice! I've marked this task as done:"
                 : "OK, I've marked this task as not done yet:";
         reply(confirmation, "  " + task);
@@ -225,20 +224,28 @@ public class PiplupBot {
      * Reads the task number that follows a {@code mark} or {@code unmark} command
      * and applies the requested status to that task.
      *
-     * @param input   the whole line the user typed
-     * @param command the command word at the start of {@code input}
-     * @param done    the status to apply to the task named by the number
+     * @param input      the whole line the user typed
+     * @param command    the command word at the start of {@code input}
+     * @param isTaskDone the status to apply to the task named by the number
+     * @throws PiplupBotException if what follows the command word is not a
+     *                            number, or names no stored task
      */
-    private static void handleStatusCommand(String input, String command, boolean done) {
+    private static void handleStatusCommand(String input, String command, boolean isTaskDone)
+            throws PiplupBotException {
         // Everything after the command word should be the task number.
         // argumentOf() copes with the word on its own, e.g. a bare "mark", which
         // leaves an empty argument that parseInt rejects like any other non-number.
         String argument = argumentOf(input, command);
+
+        int taskNumber;
         try {
-            setTaskStatus(Integer.parseInt(argument), done);
+            taskNumber = Integer.parseInt(argument);
         } catch (NumberFormatException e) {
-            reply("Please give me a task number, e.g. " + command + " 2.");
+            // Translate Java's own exception into the bot's own kind, so that the
+            // main loop has just one kind of error to report.
+            throw new PiplupBotException("Please give me a task number, e.g. " + command + " 2.");
         }
+        setTaskStatus(taskNumber, isTaskDone);
     }
 
     public static void main(String[] args) {
@@ -258,28 +265,38 @@ public class PiplupBot {
         while (scanner.hasNextLine()) {
             String input = scanner.nextLine().trim();
 
-            if (input.equals(EXIT_COMMAND)) {
-                reply("Bye. Hope to see you again soon!");
-                break;
-            } else if (input.equals(LIST_COMMAND)) {
-                listTasks();
-            } else if (input.equals(MARK_COMMAND) || input.startsWith(MARK_COMMAND + " ")) {
-                // Accept the word on its own as well, so a forgotten number is
-                // answered with a hint rather than an unknown-command message.
-                handleStatusCommand(input, MARK_COMMAND, true);
-            } else if (input.equals(UNMARK_COMMAND) || input.startsWith(UNMARK_COMMAND + " ")) {
-                handleStatusCommand(input, UNMARK_COMMAND, false);
-            } else if (input.equals(TODO_COMMAND) || input.startsWith(TODO_COMMAND + " ")) {
-                handleTodo(input);
-            } else if (input.equals(DEADLINE_COMMAND) || input.startsWith(DEADLINE_COMMAND + " ")) {
-                handleDeadline(input);
-            } else if (input.equals(EVENT_COMMAND) || input.startsWith(EVENT_COMMAND + " ")) {
-                handleEvent(input);
-            } else if (!input.isEmpty()) {
-                // Every task now has a type, so a line naming no command is a typo
-                // rather than a task. Saying so beats silently storing it.
-                reply("Sorry, I don't know what \"" + input + "\" means.",
-                        "Try: todo, deadline, event, list, mark, unmark, or bye.");
+            // One try/catch for the whole conversation: the handlers below decide
+            // *what* went wrong and throw, while this block is the single place
+            // that decides *how* the problem is shown. A new command therefore
+            // gets its error reporting for free.
+            try {
+                if (input.equals(EXIT_COMMAND)) {
+                    reply("Bye. Hope to see you again soon!");
+                    break;
+                } else if (input.equals(LIST_COMMAND)) {
+                    listTasks();
+                } else if (input.equals(MARK_COMMAND) || input.startsWith(MARK_COMMAND + " ")) {
+                    // Accept the word on its own as well, so a forgotten number is
+                    // answered with a hint rather than an unknown-command message.
+                    handleStatusCommand(input, MARK_COMMAND, true);
+                } else if (input.equals(UNMARK_COMMAND) || input.startsWith(UNMARK_COMMAND + " ")) {
+                    handleStatusCommand(input, UNMARK_COMMAND, false);
+                } else if (input.equals(TODO_COMMAND) || input.startsWith(TODO_COMMAND + " ")) {
+                    handleTodo(input);
+                } else if (input.equals(DEADLINE_COMMAND) || input.startsWith(DEADLINE_COMMAND + " ")) {
+                    handleDeadline(input);
+                } else if (input.equals(EVENT_COMMAND) || input.startsWith(EVENT_COMMAND + " ")) {
+                    handleEvent(input);
+                } else if (!input.isEmpty()) {
+                    // Every task now has a type, so a line naming no command is a typo
+                    // rather than a task. Saying so beats silently storing it.
+                    throw new PiplupBotException("Sorry, I don't know what \"" + input + "\" means.",
+                            "Try: todo, deadline, event, list, mark, unmark, or bye.");
+                }
+            } catch (PiplupBotException e) {
+                // The bot explains the problem and carries on with the next line,
+                // instead of letting the error stop the conversation.
+                reply(e.getMessageLines());
             }
         }
     }
