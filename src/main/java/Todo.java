@@ -20,10 +20,10 @@ public class Todo extends Task {
     /**
      * {@inheritDoc}
      *
-     * @return {@code "[T]"}, the label for a todo
+     * @return {@code "T"}, the code for a todo
      */
     @Override
-    protected String getTypeLabel() {
-        return "[T]";
+    protected String getTypeCode() {
+        return "T";
     }
 }

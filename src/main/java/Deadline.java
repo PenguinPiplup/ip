@@ -28,11 +28,11 @@ public class Deadline extends Task {
     /**
      * {@inheritDoc}
      *
-     * @return {@code "[D]"}, the label for a deadline
+     * @return {@code "D"}, the code for a deadline
      */
     @Override
-    protected String getTypeLabel() {
-        return "[D]";
+    protected String getTypeCode() {
+        return "D";
     }
 
     /**
@@ -44,5 +44,16 @@ public class Deadline extends Task {
     @Override
     public String toString() {
         return super.toString() + " (by: " + by + ")";
+    }
+
+    /**
+     * Renders the deadline for the save file as {@code D | 0 | return book | June 6th},
+     * i.e. the fields every task has, followed by the due date as a field of its own.
+     *
+     * @return the shared task fields followed by the due date
+     */
+    @Override
+    public String toFileFormat() {
+        return super.toFileFormat() + Storage.getFieldSeparator() + by;
     }
 }

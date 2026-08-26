@@ -58,14 +58,52 @@ public abstract class Task {
     }
 
     /**
-     * Returns the label that says which kind of task this is.
+     * Returns the single letter that says which kind of task this is.
      * Each subclass answers for itself, which is why this class does not need
      * to store the kind or ask what it is: calling this method on a
      * {@code Task} reaches the right subclass's answer on its own.
      *
-     * @return the letter in square brackets, e.g. {@code "[T]"}
+     * <p>The letter is the one piece of type information a subclass has to
+     * supply, because both the label shown on screen and the code written to the
+     * save file are built from it. Keeping one source for the two means they
+     * cannot drift apart.</p>
+     *
+     * @return the letter naming the kind of task, e.g. {@code "T"}
      */
-    protected abstract String getTypeLabel();
+    protected abstract String getTypeCode();
+
+    /**
+     * Returns the label that says which kind of task this is, as the task list
+     * displays it.
+     *
+     * @return the type code in square brackets, e.g. {@code "[T]"}
+     */
+    protected String getTypeLabel() {
+        return "[" + getTypeCode() + "]";
+    }
+
+    /**
+     * Renders the task as the one line that represents it in the save file,
+     * e.g. {@code T | 1 | read book}.
+     *
+     * <p>This is deliberately a different rendering from {@link #toString()}:
+     * the screen format is written for a person to read, while this one is
+     * written to be read back by the program, so it keeps the fields separate
+     * instead of dressing them up with brackets and words. Were the two ever
+     * merged, a change to the wording on screen would silently invalidate every
+     * saved file.</p>
+     *
+     * <p>The done status is stored as {@code 1} or {@code 0} rather than
+     * {@code true}/{@code false}, following the format given in the
+     * requirements.</p>
+     *
+     * @return the type code, the done status and the description, separated by
+     *         {@link Storage#getFieldSeparator()}
+     */
+    public String toFileFormat() {
+        String separator = Storage.getFieldSeparator();
+        return getTypeCode() + separator + (isDone ? "1" : "0") + separator + description;
+    }
 
     /**
      * Renders the task the way the task list displays it, e.g. {@code [T][X] read book}.

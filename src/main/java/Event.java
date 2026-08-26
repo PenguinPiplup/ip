@@ -29,11 +29,11 @@ public class Event extends Task {
     /**
      * {@inheritDoc}
      *
-     * @return {@code "[E]"}, the label for an event
+     * @return {@code "E"}, the code for an event
      */
     @Override
-    protected String getTypeLabel() {
-        return "[E]";
+    protected String getTypeCode() {
+        return "E";
     }
 
     /**
@@ -45,5 +45,18 @@ public class Event extends Task {
     @Override
     public String toString() {
         return super.toString() + " (from: " + from + " to: " + to + ")";
+    }
+
+    /**
+     * Renders the event for the save file as {@code E | 0 | project meeting | Mon 2pm | 4pm}.
+     * The start and the end are separate fields, so reading the file back does
+     * not have to split a combined "2-4pm" apart again.
+     *
+     * @return the shared task fields followed by the start and the end
+     */
+    @Override
+    public String toFileFormat() {
+        String separator = Storage.getFieldSeparator();
+        return super.toFileFormat() + separator + from + separator + to;
     }
 }

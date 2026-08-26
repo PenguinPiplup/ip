@@ -13,6 +13,11 @@ import java.util.Scanner;
  * command, reverses that on the {@code unmark <number>} command,
  * removes a task on the {@code delete <number>} command,
  * and exits when the user types {@code bye}.
+ *
+ * <p>Every change to the list is written straight to the hard disk by
+ * {@link Storage}, so the tasks survive the program being closed. Reading that
+ * file back on startup is not implemented yet, so at present each run still
+ * begins with an empty list.</p>
  */
 public class PiplupBot {
     /**
@@ -67,6 +72,7 @@ public class PiplupBot {
      */
     private static void addTask(Task task) {
         tasks.add(task);
+        Storage.save(tasks);
         reply("Got it. I've added this task:",
                 "  " + task,
                 "Now you have " + tasks.size() + " tasks in the list.");
@@ -188,6 +194,7 @@ public class PiplupBot {
         requireTaskNumber(taskNumber);
 
         Task removedTask = tasks.remove(taskNumber - 1);
+        Storage.save(tasks);
         reply("Noted. I've removed this task:",
                 "  " + removedTask,
                 "Now you have " + tasks.size() + " tasks in the list.");
@@ -211,6 +218,7 @@ public class PiplupBot {
         } else {
             task.markAsNotDone();
         }
+        Storage.save(tasks);
 
         String confirmation = isTaskDone
                 ? "Nice! I've marked this task as done:"
