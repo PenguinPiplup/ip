@@ -48,15 +48,16 @@ public class Event extends Task {
     }
 
     /**
-     * Renders the event for the save file as {@code E | 0 | project meeting | Mon 2pm | 4pm}.
+     * {@inheritDoc}
+     *
+     * <p>An event is saved as {@code E | 0 | project meeting | Mon 2pm | 4pm}.
      * The start and the end are separate fields, so reading the file back does
-     * not have to split a combined "2-4pm" apart again.
+     * not have to split a combined "2-4pm" apart again.</p>
      *
      * @return the shared task fields followed by the start and the end
      */
     @Override
-    public String toFileFormat() {
-        String separator = Storage.getFieldSeparator();
-        return super.toFileFormat() + separator + from + separator + to;
+    public String[] toFileFields() {
+        return withExtraFields(from, to);
     }
 }

@@ -83,26 +83,39 @@ public abstract class Task {
     }
 
     /**
-     * Renders the task as the one line that represents it in the save file,
-     * e.g. {@code T | 1 | read book}.
+     * Returns the fields that describe this task in the save file.
      *
-     * <p>This is deliberately a different rendering from {@link #toString()}:
-     * the screen format is written for a person to read, while this one is
-     * written to be read back by the program, so it keeps the fields separate
-     * instead of dressing them up with brackets and words. Were the two ever
-     * merged, a change to the wording on screen would silently invalidate every
-     * saved file.</p>
+     * <p>The task hands over its parts as plain text and leaves {@link Storage}
+     * to join them into a line. That division matters: a description may contain
+     * any character at all, including the one the file uses to separate fields,
+     * and protecting it is the file format's problem rather than the task's. A
+     * task that built its own line would have to know about separators and
+     * escaping, and every subclass would have to get that right again.</p>
      *
-     * <p>The done status is stored as {@code 1} or {@code 0} rather than
-     * {@code true}/{@code false}, following the format given in the
-     * requirements.</p>
+     * <p>The done status is given as {@code 1} or {@code 0} rather than
+     * {@code true}/{@code false}, following the format in the requirements.</p>
      *
-     * @return the type code, the done status and the description, separated by
-     *         {@link Storage#getFieldSeparator()}
+     * @return the type code, the done status and the description
      */
-    public String toFileFormat() {
-        String separator = Storage.getFieldSeparator();
-        return getTypeCode() + separator + (isDone ? "1" : "0") + separator + description;
+    public String[] toFileFields() {
+        return withExtraFields();
+    }
+
+    /**
+     * Builds the field list every task begins with, followed by whatever the
+     * subclass adds. Having the shared three in one place means a subclass
+     * cannot accidentally write them in a different order.
+     *
+     * @param extras the subclass's own fields, in the order they are written
+     * @return the shared fields followed by {@code extras}
+     */
+    protected String[] withExtraFields(String... extras) {
+        String[] fields = new String[3 + extras.length];
+        fields[0] = getTypeCode();
+        fields[1] = isDone ? "1" : "0";
+        fields[2] = description;
+        System.arraycopy(extras, 0, fields, 3, extras.length);
+        return fields;
     }
 
     /**

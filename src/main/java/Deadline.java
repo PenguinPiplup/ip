@@ -47,13 +47,15 @@ public class Deadline extends Task {
     }
 
     /**
-     * Renders the deadline for the save file as {@code D | 0 | return book | June 6th},
-     * i.e. the fields every task has, followed by the due date as a field of its own.
+     * {@inheritDoc}
+     *
+     * <p>A deadline is saved as {@code D | 0 | return book | June 6th}: the
+     * fields every task has, followed by the due date as a field of its own.</p>
      *
      * @return the shared task fields followed by the due date
      */
     @Override
-    public String toFileFormat() {
-        return super.toFileFormat() + Storage.getFieldSeparator() + by;
+    public String[] toFileFields() {
+        return withExtraFields(by);
     }
 }
