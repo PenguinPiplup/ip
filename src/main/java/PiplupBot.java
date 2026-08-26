@@ -13,6 +13,10 @@ import java.util.Scanner;
  * command, reverses that on the {@code unmark <number>} command,
  * removes a task on the {@code delete <number>} command,
  * and exits when the user types {@code bye}.
+ *
+ * <p>Every change to the list is written straight to the hard disk by
+ * {@link Storage}, and read back when the program starts, so the tasks survive
+ * the program being closed.</p>
  */
 public class PiplupBot {
     /**
@@ -70,6 +74,24 @@ public class PiplupBot {
         reply("Got it. I've added this task:",
                 "  " + task,
                 "Now you have " + tasks.size() + " tasks in the list.");
+        saveTasks();
+    }
+
+    /**
+     * Writes the list to disk, telling the user if it could not be written.
+     *
+     * <p>Saving is a side errand rather than the command the user asked for, so
+     * a failure must not swallow the confirmation or end the conversation. It is
+     * reported after the confirmation instead, because the confirmation is true
+     * as far as this session goes -- the task really was added -- and the warning
+     * is what qualifies it.</p>
+     */
+    private static void saveTasks() {
+        try {
+            Storage.save(tasks);
+        } catch (PiplupBotException e) {
+            reply(e.getMessageLines());
+        }
     }
 
     /**
@@ -191,6 +213,7 @@ public class PiplupBot {
         reply("Noted. I've removed this task:",
                 "  " + removedTask,
                 "Now you have " + tasks.size() + " tasks in the list.");
+        saveTasks();
     }
 
     /**
@@ -216,6 +239,7 @@ public class PiplupBot {
                 ? "Nice! I've marked this task as done:"
                 : "OK, I've marked this task as not done yet:";
         reply(confirmation, "  " + task);
+        saveTasks();
     }
 
     /**
@@ -246,6 +270,13 @@ public class PiplupBot {
     }
 
     public static void main(String[] args) {
+        // Pick up where the last run left off, before a word is printed: the
+        // greeting should already be true when it appears. addAll() fills the
+        // existing list rather than replacing it, which is what lets the field
+        // stay final -- one list for the whole run, whatever ends up in it.
+        Storage.LoadResult loaded = Storage.load();
+        tasks.addAll(loaded.tasks());
+
         String banner = " ____  _       _             ____        _   \n" +
                         "|  _ \\(_)_ __ | |_   _ _ __ | __ )  ___ | |_ \n" +
                         "| |_) | | '_ \\| | | | | '_ \\|  _ \\ / _ \\| __|\n" +
@@ -255,6 +286,13 @@ public class PiplupBot {
         System.out.println(banner);
 
         reply("Hello! I'm PiplupBot.", "What can I do for you?");
+
+        // Anything wrong with the save file is said after the greeting rather
+        // than before it, so the bot introduces itself first and the warning
+        // reads as its own words rather than as a crash on startup.
+        if (loaded.hasWarning()) {
+            reply(loaded.warningLines());
+        }
 
         Scanner scanner = new Scanner(System.in);
         // Keep reading commands until "bye" clears this flag, or until the
