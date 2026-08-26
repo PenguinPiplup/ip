@@ -15,9 +15,8 @@ import java.util.Scanner;
  * and exits when the user types {@code bye}.
  *
  * <p>Every change to the list is written straight to the hard disk by
- * {@link Storage}, so the tasks survive the program being closed. Reading that
- * file back on startup is not implemented yet, so at present each run still
- * begins with an empty list.</p>
+ * {@link Storage}, and read back when the program starts, so the tasks survive
+ * the program being closed.</p>
  */
 public class PiplupBot {
     /**
@@ -254,6 +253,12 @@ public class PiplupBot {
     }
 
     public static void main(String[] args) {
+        // Pick up where the last run left off, before a word is printed: the
+        // greeting should already be true when it appears. addAll() fills the
+        // existing list rather than replacing it, which is what lets the field
+        // stay final -- one list for the whole run, whatever ends up in it.
+        tasks.addAll(Storage.load());
+
         String banner = " ____  _       _             ____        _   \n" +
                         "|  _ \\(_)_ __ | |_   _ _ __ | __ )  ___ | |_ \n" +
                         "| |_) | | '_ \\| | | | | '_ \\|  _ \\ / _ \\| __|\n" +
