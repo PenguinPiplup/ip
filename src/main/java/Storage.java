@@ -209,6 +209,15 @@ public class Storage {
      * @return a line telling the user where the copy is, or why there is none
      */
     private static String preserveDamagedFile() {
+        // Files.copy() of a directory succeeds by quietly creating an empty
+        // directory, so without this check the bot would promise a rescue copy
+        // that holds nothing at all -- the very kind of false reassurance the
+        // rest of this method exists to avoid. Only a real file can be rescued.
+        if (!Files.isRegularFile(FILE_PATH)) {
+            return "There is nothing there for me to copy: " + displayPath(FILE_PATH)
+                    + " is not a file.";
+        }
+
         try {
             Files.copy(FILE_PATH, DAMAGED_PATH, StandardCopyOption.REPLACE_EXISTING);
             return "I have kept the file as it was in " + displayPath(DAMAGED_PATH) + ".";
