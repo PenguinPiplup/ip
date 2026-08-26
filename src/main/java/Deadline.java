@@ -26,12 +26,23 @@ public class Deadline extends Task {
     }
 
     /**
+     * {@inheritDoc}
+     *
+     * @return {@code "[D]"}, the label for a deadline
+     */
+    @Override
+    protected String getTypeLabel() {
+        return "[D]";
+    }
+
+    /**
      * Renders the deadline as {@code [D][ ] return book (by: Sunday)}.
      *
-     * @return the type label, the shared task text, and the due date
+     * @return the shared task text, which already carries the {@code [D]}
+     *         label, followed by the due date
      */
     @Override
     public String toString() {
-        return "[D]" + super.toString() + " (by: " + by + ")";
+        return super.toString() + " (by: " + by + ")";
     }
 }

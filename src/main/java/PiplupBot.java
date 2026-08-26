@@ -15,30 +15,6 @@ import java.util.Scanner;
  * and exits when the user types {@code bye}.
  */
 public class PiplupBot {
-    /** Command that ends the conversation. */
-    private static final String EXIT_COMMAND = "bye";
-
-    /** Command that displays everything stored so far. */
-    private static final String LIST_COMMAND = "list";
-
-    /** Command that marks a task as done; expects a task number after it, e.g. {@code mark 2}. */
-    private static final String MARK_COMMAND = "mark";
-
-    /** Command that reverses a task's done status, e.g. {@code unmark 2}. */
-    private static final String UNMARK_COMMAND = "unmark";
-
-    /** Command that removes a task from the list, e.g. {@code delete 3}. */
-    private static final String DELETE_COMMAND = "delete";
-
-    /** Command that adds a task with no date attached, e.g. {@code todo borrow book}. */
-    private static final String TODO_COMMAND = "todo";
-
-    /** Command that adds a task with a due date, e.g. {@code deadline return book /by Sunday}. */
-    private static final String DEADLINE_COMMAND = "deadline";
-
-    /** Command that adds a task with a start and an end, e.g. {@code event meeting /from Mon 2pm /to 4pm}. */
-    private static final String EVENT_COMMAND = "event";
-
     /**
      * Keywords that separate the parts of a deadline or an event.
      * They are surrounded by spaces so that a description containing the word
@@ -97,25 +73,13 @@ public class PiplupBot {
     }
 
     /**
-     * Returns whatever the user typed after a command word, with the spaces
-     * around it removed, e.g. {@code "borrow book"} from {@code "todo borrow book"}.
-     *
-     * @param input   the whole line the user typed
-     * @param command the command word at the start of {@code input}
-     * @return the rest of the line, possibly empty
-     */
-    private static String argumentOf(String input, String command) {
-        return input.substring(command.length()).trim();
-    }
-
-    /**
      * Handles {@code todo <description>}.
      *
      * @param input the whole line the user typed
      * @throws PiplupBotException if no description follows the command word
      */
     private static void handleTodo(String input) throws PiplupBotException {
-        String description = argumentOf(input, TODO_COMMAND);
+        String description = Command.TODO.argumentOf(input);
         if (description.isEmpty()) {
             throw new PiplupBotException("A todo needs a description, e.g. todo borrow book.");
         }
@@ -130,7 +94,7 @@ public class PiplupBot {
      * @throws PiplupBotException if the description or the {@code /by} part is missing
      */
     private static void handleDeadline(String input) throws PiplupBotException {
-        String details = argumentOf(input, DEADLINE_COMMAND);
+        String details = Command.DEADLINE.argumentOf(input);
         String hint = "A deadline needs a /by part, e.g. deadline return book /by Sunday.";
 
         int separator = details.indexOf(BY_SEPARATOR);
@@ -157,7 +121,7 @@ public class PiplupBot {
      *                            or the {@code /to} part is missing
      */
     private static void handleEvent(String input) throws PiplupBotException {
-        String details = argumentOf(input, EVENT_COMMAND);
+        String details = Command.EVENT.argumentOf(input);
         String hint = "An event needs a /from and a /to part, "
                 + "e.g. event project meeting /from Mon 2pm /to 4pm.";
 
@@ -261,22 +225,23 @@ public class PiplupBot {
      * caller, which is why all three commands can share this one method.
      *
      * @param input   the whole line the user typed
-     * @param command the command word at the start of {@code input}
+     * @param command the command the line names
      * @return the number typed after the command word
      * @throws PiplupBotException if what follows the command word is not a number
      */
-    private static int parseTaskNumber(String input, String command) throws PiplupBotException {
+    private static int parseTaskNumber(String input, Command command) throws PiplupBotException {
         // Everything after the command word should be the task number.
         // argumentOf() copes with the word on its own, e.g. a bare "mark", which
         // leaves an empty argument that parseInt rejects like any other non-number.
-        String argument = argumentOf(input, command);
+        String argument = command.argumentOf(input);
 
         try {
             return Integer.parseInt(argument);
         } catch (NumberFormatException e) {
             // Translate Java's own exception into the bot's own kind, so that the
             // main loop has just one kind of error to report.
-            throw new PiplupBotException("Please give me a task number, e.g. " + command + " 2.");
+            throw new PiplupBotException(
+                    "Please give me a task number, e.g. " + command.getKeyword() + " 2.");
         }
     }
 
@@ -292,40 +257,40 @@ public class PiplupBot {
         reply("Hello! I'm PiplupBot.", "What can I do for you?");
 
         Scanner scanner = new Scanner(System.in);
-        // Keep reading commands until the user types "bye",
-        // or until the input runs out (e.g. Ctrl-D / piped input).
-        while (scanner.hasNextLine()) {
+        // Keep reading commands until "bye" clears this flag, or until the
+        // input runs out (e.g. Ctrl-D / piped input).
+        boolean isChatting = true;
+        while (isChatting && scanner.hasNextLine()) {
             String input = scanner.nextLine().trim();
+            if (input.isEmpty()) {
+                // A blank line names no command, so there is nothing to report.
+                continue;
+            }
 
             // One try/catch for the whole conversation: the handlers below decide
             // *what* went wrong and throw, while this block is the single place
             // that decides *how* the problem is shown. A new command therefore
             // gets its error reporting for free.
             try {
-                if (input.equals(EXIT_COMMAND)) {
+                // Recognising the command and acting on it are now two steps:
+                // Command.fromInput() works out *which* command was typed, or
+                // reports that the line names none, and the switch decides what
+                // to do about it. Since the switch names every constant, adding
+                // a command to the enum leaves a gap here that IntelliJ's
+                // "missing branches in enum switch" inspection points straight at.
+                Command command = Command.fromInput(input);
+                switch (command) {
+                case TODO -> handleTodo(input);
+                case DEADLINE -> handleDeadline(input);
+                case EVENT -> handleEvent(input);
+                case LIST -> listTasks();
+                case MARK -> setTaskStatus(parseTaskNumber(input, command), true);
+                case UNMARK -> setTaskStatus(parseTaskNumber(input, command), false);
+                case DELETE -> deleteTask(parseTaskNumber(input, command));
+                case BYE -> {
                     reply("Bye. Hope to see you again soon!");
-                    break;
-                } else if (input.equals(LIST_COMMAND)) {
-                    listTasks();
-                } else if (input.equals(MARK_COMMAND) || input.startsWith(MARK_COMMAND + " ")) {
-                    // Accept the word on its own as well, so a forgotten number is
-                    // answered with a hint rather than an unknown-command message.
-                    setTaskStatus(parseTaskNumber(input, MARK_COMMAND), true);
-                } else if (input.equals(UNMARK_COMMAND) || input.startsWith(UNMARK_COMMAND + " ")) {
-                    setTaskStatus(parseTaskNumber(input, UNMARK_COMMAND), false);
-                } else if (input.equals(DELETE_COMMAND) || input.startsWith(DELETE_COMMAND + " ")) {
-                    deleteTask(parseTaskNumber(input, DELETE_COMMAND));
-                } else if (input.equals(TODO_COMMAND) || input.startsWith(TODO_COMMAND + " ")) {
-                    handleTodo(input);
-                } else if (input.equals(DEADLINE_COMMAND) || input.startsWith(DEADLINE_COMMAND + " ")) {
-                    handleDeadline(input);
-                } else if (input.equals(EVENT_COMMAND) || input.startsWith(EVENT_COMMAND + " ")) {
-                    handleEvent(input);
-                } else if (!input.isEmpty()) {
-                    // Every task now has a type, so a line naming no command is a typo
-                    // rather than a task. Saying so beats silently storing it.
-                    throw new PiplupBotException("Sorry, I don't know what \"" + input + "\" means.",
-                            "Try: todo, deadline, event, list, mark, unmark, delete, or bye.");
+                    isChatting = false;
+                }
                 }
             } catch (PiplupBotException e) {
                 // The bot explains the problem and carries on with the next line,

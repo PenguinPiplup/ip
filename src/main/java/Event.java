@@ -27,12 +27,23 @@ public class Event extends Task {
     }
 
     /**
+     * {@inheritDoc}
+     *
+     * @return {@code "[E]"}, the label for an event
+     */
+    @Override
+    protected String getTypeLabel() {
+        return "[E]";
+    }
+
+    /**
      * Renders the event as {@code [E][ ] project meeting (from: Mon 2pm to: 4pm)}.
      *
-     * @return the type label, the shared task text, and the start and end times
+     * @return the shared task text, which already carries the {@code [E]}
+     *         label, followed by the start and end times
      */
     @Override
     public String toString() {
-        return "[E]" + super.toString() + " (from: " + from + " to: " + to + ")";
+        return super.toString() + " (from: " + from + " to: " + to + ")";
     }
 }

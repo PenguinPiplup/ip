@@ -4,8 +4,8 @@
 
 /**
  * A task with no date or time attached to it, e.g. {@code visit new theme park}.
- * It adds nothing to {@link Task} except the {@code [T]} label, because a todo
- * really is just a description and a done status.
+ * It adds nothing to {@link Task} except its own label, because a todo really
+ * is just a description and a done status.
  */
 public class Todo extends Task {
     /**
@@ -18,14 +18,12 @@ public class Todo extends Task {
     }
 
     /**
-     * Renders the todo as {@code [T][ ] visit new theme park}.
-     * The {@code [T]} says which kind of task this is; {@code super.toString()}
-     * supplies the status box and description that every task shares.
+     * {@inheritDoc}
      *
-     * @return the type label followed by the shared task text
+     * @return {@code "[T]"}, the label for a todo
      */
     @Override
-    public String toString() {
-        return "[T]" + super.toString();
+    protected String getTypeLabel() {
+        return "[T]";
     }
 }
