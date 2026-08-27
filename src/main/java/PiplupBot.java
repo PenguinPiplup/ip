@@ -110,14 +110,21 @@ public class PiplupBot {
 
     /**
      * Handles {@code deadline <description> /by <when>}.
-     * The date is stored as plain text; turning it into a real date is a later step.
+     *
+     * <p>This method only splits the line apart; whether the {@code /by} part is
+     * a date at all is {@link DateTimes}'s question, asked by the
+     * {@link Deadline} constructor. Both kinds of mistake reach the user the
+     * same way, as a {@link PiplupBotException} the main loop turns into a
+     * reply.</p>
      *
      * @param input the whole line the user typed
-     * @throws PiplupBotException if the description or the {@code /by} part is missing
+     * @throws PiplupBotException if the description or the {@code /by} part is
+     *                            missing, or the date cannot be understood
      */
     private static void handleDeadline(String input) throws PiplupBotException {
         String details = Command.DEADLINE.argumentOf(input);
-        String hint = "A deadline needs a /by part, e.g. deadline return book /by Sunday.";
+        String hint = "A deadline needs a /by part, "
+                + "e.g. deadline return book /by 2019-10-15 1800.";
 
         int separator = details.indexOf(BY_SEPARATOR);
         if (separator < 0) {
@@ -136,16 +143,17 @@ public class PiplupBot {
 
     /**
      * Handles {@code event <description> /from <start> /to <end>}.
-     * The times are stored as plain text, as for deadlines.
+     * The two times are read the same way a deadline's date is.
      *
      * @param input the whole line the user typed
      * @throws PiplupBotException if the description, the {@code /from} part
-     *                            or the {@code /to} part is missing
+     *                            or the {@code /to} part is missing, or either
+     *                            time cannot be understood
      */
     private static void handleEvent(String input) throws PiplupBotException {
         String details = Command.EVENT.argumentOf(input);
         String hint = "An event needs a /from and a /to part, "
-                + "e.g. event project meeting /from Mon 2pm /to 4pm.";
+                + "e.g. event project meeting /from 2019-10-02 1400 /to 2019-10-02 1600.";
 
         int fromSeparator = details.indexOf(FROM_SEPARATOR);
         // Look for "/to" only after "/from", so that a description containing
