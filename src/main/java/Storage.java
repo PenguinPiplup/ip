@@ -31,6 +31,14 @@ import java.util.regex.Pattern;
  * fields as plain text and know nothing of separators or escaping, so the file
  * format lives in this one class alone.</p>
  *
+ * <p>Dates are held in the file in ISO form, e.g. {@code 2019-10-15T18:00},
+ * rather than the way the bot shows them. Being the form {@code LocalDateTime}
+ * writes and reads by default, it survives the round trip exactly, and it keeps
+ * the file independent of any later change to the wording on screen. A file
+ * written by an earlier version, which stored whatever text the user typed, no
+ * longer parses: those lines are skipped and the file copied aside, exactly as
+ * for any other line this version cannot read.</p>
+ *
  * <p>Because the file is ordinary text that anything on the machine can edit,
  * move or damage, reading it is written defensively: a file that is missing,
  * empty, unreadable or partly nonsense must still leave the bot usable, and must
@@ -338,7 +346,11 @@ public class Storage {
      * <p>Every check here rejects a line the bot could not itself have written.
      * They matter because the file is ordinary text that anything can edit:
      * without them a hand-edited line could produce a task with no description,
-     * or a deadline with no date, which no command would ever let a user create.</p>
+     * or a deadline with no date, which no command would ever let a user create.
+     * The dates themselves are checked by the {@link Deadline} and {@link Event}
+     * constructors, which reject a date they cannot read with the same
+     * {@link PiplupBotException} the checks here throw -- so a damaged date is
+     * skipped along with every other kind of damaged line.</p>
      *
      * @param line one line of the save file
      * @return the task the line describes

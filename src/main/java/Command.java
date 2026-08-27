@@ -19,10 +19,13 @@ public enum Command {
     /** Adds a task with no date attached, e.g. {@code todo borrow book}. */
     TODO("todo", true),
 
-    /** Adds a task with a due date, e.g. {@code deadline return book /by Sunday}. */
+    /** Adds a task with a due date, e.g. {@code deadline return book /by 2019-10-15 1800}. */
     DEADLINE("deadline", true),
 
-    /** Adds a task with a start and an end, e.g. {@code event meeting /from Mon 2pm /to 4pm}. */
+    /**
+     * Adds a task with a start and an end,
+     * e.g. {@code event meeting /from 2019-10-02 1400 /to 2019-10-02 1600}.
+     */
     EVENT("event", true),
 
     /** Displays everything stored so far. */
