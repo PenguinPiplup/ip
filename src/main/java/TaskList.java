@@ -116,6 +116,30 @@ public class TaskList {
     }
 
     /**
+     * Returns one line per stored task, each numbered the way the user refers
+     * to it, e.g. {@code "2.[D][ ] return book (by: Oct 15 2019, 6:00 pm)"}.
+     *
+     * <p>The list numbers its own tasks so that the {@code + 1} which turns an
+     * index into a task number sits beside the {@code - 1} in {@link #get} and
+     * {@link #remove} that turns it back. They are two halves of one rule, and
+     * keeping them in one class is what stops them drifting apart.</p>
+     *
+     * <p>Only the tasks are returned, without any heading above them: what to
+     * call this list is the caller's decision, which is what lets the same lines
+     * appear under different wording.</p>
+     *
+     * @return a line per task, in the order the user sees them; empty if there
+     *         are no tasks
+     */
+    public String[] toNumberedLines() {
+        String[] lines = new String[tasks.size()];
+        for (int i = 0; i < tasks.size(); i++) {
+            lines[i] = (i + 1) + "." + tasks.get(i);
+        }
+        return lines;
+    }
+
+    /**
      * Checks that a number names one of the stored tasks.
      * {@code ArrayList} would throw {@code IndexOutOfBoundsException} on a bad
      * index anyway; checking first lets the bot explain the problem in its own

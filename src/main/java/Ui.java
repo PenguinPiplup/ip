@@ -57,6 +57,25 @@ public class Ui {
     }
 
     /**
+     * Shows a heading with items listed beneath it, all inside one pair of
+     * dividers rather than one pair per item.
+     *
+     * <p>Pasting the heading on top of the items is a question of layout, so it
+     * belongs here beside {@link #show} rather than in the class that chose the
+     * words. The heading is a parameter because the same items can be introduced
+     * differently depending on why they are being shown.</p>
+     *
+     * @param heading the line that introduces the items
+     * @param items   the lines to show beneath it, possibly none
+     */
+    public void showList(String heading, String[] items) {
+        String[] lines = new String[items.length + 1];
+        lines[0] = heading;
+        System.arraycopy(items, 0, lines, 1, items.length);
+        show(lines);
+    }
+
+    /**
      * Draws the banner and greets the user.
      */
     public void showWelcome() {

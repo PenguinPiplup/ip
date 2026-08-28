@@ -1,5 +1,3 @@
-import java.util.ArrayList;
-
 /**
  * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
  */
@@ -161,20 +159,11 @@ public class PiplupBot {
 
     /**
      * Displays the stored tasks, numbered starting from 1, with their done status.
+     * All this method decides is what to call the list: the numbering is
+     * {@link TaskList}'s and the layout is {@link Ui}'s.
      */
     private static void listTasks() {
-        // Build the reply one line per task (plus the heading), so show() can frame
-        // them all inside a single pair of dividers. Walking a plain list keeps
-        // the loop counting from 0 like every other Java loop; the "+ 1" turns
-        // that into the number the user types, which is the only place the two
-        // ways of counting meet.
-        ArrayList<Task> storedTasks = tasks.asList();
-        String[] lines = new String[storedTasks.size() + 1];
-        lines[0] = "Here are the tasks in your list:";
-        for (int i = 0; i < storedTasks.size(); i++) {
-            lines[i + 1] = (i + 1) + "." + storedTasks.get(i);
-        }
-        ui.show(lines);
+        ui.showList("Here are the tasks in your list:", tasks.toNumberedLines());
     }
 
     /**
