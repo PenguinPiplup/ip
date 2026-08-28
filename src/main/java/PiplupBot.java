@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Scanner;
 
 /**
  * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
@@ -17,6 +16,11 @@ import java.util.Scanner;
  * <p>Every change to the list is written straight to the hard disk by
  * {@link Storage}, and read back when the program starts, so the tasks survive
  * the program being closed.</p>
+ *
+ * <p>This class is the bot's decision-maker: it holds the task list and works
+ * out what each command should do. Saying it out loud, and hearing what the
+ * user typed, are {@link Ui}'s work, so nothing here needs to know how a reply
+ * is laid out on screen.</p>
  */
 public class PiplupBot {
     /**
@@ -27,10 +31,6 @@ public class PiplupBot {
     private static final String BY_SEPARATOR = " /by ";
     private static final String FROM_SEPARATOR = " /from ";
     private static final String TO_SEPARATOR = " /to ";
-
-    /** Horizontal line that separates the bot's replies from the user's input. */
-    private static final String DIVIDER =
-            "    ____________________________________________________________";
 
     /**
      * Stored tasks, in the order the user added them.
@@ -48,19 +48,11 @@ public class PiplupBot {
     private static final ArrayList<Task> tasks = new ArrayList<>();
 
     /**
-     * Prints one or more lines wrapped between horizontal lines.
-     * Each line is indented so the bot's replies stand out from what the user typed.
-     *
-     * @param lines the lines of text to display
+     * Everything the bot says and hears. The bot keeps one of these for the
+     * whole run, and asks it to do all the printing and reading, so no method
+     * here touches {@code System.out} or {@code System.in} itself.
      */
-    private static void reply(String... lines) {
-        System.out.println(DIVIDER);
-        for (String line : lines) {
-            System.out.println("     " + line);
-        }
-        System.out.println(DIVIDER);
-        System.out.println();
-    }
+    private static final Ui ui = new Ui();
 
     /**
      * Stores a task and confirms it to the user.
@@ -71,7 +63,7 @@ public class PiplupBot {
      */
     private static void addTask(Task task) {
         tasks.add(task);
-        reply("Got it. I've added this task:",
+        ui.show("Got it. I've added this task:",
                 "  " + task,
                 "Now you have " + tasks.size() + " tasks in the list.");
         saveTasks();
@@ -90,7 +82,7 @@ public class PiplupBot {
         try {
             Storage.save(tasks);
         } catch (PiplupBotException e) {
-            reply(e.getMessageLines());
+            ui.showError(e);
         }
     }
 
@@ -178,14 +170,14 @@ public class PiplupBot {
      * Displays the stored tasks, numbered starting from 1, with their done status.
      */
     private static void listTasks() {
-        // Build the reply one line per task (plus the heading), so reply() can frame
+        // Build the reply one line per task (plus the heading), so show() can frame
         // them all inside a single pair of dividers.
         String[] lines = new String[tasks.size() + 1];
         lines[0] = "Here are the tasks in your list:";
         for (int i = 0; i < tasks.size(); i++) {
             lines[i + 1] = (i + 1) + "." + tasks.get(i);
         }
-        reply(lines);
+        ui.show(lines);
     }
 
     /**
@@ -218,7 +210,7 @@ public class PiplupBot {
         requireTaskNumber(taskNumber);
 
         Task removedTask = tasks.remove(taskNumber - 1);
-        reply("Noted. I've removed this task:",
+        ui.show("Noted. I've removed this task:",
                 "  " + removedTask,
                 "Now you have " + tasks.size() + " tasks in the list.");
         saveTasks();
@@ -246,7 +238,7 @@ public class PiplupBot {
         String confirmation = isTaskDone
                 ? "Nice! I've marked this task as done:"
                 : "OK, I've marked this task as not done yet:";
-        reply(confirmation, "  " + task);
+        ui.show(confirmation, "  " + task);
         saveTasks();
     }
 
@@ -285,29 +277,20 @@ public class PiplupBot {
         Storage.LoadResult loaded = Storage.load();
         tasks.addAll(loaded.tasks());
 
-        String banner = " ____  _       _             ____        _   \n" +
-                        "|  _ \\(_)_ __ | |_   _ _ __ | __ )  ___ | |_ \n" +
-                        "| |_) | | '_ \\| | | | | '_ \\|  _ \\ / _ \\| __|\n" +
-                        "|  __/| | |_) | | |_| | |_) | |_) | (_) | |_ \n" +
-                        "|_|   |_| .__/|_|\\__,_| .__/|____/ \\___/ \\__|\n" +
-                        "        |_|           |_|                    \n";
-        System.out.println(banner);
-
-        reply("Hello! I'm PiplupBot.", "What can I do for you?");
+        ui.showWelcome();
 
         // Anything wrong with the save file is said after the greeting rather
         // than before it, so the bot introduces itself first and the warning
         // reads as its own words rather than as a crash on startup.
         if (loaded.hasWarning()) {
-            reply(loaded.warningLines());
+            ui.show(loaded.warningLines());
         }
 
-        Scanner scanner = new Scanner(System.in);
         // Keep reading commands until "bye" clears this flag, or until the
         // input runs out (e.g. Ctrl-D / piped input).
         boolean isChatting = true;
-        while (isChatting && scanner.hasNextLine()) {
-            String input = scanner.nextLine().trim();
+        while (isChatting && ui.hasNextCommand()) {
+            String input = ui.readCommand();
             if (input.isEmpty()) {
                 // A blank line names no command, so there is nothing to report.
                 continue;
@@ -334,14 +317,14 @@ public class PiplupBot {
                 case UNMARK -> setTaskStatus(parseTaskNumber(input, command), false);
                 case DELETE -> deleteTask(parseTaskNumber(input, command));
                 case BYE -> {
-                    reply("Bye. Hope to see you again soon!");
+                    ui.showGoodbye();
                     isChatting = false;
                 }
                 }
             } catch (PiplupBotException e) {
                 // The bot explains the problem and carries on with the next line,
                 // instead of letting the error stop the conversation.
-                reply(e.getMessageLines());
+                ui.showError(e);
             }
         }
     }
