@@ -1,0 +1,36 @@
+/**
+ * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
+ */
+
+/**
+ * Stores a task and confirms it to the user.
+ *
+ * <p>One class covers {@code todo}, {@code deadline} and {@code event} because
+ * by the time a command exists the differences between them are spent: the
+ * parser has already worked out which kind was typed and built the matching
+ * {@link Todo}, {@link Deadline} or {@link Event}. All that is left is to add it
+ * and say so, which is identical for all three -- even the confirmation, since
+ * the task prints itself through its own {@code toString()}.</p>
+ */
+public class AddCommand extends Command {
+    /** The task to store, already built and checked by {@link Parser}. */
+    private final Task task;
+
+    /**
+     * Creates a command that will store the given task.
+     *
+     * @param task the task to remember
+     */
+    public AddCommand(Task task) {
+        this.task = task;
+    }
+
+    @Override
+    public void execute(TaskList tasks, Ui ui, Storage storage) {
+        tasks.add(task);
+        ui.show("Got it. I've added this task:",
+                "  " + task,
+                "Now you have " + tasks.size() + " tasks in the list.");
+        save(tasks, ui, storage);
+    }
+}

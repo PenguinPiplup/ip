@@ -1,0 +1,23 @@
+/**
+ * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
+ */
+
+/**
+ * Says goodbye and ends the conversation.
+ *
+ * <p>This is the only command that answers {@code true} to {@link #isExit()}.
+ * Stopping is reported rather than done here: the command says the conversation
+ * is over and {@link PiplupBot#run} is what actually stops reading, so a command
+ * never has to know how the loop around it is written.</p>
+ */
+public class ExitCommand extends Command {
+    @Override
+    public void execute(TaskList tasks, Ui ui, Storage storage) {
+        ui.showGoodbye();
+    }
+
+    @Override
+    public boolean isExit() {
+        return true;
+    }
+}

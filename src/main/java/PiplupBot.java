@@ -17,12 +17,17 @@ import java.nio.file.Path;
  * {@link Storage}, and read back when the program starts, so the tasks survive
  * the program being closed.</p>
  *
- * <p>This class is the bot's decision-maker: it works out what each command
- * should do and what to say about it. Making sense of the line the user typed
- * is {@link Parser}'s work, holding the tasks is {@link TaskList}'s, and saying
- * things out loud -- and hearing what the user typed -- is {@link Ui}'s. So
- * nothing here needs to know how a command is spelled, how a list is indexed,
- * or how a reply is laid out on screen.</p>
+ * <p>This class is the conversation and nothing else. It hands each line to
+ * {@link Parser}, asks the {@link Command} that comes back to carry itself out,
+ * and stops when one of them says the conversation is over. What a command
+ * <em>does</em> is that command's own business, holding the tasks is
+ * {@link TaskList}'s, and saying things out loud -- and hearing what the user
+ * typed -- is {@link Ui}'s.</p>
+ *
+ * <p>So nothing here knows how a command is spelled, what any of them do, how a
+ * list is indexed, or how a reply is laid out on screen. The measure of that is
+ * that this file no longer names a single command: teaching the bot a new one
+ * leaves it untouched.</p>
  */
 public class PiplupBot {
     /** Where the tasks are kept between runs. */
@@ -74,88 +79,6 @@ public class PiplupBot {
     }
 
     /**
-     * Stores a task and confirms it to the user.
-     * It takes a {@code Task} rather than a description, so the same method
-     * works for every kind of task without needing to know which one it got.
-     *
-     * @param task the task to remember
-     */
-    private void addTask(Task task) {
-        tasks.add(task);
-        ui.show("Got it. I've added this task:",
-                "  " + task,
-                "Now you have " + tasks.size() + " tasks in the list.");
-        saveTasks();
-    }
-
-    /**
-     * Writes the list to disk, telling the user if it could not be written.
-     *
-     * <p>Saving is a side errand rather than the command the user asked for, so
-     * a failure must not swallow the confirmation or end the conversation. It is
-     * reported after the confirmation instead, because the confirmation is true
-     * as far as this session goes -- the task really was added -- and the warning
-     * is what qualifies it.</p>
-     */
-    private void saveTasks() {
-        try {
-            storage.save(tasks.asList());
-        } catch (PiplupBotException e) {
-            ui.showError(e);
-        }
-    }
-
-    /**
-     * Displays the stored tasks, numbered starting from 1, with their done status.
-     * All this method decides is what to call the list: the numbering is
-     * {@link TaskList}'s and the layout is {@link Ui}'s.
-     */
-    private void listTasks() {
-        ui.showList("Here are the tasks in your list:", tasks.toNumberedLines());
-    }
-
-    /**
-     * Removes the task at the given position and confirms it to the user.
-     * {@link TaskList#remove} does the removing and hands back the task it
-     * removed, which is what the confirmation shows; this method's own job is
-     * only to word that confirmation and have the change saved.
-     *
-     * @param taskNumber the task's position as shown by {@code list}, counting from 1
-     * @throws PiplupBotException if no stored task has that number
-     */
-    private void deleteTask(int taskNumber) throws PiplupBotException {
-        Task removedTask = tasks.remove(taskNumber);
-        ui.show("Noted. I've removed this task:",
-                "  " + removedTask,
-                "Now you have " + tasks.size() + " tasks in the list.");
-        saveTasks();
-    }
-
-    /**
-     * Sets the done status of the task at the given position and confirms it to the user.
-     * One method covers both directions because marking and unmarking differ only
-     * in the value stored and the wording of the confirmation.
-     *
-     * @param taskNumber the task's position as shown by {@code list}, counting from 1
-     * @param isTaskDone {@code true} to mark the task done, {@code false} to reverse it
-     * @throws PiplupBotException if no stored task has that number
-     */
-    private void setTaskStatus(int taskNumber, boolean isTaskDone) throws PiplupBotException {
-        Task task = tasks.get(taskNumber);
-        if (isTaskDone) {
-            task.markAsDone();
-        } else {
-            task.markAsNotDone();
-        }
-
-        String confirmation = isTaskDone
-                ? "Nice! I've marked this task as done:"
-                : "OK, I've marked this task as not done yet:";
-        ui.show(confirmation, "  " + task);
-        saveTasks();
-    }
-
-    /**
      * Holds the conversation, from the greeting to {@code bye}.
      * Everything it needs was settled by the constructor, so this method is the
      * conversation itself and nothing else.
@@ -170,41 +93,31 @@ public class PiplupBot {
             ui.show(loadWarningLines);
         }
 
-        // Keep reading commands until "bye" clears this flag, or until the
-        // input runs out (e.g. Ctrl-D / piped input).
-        boolean isChatting = true;
-        while (isChatting && ui.hasNextCommand()) {
+        // Keep reading commands until one of them says the conversation is over,
+        // or until the input runs out (e.g. Ctrl-D / piped input).
+        boolean isExit = false;
+        while (!isExit && ui.hasNextCommand()) {
             String input = ui.readCommand();
             if (input.isEmpty()) {
                 // A blank line names no command, so there is nothing to report.
                 continue;
             }
 
-            // One try/catch for the whole conversation: the handlers below decide
-            // *what* went wrong and throw, while this block is the single place
-            // that decides *how* the problem is shown. A new command therefore
-            // gets its error reporting for free.
+            // One try/catch for the whole conversation: the parser and the
+            // commands decide *what* went wrong and throw, while this block is
+            // the single place that decides *how* the problem is shown. A new
+            // command therefore gets its error reporting for free.
             try {
-                // Recognising the command and acting on it are now two steps:
-                // CommandWord.fromInput() works out *which* command was typed, or
-                // reports that the line names none, and the switch decides what
-                // to do about it. Since the switch names every constant, adding
-                // a command to the enum leaves a gap here that IntelliJ's
-                // "missing branches in enum switch" inspection points straight at.
-                CommandWord commandWord = CommandWord.fromInput(input);
-                switch (commandWord) {
-                case TODO -> addTask(Parser.parseTodo(input));
-                case DEADLINE -> addTask(Parser.parseDeadline(input));
-                case EVENT -> addTask(Parser.parseEvent(input));
-                case LIST -> listTasks();
-                case MARK -> setTaskStatus(Parser.parseTaskNumber(input, commandWord), true);
-                case UNMARK -> setTaskStatus(Parser.parseTaskNumber(input, commandWord), false);
-                case DELETE -> deleteTask(Parser.parseTaskNumber(input, commandWord));
-                case BYE -> {
-                    ui.showGoodbye();
-                    isChatting = false;
-                }
-                }
+                // Reading the line and acting on it are two separate steps, and
+                // this method takes no part in either. Parser.parse() turns the
+                // line into a command -- or refuses it -- and the command carries
+                // itself out, so nothing here names a single one of them.
+                Command command = Parser.parse(input);
+                command.execute(tasks, ui, storage);
+
+                // Only the command knows whether it was the last one, so it is
+                // asked rather than recognised: this loop never mentions "bye".
+                isExit = command.isExit();
             } catch (PiplupBotException e) {
                 // The bot explains the problem and carries on with the next line,
                 // instead of letting the error stop the conversation.

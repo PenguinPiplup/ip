@@ -3,8 +3,7 @@
  */
 
 /**
- * Turns a line the user typed into the thing it describes -- a task, or the
- * number of one.
+ * Turns a line the user typed into the {@link Command} it asks for.
  *
  * <p>Every command that carries more than its own keyword needs its line pulled
  * apart before anything can be done with it: a deadline hides a description and
@@ -16,19 +15,21 @@
  *
  * <p>Splitting the two apart leaves this class with one job: read the line, or
  * explain why it cannot be read. Nothing here stores a task, prints anything, or
- * knows that a task list exists -- it hands back a value and lets the caller
- * decide what to do with it. That is also what makes it easy to test: every
- * method is a line of text in, a value or a {@link PiplupBotException} out.</p>
+ * knows that a task list exists -- it hands back a command and lets the caller
+ * decide when to run it. That is also what makes it easy to test:
+ * {@link #parse} is a line of text in, a command or a {@link PiplupBotException}
+ * out.</p>
  *
  * <p>Unlike {@link Ui} and {@link TaskList}, this is a class of static methods
  * rather than an object to create, because it has nothing to remember between
  * calls. Reading one line tells it nothing it would want to know while reading
  * the next, so there is no state for an object to hold and no reason to make one.</p>
  *
- * <p>Which command a line names is still {@link CommandWord#fromInput}'s question,
- * not this class's. The enum already holds the keywords, so recognising them
- * belongs with them; a method here would only be able to ask the enum the same
- * question and pass on the answer.</p>
+ * <p>Recognising the word itself is still {@link CommandWord#fromInput}'s
+ * question, not this class's: the enum holds the keywords, so matching them
+ * belongs with them. This class asks that question and then does what the enum
+ * cannot -- build the command object, filled in with whatever the rest of the
+ * line said.</p>
  */
 public class Parser {
     /**
@@ -41,13 +42,50 @@ public class Parser {
     private static final String TO_SEPARATOR = " /to ";
 
     /**
+     * Reads a whole line and returns the command it asks for, ready to run.
+     *
+     * <p>The command is built but not carried out, so a line that cannot be
+     * understood is refused before anything has happened: no task is stored, no
+     * confirmation is printed, and the list is exactly as it was. That is why
+     * every method below throws rather than returning something half-filled.</p>
+     *
+     * <p>The {@code switch} names every constant, so adding a command to
+     * {@link CommandWord} leaves a gap here that the compiler reports -- a
+     * {@code switch} expression over an enum must cover all of them. This is the
+     * one place left that lists the commands; {@link PiplupBot#run} no longer
+     * does, because it asks whatever it is given to execute itself.</p>
+     *
+     * <p>All three task keywords produce an {@link AddCommand}, differing only in
+     * which kind of {@link Task} was built for it -- the same polymorphism that
+     * lets one list hold all three.</p>
+     *
+     * @param input the whole line the user typed, already trimmed and not empty
+     * @return the command the line asks for
+     * @throws PiplupBotException if the line names no command, or names one but
+     *                            is missing or mistaking what should follow it
+     */
+    public static Command parse(String input) throws PiplupBotException {
+        CommandWord commandWord = CommandWord.fromInput(input);
+        return switch (commandWord) {
+        case TODO -> new AddCommand(parseTodo(input));
+        case DEADLINE -> new AddCommand(parseDeadline(input));
+        case EVENT -> new AddCommand(parseEvent(input));
+        case LIST -> new ListCommand();
+        case MARK -> new MarkCommand(parseTaskNumber(input, commandWord), true);
+        case UNMARK -> new MarkCommand(parseTaskNumber(input, commandWord), false);
+        case DELETE -> new DeleteCommand(parseTaskNumber(input, commandWord));
+        case BYE -> new ExitCommand();
+        };
+    }
+
+    /**
      * Reads {@code todo <description>}.
      *
      * @param input the whole line the user typed
      * @return the task the line describes
      * @throws PiplupBotException if no description follows the command word
      */
-    public static Todo parseTodo(String input) throws PiplupBotException {
+    private static Todo parseTodo(String input) throws PiplupBotException {
         String description = CommandWord.TODO.argumentOf(input);
         if (description.isEmpty()) {
             throw new PiplupBotException("A todo needs a description, e.g. todo borrow book.");
@@ -69,7 +107,7 @@ public class Parser {
      * @throws PiplupBotException if the description or the {@code /by} part is
      *                            missing, or the date cannot be understood
      */
-    public static Deadline parseDeadline(String input) throws PiplupBotException {
+    private static Deadline parseDeadline(String input) throws PiplupBotException {
         String details = CommandWord.DEADLINE.argumentOf(input);
         String hint = "A deadline needs a /by part, "
                 + "e.g. deadline return book /by 2019-10-15 1800.";
@@ -99,7 +137,7 @@ public class Parser {
      *                            or the {@code /to} part is missing, or either
      *                            time cannot be understood
      */
-    public static Event parseEvent(String input) throws PiplupBotException {
+    private static Event parseEvent(String input) throws PiplupBotException {
         String details = CommandWord.EVENT.argumentOf(input);
         String hint = "An event needs a /from and a /to part, "
                 + "e.g. event project meeting /from 2019-10-02 1400 /to 2019-10-02 1600.";
@@ -135,7 +173,7 @@ public class Parser {
      * @return the number typed after the command word
      * @throws PiplupBotException if what follows the command word is not a number
      */
-    public static int parseTaskNumber(String input, CommandWord commandWord)
+    private static int parseTaskNumber(String input, CommandWord commandWord)
             throws PiplupBotException {
         // Everything after the command word should be the task number.
         // argumentOf() copes with the word on its own, e.g. a bare "mark", which
