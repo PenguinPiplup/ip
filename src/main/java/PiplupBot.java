@@ -186,20 +186,20 @@ public class PiplupBot {
             // gets its error reporting for free.
             try {
                 // Recognising the command and acting on it are now two steps:
-                // Command.fromInput() works out *which* command was typed, or
+                // CommandWord.fromInput() works out *which* command was typed, or
                 // reports that the line names none, and the switch decides what
                 // to do about it. Since the switch names every constant, adding
                 // a command to the enum leaves a gap here that IntelliJ's
                 // "missing branches in enum switch" inspection points straight at.
-                Command command = Command.fromInput(input);
-                switch (command) {
+                CommandWord commandWord = CommandWord.fromInput(input);
+                switch (commandWord) {
                 case TODO -> addTask(Parser.parseTodo(input));
                 case DEADLINE -> addTask(Parser.parseDeadline(input));
                 case EVENT -> addTask(Parser.parseEvent(input));
                 case LIST -> listTasks();
-                case MARK -> setTaskStatus(Parser.parseTaskNumber(input, command), true);
-                case UNMARK -> setTaskStatus(Parser.parseTaskNumber(input, command), false);
-                case DELETE -> deleteTask(Parser.parseTaskNumber(input, command));
+                case MARK -> setTaskStatus(Parser.parseTaskNumber(input, commandWord), true);
+                case UNMARK -> setTaskStatus(Parser.parseTaskNumber(input, commandWord), false);
+                case DELETE -> deleteTask(Parser.parseTaskNumber(input, commandWord));
                 case BYE -> {
                     ui.showGoodbye();
                     isChatting = false;

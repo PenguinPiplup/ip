@@ -25,7 +25,7 @@
  * calls. Reading one line tells it nothing it would want to know while reading
  * the next, so there is no state for an object to hold and no reason to make one.</p>
  *
- * <p>Which command a line names is still {@link Command#fromInput}'s question,
+ * <p>Which command a line names is still {@link CommandWord#fromInput}'s question,
  * not this class's. The enum already holds the keywords, so recognising them
  * belongs with them; a method here would only be able to ask the enum the same
  * question and pass on the answer.</p>
@@ -48,7 +48,7 @@ public class Parser {
      * @throws PiplupBotException if no description follows the command word
      */
     public static Todo parseTodo(String input) throws PiplupBotException {
-        String description = Command.TODO.argumentOf(input);
+        String description = CommandWord.TODO.argumentOf(input);
         if (description.isEmpty()) {
             throw new PiplupBotException("A todo needs a description, e.g. todo borrow book.");
         }
@@ -70,7 +70,7 @@ public class Parser {
      *                            missing, or the date cannot be understood
      */
     public static Deadline parseDeadline(String input) throws PiplupBotException {
-        String details = Command.DEADLINE.argumentOf(input);
+        String details = CommandWord.DEADLINE.argumentOf(input);
         String hint = "A deadline needs a /by part, "
                 + "e.g. deadline return book /by 2019-10-15 1800.";
 
@@ -100,7 +100,7 @@ public class Parser {
      *                            time cannot be understood
      */
     public static Event parseEvent(String input) throws PiplupBotException {
-        String details = Command.EVENT.argumentOf(input);
+        String details = CommandWord.EVENT.argumentOf(input);
         String hint = "An event needs a /from and a /to part, "
                 + "e.g. event project meeting /from 2019-10-02 1400 /to 2019-10-02 1600.";
 
@@ -130,16 +130,17 @@ public class Parser {
      * {@link TaskList}'s question, and what happens to the task is the caller's,
      * which is why all three commands can share this one method.
      *
-     * @param input   the whole line the user typed
-     * @param command the command the line names
+     * @param input       the whole line the user typed
+     * @param commandWord the command the line names
      * @return the number typed after the command word
      * @throws PiplupBotException if what follows the command word is not a number
      */
-    public static int parseTaskNumber(String input, Command command) throws PiplupBotException {
+    public static int parseTaskNumber(String input, CommandWord commandWord)
+            throws PiplupBotException {
         // Everything after the command word should be the task number.
         // argumentOf() copes with the word on its own, e.g. a bare "mark", which
         // leaves an empty argument that parseInt rejects like any other non-number.
-        String argument = command.argumentOf(input);
+        String argument = commandWord.argumentOf(input);
 
         try {
             return Integer.parseInt(argument);
@@ -147,7 +148,7 @@ public class Parser {
             // Translate Java's own exception into the bot's own kind, so that the
             // main loop has just one kind of error to report.
             throw new PiplupBotException(
-                    "Please give me a task number, e.g. " + command.getKeyword() + " 2.");
+                    "Please give me a task number, e.g. " + commandWord.getKeyword() + " 2.");
         }
     }
 }

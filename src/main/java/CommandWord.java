@@ -3,8 +3,13 @@
  */
 
 /**
- * The commands PiplupBot understands, each paired with the word the user types
- * for it.
+ * The words PiplupBot recognises at the start of a line, one for each command
+ * it understands.
+ *
+ * <p>The enum is named for the word rather than for the command because the
+ * word is all it decides: which one was typed, whether anything may follow it,
+ * and how to spell it back to the user in a hint. What the command then
+ * <em>does</em> is settled elsewhere, by whoever is handed the answer.</p>
  *
  * <p>Holding the keywords here rather than as loose {@code String} constants
  * means the bot has one list of commands instead of several: the word to match,
@@ -15,7 +20,7 @@
  * <p>The constants are declared in the order the hint lists them, because the
  * hint is built from {@link #values()}.</p>
  */
-public enum Command {
+public enum CommandWord {
     /** Adds a task with no date attached, e.g. {@code todo borrow book}. */
     TODO("todo", true),
 
@@ -58,7 +63,7 @@ public enum Command {
      */
     private final boolean takesArgument;
 
-    Command(String keyword, boolean takesArgument) {
+    CommandWord(String keyword, boolean takesArgument) {
         this.keyword = keyword;
         this.takesArgument = takesArgument;
     }
@@ -106,10 +111,10 @@ public enum Command {
      * @return the matching command
      * @throws PiplupBotException if the line names no command
      */
-    public static Command fromInput(String input) throws PiplupBotException {
-        for (Command command : values()) {
-            if (command.matches(input)) {
-                return command;
+    public static CommandWord fromInput(String input) throws PiplupBotException {
+        for (CommandWord commandWord : values()) {
+            if (commandWord.matches(input)) {
+                return commandWord;
             }
         }
         throw new PiplupBotException("Sorry, I don't know what \"" + input + "\" means.",
@@ -127,16 +132,16 @@ public enum Command {
      * @return the keywords in declaration order, separated by commas
      */
     private static String keywordList() {
-        Command[] commands = values();
+        CommandWord[] commandWords = values();
         StringBuilder list = new StringBuilder();
-        for (int i = 0; i < commands.length; i++) {
+        for (int i = 0; i < commandWords.length; i++) {
             if (i > 0) {
                 list.append(", ");
             }
-            if (i == commands.length - 1) {
+            if (i == commandWords.length - 1) {
                 list.append("or ");
             }
-            list.append(commands[i].keyword);
+            list.append(commandWords[i].keyword);
         }
         return list.toString();
     }
