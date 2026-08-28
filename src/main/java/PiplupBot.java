@@ -17,10 +17,11 @@ import java.util.ArrayList;
  * {@link Storage}, and read back when the program starts, so the tasks survive
  * the program being closed.</p>
  *
- * <p>This class is the bot's decision-maker: it holds the task list and works
- * out what each command should do. Saying it out loud, and hearing what the
- * user typed, are {@link Ui}'s work, so nothing here needs to know how a reply
- * is laid out on screen.</p>
+ * <p>This class is the bot's decision-maker: it works out what each command
+ * should do and what to say about it. Holding the tasks is {@link TaskList}'s
+ * work, and saying things out loud -- and hearing what the user typed -- is
+ * {@link Ui}'s, so nothing here needs to know how a list is indexed or how a
+ * reply is laid out on screen.</p>
  */
 public class PiplupBot {
     /**
@@ -33,19 +34,11 @@ public class PiplupBot {
     private static final String TO_SEPARATOR = " /to ";
 
     /**
-     * Stored tasks, in the order the user added them.
-     * An {@code ArrayList} grows as tasks are added and closes the gap itself
-     * when one is removed, so there is no fixed limit on how many tasks fit and
-     * no separate count to keep in step with the contents: {@code tasks.size()}
-     * is always the truth.
-     *
-     * <p>The list is declared as holding {@code Task} but actually holds
-     * {@link Todo}, {@link Deadline} and {@link Event} objects. This is
-     * polymorphism at work: the bot stores and prints them all through the
-     * shared {@code Task} type, and each object's own {@code toString()}
-     * decides how it appears.</p>
+     * The tasks the user has stored. It is filled in {@link #main} from whatever
+     * the save file held, rather than started empty here, because the bot has
+     * nothing useful to do with a list until it knows what was loaded.
      */
-    private static final ArrayList<Task> tasks = new ArrayList<>();
+    private static TaskList tasks;
 
     /**
      * Everything the bot says and hears. The bot keeps one of these for the
@@ -80,7 +73,7 @@ public class PiplupBot {
      */
     private static void saveTasks() {
         try {
-            Storage.save(tasks);
+            Storage.save(tasks.asList());
         } catch (PiplupBotException e) {
             ui.showError(e);
         }
@@ -171,45 +164,30 @@ public class PiplupBot {
      */
     private static void listTasks() {
         // Build the reply one line per task (plus the heading), so show() can frame
-        // them all inside a single pair of dividers.
-        String[] lines = new String[tasks.size() + 1];
+        // them all inside a single pair of dividers. Walking a plain list keeps
+        // the loop counting from 0 like every other Java loop; the "+ 1" turns
+        // that into the number the user types, which is the only place the two
+        // ways of counting meet.
+        ArrayList<Task> storedTasks = tasks.asList();
+        String[] lines = new String[storedTasks.size() + 1];
         lines[0] = "Here are the tasks in your list:";
-        for (int i = 0; i < tasks.size(); i++) {
-            lines[i + 1] = (i + 1) + "." + tasks.get(i);
+        for (int i = 0; i < storedTasks.size(); i++) {
+            lines[i + 1] = (i + 1) + "." + storedTasks.get(i);
         }
         ui.show(lines);
     }
 
     /**
-     * Checks that a number names one of the stored tasks.
-     * Both {@code mark}/{@code unmark} and {@code delete} need this same guard.
-     * {@code ArrayList} would throw {@code IndexOutOfBoundsException} on a bad
-     * index anyway; checking first lets the bot explain the problem in its own
-     * words instead of ending the conversation with a stack trace.
-     *
-     * @param taskNumber the task's position as shown by {@code list}, counting from 1
-     * @throws PiplupBotException if no stored task has that number
-     */
-    private static void requireTaskNumber(int taskNumber) throws PiplupBotException {
-        if (taskNumber < 1 || taskNumber > tasks.size()) {
-            throw new PiplupBotException("There is no task numbered " + taskNumber + ".");
-        }
-    }
-
-    /**
      * Removes the task at the given position and confirms it to the user.
-     * {@code ArrayList.remove} shifts the tasks that followed it one place
-     * towards the front, so the numbering stays contiguous: after deleting
-     * task 3, the old task 4 becomes task 3. It also hands back the task it
-     * removed, which is what the confirmation shows.
+     * {@link TaskList#remove} does the removing and hands back the task it
+     * removed, which is what the confirmation shows; this method's own job is
+     * only to word that confirmation and have the change saved.
      *
      * @param taskNumber the task's position as shown by {@code list}, counting from 1
      * @throws PiplupBotException if no stored task has that number
      */
     private static void deleteTask(int taskNumber) throws PiplupBotException {
-        requireTaskNumber(taskNumber);
-
-        Task removedTask = tasks.remove(taskNumber - 1);
+        Task removedTask = tasks.remove(taskNumber);
         ui.show("Noted. I've removed this task:",
                 "  " + removedTask,
                 "Now you have " + tasks.size() + " tasks in the list.");
@@ -226,9 +204,7 @@ public class PiplupBot {
      * @throws PiplupBotException if no stored task has that number
      */
     private static void setTaskStatus(int taskNumber, boolean isTaskDone) throws PiplupBotException {
-        requireTaskNumber(taskNumber);
-
-        Task task = tasks.get(taskNumber - 1);
+        Task task = tasks.get(taskNumber);
         if (isTaskDone) {
             task.markAsDone();
         } else {
@@ -271,11 +247,11 @@ public class PiplupBot {
 
     public static void main(String[] args) {
         // Pick up where the last run left off, before a word is printed: the
-        // greeting should already be true when it appears. addAll() fills the
-        // existing list rather than replacing it, which is what lets the field
-        // stay final -- one list for the whole run, whatever ends up in it.
+        // greeting should already be true when it appears. The loaded tasks are
+        // handed to the TaskList's constructor, so the list starts out holding
+        // exactly what the file held.
         Storage.LoadResult loaded = Storage.load();
-        tasks.addAll(loaded.tasks());
+        tasks = new TaskList(loaded.tasks());
 
         ui.showWelcome();
 
