@@ -19,10 +19,12 @@ import java.util.regex.Pattern;
  * Rewriting is therefore the simplest approach that is correct for every kind of
  * change, and with a handful of tasks the cost is not worth optimising away.</p>
  *
- * <p>Everything here is {@code static} because there is only ever one file, at
- * one hard-coded path. If the path ever has to vary -- a different file per user,
- * say, or a temporary file in a test -- this becomes a normal class whose
- * constructor takes the path.</p>
+ * <p>The path is given to the constructor rather than fixed here, so this class
+ * only has to read and write wherever it is pointed, and choosing where the
+ * tasks live is the bot's decision instead. That path is state each object
+ * remembers, which is why this is an ordinary class with instance methods
+ * rather than a collection of static ones -- the same reason {@link Ui} is one,
+ * and the reason {@link Parser}, which remembers nothing, is not.</p>
  *
  * <p>{@link #save} and {@link #load} are two halves of one agreement about what
  * a line in the file looks like, so they are kept in the same class: a change to
@@ -45,25 +47,16 @@ import java.util.regex.Pattern;
  * never be thrown away without a copy being kept first.</p>
  */
 public class Storage {
-    /**
-     * Where the tasks are kept.
-     *
-     * <p>The path is relative, so it is resolved against whatever directory the
-     * bot is started in -- normally the project root, giving
-     * {@code ./data/piplupbot.txt}. The text-UI tests rely on this: they start
-     * the program in a scratch directory of their own, so the file they write is
-     * not the one holding real tasks, and no test-only setting is needed here to
-     * arrange it.</p>
-     */
-    private static final Path FILE_PATH = Path.of("data", "piplupbot.txt");
+    /** Where the tasks are kept, as chosen by whoever created this object. */
+    private final Path filePath;
 
     /**
      * Where a file that could not be read in full is copied before the bot
      * overwrites it. Without this, one damaged line would be destroyed by the
-     * very next command the user typed.
+     * very next command the user typed. It is worked out once, in the
+     * constructor, so the rescue copy always lands beside the file it came from.
      */
-    private static final Path DAMAGED_PATH =
-            FILE_PATH.resolveSibling(FILE_PATH.getFileName() + ".damaged");
+    private final Path damagedPath;
 
     /**
      * The character sequence that separates the fields of one saved task.
@@ -107,8 +100,20 @@ public class Storage {
         }
     }
 
-    /** Prevents instances being created; every member of this class is static. */
-    private Storage() {
+    /**
+     * Creates storage for the file at the given path.
+     * The file itself is not touched until {@link #load} or {@link #save} is
+     * called, so creating this object cannot fail.
+     *
+     * @param filePath where to keep the tasks, e.g.
+     *                 {@code Path.of("data", "piplupbot.txt")}
+     */
+    public Storage(Path filePath) {
+        this.filePath = filePath;
+        // The rescue copy is the save file's name with ".damaged" on the end,
+        // in the same directory, so the two are obviously a pair.
+        this.damagedPath =
+                this.filePath.resolveSibling(this.filePath.getFileName() + ".damaged");
     }
 
     /**
@@ -121,7 +126,7 @@ public class Storage {
      *                            caller can tell the user their change is only
      *                            in this session
      */
-    public static void save(ArrayList<Task> tasks) throws PiplupBotException {
+    public void save(ArrayList<Task> tasks) throws PiplupBotException {
         // Each task hands over its own fields: the list does not need to know
         // which kind of task it is holding, exactly as when the tasks are
         // printed. Turning those fields into a line is this class's job.
@@ -131,9 +136,15 @@ public class Storage {
         }
 
         try {
-            // getParent() is the "data" directory. createDirectories() is happy
-            // if it already exists, so there is no need to check first.
-            Files.createDirectories(FILE_PATH.getParent());
+            // getParent() is the "data" directory, or null if the path names a
+            // file in the current directory and so has no directory part at all
+            // -- possible now that the path comes from outside this class.
+            // createDirectories() is happy if the directory already exists, so
+            // there is no need to check for that.
+            Path parent = filePath.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
             // The lines are joined with "\n" rather than left to
             // Files.write(Path, Iterable), which would use the platform's own
             // line ending. A file written on Windows and one written on macOS
@@ -141,10 +152,10 @@ public class Storage {
             // is shared between machines or compared against a recorded copy.
             // An empty list writes an empty file, not a file holding one blank line.
             String text = lines.isEmpty() ? "" : String.join("\n", lines) + "\n";
-            Files.writeString(FILE_PATH, text);
+            Files.writeString(filePath, text);
         } catch (IOException e) {
             throw new PiplupBotException(
-                    "I could not save your tasks to " + displayPath(FILE_PATH) + " (" + e + ").",
+                    "I could not save your tasks to " + displayPath(filePath) + " (" + e + ").",
                     "Your change is in this session only, and will be lost when I close.");
         }
     }
@@ -163,23 +174,23 @@ public class Storage {
      * @return the tasks that were read, together with anything the user should
      *         be told about the file
      */
-    public static LoadResult load() {
+    public LoadResult load() {
         ArrayList<Task> tasks = new ArrayList<>();
 
         // A file that is not there is what the very first run sees, and an empty
         // list is the right answer for it -- so this is not worth a word.
-        if (!Files.exists(FILE_PATH)) {
+        if (!Files.exists(filePath)) {
             return new LoadResult(tasks, NO_WARNING);
         }
 
         List<String> lines;
         try {
-            lines = Files.readAllLines(FILE_PATH);
+            lines = Files.readAllLines(filePath);
         } catch (IOException e) {
             // The file is there but cannot be read at all: the wrong permissions,
             // a directory in its place, or bytes that are not text.
             return new LoadResult(tasks, new String[] {
-                "I could not read " + displayPath(FILE_PATH) + " (" + e + ").",
+                "I could not read " + displayPath(filePath) + " (" + e + ").",
                 "I have started with an empty list, so your next command would overwrite it.",
                 preserveDamagedFile()
             });
@@ -201,7 +212,7 @@ public class Storage {
         }
         return new LoadResult(tasks, new String[] {
             "I could not understand " + skipped + (skipped == 1 ? " line" : " lines")
-                    + " in " + displayPath(FILE_PATH) + ", so I skipped "
+                    + " in " + displayPath(filePath) + ", so I skipped "
                     + (skipped == 1 ? "it" : "them") + ".",
             "Those tasks are not in the list, and your next command would overwrite them.",
             preserveDamagedFile()
@@ -216,19 +227,19 @@ public class Storage {
      *
      * @return a line telling the user where the copy is, or why there is none
      */
-    private static String preserveDamagedFile() {
+    private String preserveDamagedFile() {
         // Files.copy() of a directory succeeds by quietly creating an empty
         // directory, so without this check the bot would promise a rescue copy
         // that holds nothing at all -- the very kind of false reassurance the
         // rest of this method exists to avoid. Only a real file can be rescued.
-        if (!Files.isRegularFile(FILE_PATH)) {
-            return "There is nothing there for me to copy: " + displayPath(FILE_PATH)
+        if (!Files.isRegularFile(filePath)) {
+            return "There is nothing there for me to copy: " + displayPath(filePath)
                     + " is not a file.";
         }
 
         try {
-            Files.copy(FILE_PATH, DAMAGED_PATH, StandardCopyOption.REPLACE_EXISTING);
-            return "I have kept the file as it was in " + displayPath(DAMAGED_PATH) + ".";
+            Files.copy(filePath, damagedPath, StandardCopyOption.REPLACE_EXISTING);
+            return "I have kept the file as it was in " + displayPath(damagedPath) + ".";
         } catch (IOException e) {
             // Even the copy failed. Say so plainly rather than implying a safety
             // net that is not there.

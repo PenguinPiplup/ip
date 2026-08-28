@@ -1,3 +1,5 @@
+import java.nio.file.Path;
+
 /**
  * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
  */
@@ -23,19 +25,53 @@
  * or how a reply is laid out on screen.</p>
  */
 public class PiplupBot {
-    /**
-     * The tasks the user has stored. It is filled in {@link #main} from whatever
-     * the save file held, rather than started empty here, because the bot has
-     * nothing useful to do with a list until it knows what was loaded.
-     */
-    private static TaskList tasks;
+    /** Where the tasks are kept between runs. */
+    private final Storage storage;
+
+    /** The tasks the user has stored, as read from {@link #storage} at startup. */
+    private final TaskList tasks;
 
     /**
      * Everything the bot says and hears. The bot keeps one of these for the
      * whole run, and asks it to do all the printing and reading, so no method
      * here touches {@code System.out} or {@code System.in} itself.
      */
-    private static final Ui ui = new Ui();
+    private final Ui ui;
+
+    /**
+     * What to tell the user about the save file, or an empty array if it was
+     * read without trouble.
+     *
+     * <p>The file is read in the constructor but the warning cannot be shown
+     * there, because the bot should introduce itself before it starts
+     * complaining. Keeping the lines here is what lets the reading happen at
+     * the earliest moment and the telling at the right one.</p>
+     */
+    private final String[] loadWarningLines;
+
+    /**
+     * Creates a bot whose tasks are kept in the given file, reading back
+     * whatever the last run left there.
+     *
+     * <p>Reading in the constructor means that by the time the object exists it
+     * is already usable, so no method has to wonder whether the list has been
+     * filled in yet. It is safe to do here because {@link Storage#load} does not
+     * throw: a file that is missing, unreadable or damaged still yields a list
+     * -- an empty one if need be -- along with something to tell the user.</p>
+     *
+     * @param filePath where to keep the tasks, e.g.
+     *                 {@code Path.of("data", "piplupbot.txt")}
+     */
+    public PiplupBot(Path filePath) {
+        this.ui = new Ui();
+        this.storage = new Storage(filePath);
+
+        Storage.LoadResult loaded = storage.load();
+        // The loaded tasks are handed to TaskList's constructor, so the list
+        // starts out holding exactly what the file held.
+        this.tasks = new TaskList(loaded.tasks());
+        this.loadWarningLines = loaded.warningLines();
+    }
 
     /**
      * Stores a task and confirms it to the user.
@@ -44,7 +80,7 @@ public class PiplupBot {
      *
      * @param task the task to remember
      */
-    private static void addTask(Task task) {
+    private void addTask(Task task) {
         tasks.add(task);
         ui.show("Got it. I've added this task:",
                 "  " + task,
@@ -61,9 +97,9 @@ public class PiplupBot {
      * as far as this session goes -- the task really was added -- and the warning
      * is what qualifies it.</p>
      */
-    private static void saveTasks() {
+    private void saveTasks() {
         try {
-            Storage.save(tasks.asList());
+            storage.save(tasks.asList());
         } catch (PiplupBotException e) {
             ui.showError(e);
         }
@@ -74,7 +110,7 @@ public class PiplupBot {
      * All this method decides is what to call the list: the numbering is
      * {@link TaskList}'s and the layout is {@link Ui}'s.
      */
-    private static void listTasks() {
+    private void listTasks() {
         ui.showList("Here are the tasks in your list:", tasks.toNumberedLines());
     }
 
@@ -87,7 +123,7 @@ public class PiplupBot {
      * @param taskNumber the task's position as shown by {@code list}, counting from 1
      * @throws PiplupBotException if no stored task has that number
      */
-    private static void deleteTask(int taskNumber) throws PiplupBotException {
+    private void deleteTask(int taskNumber) throws PiplupBotException {
         Task removedTask = tasks.remove(taskNumber);
         ui.show("Noted. I've removed this task:",
                 "  " + removedTask,
@@ -104,7 +140,7 @@ public class PiplupBot {
      * @param isTaskDone {@code true} to mark the task done, {@code false} to reverse it
      * @throws PiplupBotException if no stored task has that number
      */
-    private static void setTaskStatus(int taskNumber, boolean isTaskDone) throws PiplupBotException {
+    private void setTaskStatus(int taskNumber, boolean isTaskDone) throws PiplupBotException {
         Task task = tasks.get(taskNumber);
         if (isTaskDone) {
             task.markAsDone();
@@ -119,21 +155,19 @@ public class PiplupBot {
         saveTasks();
     }
 
-    public static void main(String[] args) {
-        // Pick up where the last run left off, before a word is printed: the
-        // greeting should already be true when it appears. The loaded tasks are
-        // handed to the TaskList's constructor, so the list starts out holding
-        // exactly what the file held.
-        Storage.LoadResult loaded = Storage.load();
-        tasks = new TaskList(loaded.tasks());
-
+    /**
+     * Holds the conversation, from the greeting to {@code bye}.
+     * Everything it needs was settled by the constructor, so this method is the
+     * conversation itself and nothing else.
+     */
+    public void run() {
         ui.showWelcome();
 
         // Anything wrong with the save file is said after the greeting rather
         // than before it, so the bot introduces itself first and the warning
         // reads as its own words rather than as a crash on startup.
-        if (loaded.hasWarning()) {
-            ui.show(loaded.warningLines());
+        if (loadWarningLines.length > 0) {
+            ui.show(loadWarningLines);
         }
 
         // Keep reading commands until "bye" clears this flag, or until the
@@ -177,5 +211,26 @@ public class PiplupBot {
                 ui.showError(e);
             }
         }
+    }
+
+    /**
+     * Starts the bot with its usual save file.
+     *
+     * <p>The path is relative, so it is resolved against whatever directory the
+     * bot is started in -- normally the project root, giving
+     * {@code ./data/piplupbot.txt}. The text-UI tests rely on this: they start
+     * the program in a scratch directory of their own, so the file they write
+     * is not the one holding real tasks, and no test-only setting is needed to
+     * arrange it.</p>
+     *
+     * <p>The parts of the path are passed separately rather than as one string,
+     * so the separator between them is never written down here: {@code Path.of}
+     * joins them with whatever the machine uses, a backslash on Windows and a
+     * forward slash elsewhere.</p>
+     *
+     * @param args ignored; the bot takes its instructions from the conversation
+     */
+    public static void main(String[] args) {
+        new PiplupBot(Path.of("data", "piplupbot.txt")).run();
     }
 }
