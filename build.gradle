@@ -20,6 +20,9 @@ dependencies {
 
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${jUnitVersion}"
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.14.4'
+
+    // Source: https://mvnrepository.com/artifact/com.joestelmach/natty
+    implementation("com.joestelmach:natty:0.13")
 }
 
 test {
@@ -37,7 +40,7 @@ test {
 }
 
 application {
-    mainClass = 'seedu.duke.Duke'
+    mainClass = 'piplupbot.PiplupBot'
 }
 
 jar {
@@ -48,7 +51,7 @@ jar {
 }
 
 shadowJar {
-    archiveFileName = 'duke.jar'
+    archiveFileName = 'piplupbot.jar'
 }
 
 run {
