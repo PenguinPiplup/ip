@@ -1,3 +1,10 @@
+package piplupbot.command;
+
+import piplupbot.PiplupBot;
+import piplupbot.Storage;
+import piplupbot.Ui;
+import piplupbot.task.TaskList;
+
 /**
  * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
  */

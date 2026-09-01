@@ -1,3 +1,7 @@
+package piplupbot.task;
+
+import piplupbot.Storage;
+
 /**
  * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
  */

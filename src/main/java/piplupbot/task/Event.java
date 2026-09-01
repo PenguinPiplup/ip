@@ -1,4 +1,8 @@
+package piplupbot.task;
+
 import java.time.LocalDateTime;
+
+import piplupbot.PiplupBotException;
 
 /**
  * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.

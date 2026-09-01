@@ -1,3 +1,5 @@
+package piplupbot;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -5,6 +7,11 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import piplupbot.task.Deadline;
+import piplupbot.task.Event;
+import piplupbot.task.Task;
+import piplupbot.task.Todo;
 
 /**
  * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.

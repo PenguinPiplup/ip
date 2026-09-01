@@ -1,4 +1,8 @@
+package piplupbot.task;
+
 import java.util.ArrayList;
+
+import piplupbot.PiplupBotException;
 
 /**
  * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.

@@ -1,3 +1,5 @@
+package piplupbot;
+
 import java.util.Scanner;
 
 /**

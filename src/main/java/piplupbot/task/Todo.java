@@ -1,3 +1,5 @@
+package piplupbot.task;
+
 /**
  * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
  */

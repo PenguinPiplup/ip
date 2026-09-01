@@ -1,3 +1,14 @@
+package piplupbot.command;
+
+import piplupbot.Parser;
+import piplupbot.Storage;
+import piplupbot.Ui;
+import piplupbot.task.Deadline;
+import piplupbot.task.Event;
+import piplupbot.task.Task;
+import piplupbot.task.TaskList;
+import piplupbot.task.Todo;
+
 /**
  * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
  */

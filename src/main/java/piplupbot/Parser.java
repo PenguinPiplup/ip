@@ -1,3 +1,19 @@
+package piplupbot;
+
+import piplupbot.command.AddCommand;
+import piplupbot.command.Command;
+import piplupbot.command.CommandWord;
+import piplupbot.command.DeleteCommand;
+import piplupbot.command.ExitCommand;
+import piplupbot.command.ListCommand;
+import piplupbot.command.MarkCommand;
+import piplupbot.task.DateTimes;
+import piplupbot.task.Deadline;
+import piplupbot.task.Event;
+import piplupbot.task.Task;
+import piplupbot.task.TaskList;
+import piplupbot.task.Todo;
+
 /**
  * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
  */
