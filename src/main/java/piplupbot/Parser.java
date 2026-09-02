@@ -49,12 +49,23 @@ import piplupbot.task.Todo;
  */
 public class Parser {
     /**
-     * Keywords that separate the parts of a deadline or an event.
-     * They are surrounded by spaces so that a description containing the word
-     * "from" or the characters "/by" is not mistaken for a separator.
+     * Separates a deadline's description from its due date.
+     * The spaces are part of the constant, so a description containing the
+     * characters "/by" is not mistaken for the separator.
      */
     private static final String BY_SEPARATOR = " /by ";
+
+    /**
+     * Separates an event's description from its start time.
+     * Surrounded by spaces for the same reason as {@link #BY_SEPARATOR}, which
+     * is why a description mentioning "from" is safe.
+     */
     private static final String FROM_SEPARATOR = " /from ";
+
+    /**
+     * Separates an event's start time from its end time.
+     * Surrounded by spaces for the same reason as {@link #BY_SEPARATOR}.
+     */
     private static final String TO_SEPARATOR = " /to ";
 
     /**

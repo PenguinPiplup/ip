@@ -72,12 +72,17 @@ public class Storage {
     private static final String FIELD_SEPARATOR = " | ";
 
     /**
-     * The characters that cannot appear in a field as themselves. A bar would be
-     * read back as a separator, and the backslash is what marks an escaped
-     * character, so it has to be escapable in its own right -- otherwise a
-     * description ending in a backslash would swallow the separator after it.
+     * The character that marks an escaped character in the file.
+     * It has to be escapable in its own right -- otherwise a description ending
+     * in a backslash would swallow the separator after it.
      */
     private static final char ESCAPE = '\\';
+
+    /**
+     * The bar inside {@link #FIELD_SEPARATOR}, which cannot appear in a field as
+     * itself: left unescaped, it would be read back as the end of one field and
+     * the start of the next.
+     */
     private static final char SEPARATOR_MARK = '|';
 
     /** What a load reports when nothing went wrong: nothing. */

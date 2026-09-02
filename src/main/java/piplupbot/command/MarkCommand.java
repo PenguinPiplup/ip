@@ -38,6 +38,13 @@ public class MarkCommand extends Command {
         this.isTaskDone = isTaskDone;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Serves both {@code mark} and {@code unmark}: {@link #isTaskDone}
+     * decides the status stored and the wording of the confirmation alike, which
+     * is what lets one method answer for the two commands.</p>
+     */
     @Override
     public void execute(TaskList tasks, Ui ui, Storage storage) throws PiplupBotException {
         // get() refuses a number that names no task, so the lines below can assume
