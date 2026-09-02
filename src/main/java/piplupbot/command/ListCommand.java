@@ -4,9 +4,7 @@ import piplupbot.Storage;
 import piplupbot.Ui;
 import piplupbot.task.TaskList;
 
-/**
- * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
- */
+// ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
  * Displays the stored tasks, numbered starting from 1, with their done status.

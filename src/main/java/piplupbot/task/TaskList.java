@@ -4,9 +4,7 @@ import java.util.ArrayList;
 
 import piplupbot.PiplupBotException;
 
-/**
- * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
- */
+// ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
  * The tasks the user has stored, in the order they were added.

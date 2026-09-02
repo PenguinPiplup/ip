@@ -14,9 +14,7 @@ import piplupbot.task.Task;
 import piplupbot.task.TaskList;
 import piplupbot.task.Todo;
 
-/**
- * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
- */
+// ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
  * Turns a line the user typed into the {@link Command} it asks for.
@@ -94,14 +92,14 @@ public class Parser {
     public static Command parse(String input) throws PiplupBotException {
         CommandWord commandWord = CommandWord.fromInput(input);
         return switch (commandWord) {
-        case TODO -> new AddCommand(parseTodo(input));
-        case DEADLINE -> new AddCommand(parseDeadline(input));
-        case EVENT -> new AddCommand(parseEvent(input));
-        case LIST -> new ListCommand();
-        case MARK -> new MarkCommand(parseTaskNumber(input, commandWord), true);
-        case UNMARK -> new MarkCommand(parseTaskNumber(input, commandWord), false);
-        case DELETE -> new DeleteCommand(parseTaskNumber(input, commandWord));
-        case BYE -> new ExitCommand();
+            case TODO -> new AddCommand(parseTodo(input));
+            case DEADLINE -> new AddCommand(parseDeadline(input));
+            case EVENT -> new AddCommand(parseEvent(input));
+            case LIST -> new ListCommand();
+            case MARK -> new MarkCommand(parseTaskNumber(input, commandWord), true);
+            case UNMARK -> new MarkCommand(parseTaskNumber(input, commandWord), false);
+            case DELETE -> new DeleteCommand(parseTaskNumber(input, commandWord));
+            case BYE -> new ExitCommand();
         };
     }
 

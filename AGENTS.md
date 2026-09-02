@@ -18,7 +18,7 @@ Unless the user says otherwise, assume that you are assisting a student working 
 * Keep explanations brief but instructive, supporting learning through responsible use of AI. For example:
 
   * When suggesting a Git command, briefly explain what it does.
-  * Add explanatory Javadoc comments to all classes and to nontrivial methods and fields when their purpose or behavior is not obvious.
+  * Add explanatory Javadoc comments to all classes and to nontrivial methods and fields when their purpose or behavior is not obvious, in the form the coding standard below prescribes.
   * Make generated code as self-explanatory as possible, and include explanatory comments where they improve understanding.
   * When faced with a design choice, choose the simplest option that is sufficient for the requirements, while briefly explaining relevant more advanced alternatives.
   * When suggesting code, use the /present-changes-visually skill to compare the code with/without the code suggested by Claude.
@@ -26,6 +26,28 @@ Unless the user says otherwise, assume that you are assisting a student working 
 # Project-specific requirements
 
 * Do not make any changes to the code until the student has reviewed the code.
+
+## Coding standard
+
+All Java code in this repository — under `src/main/` and `src/test/` alike —
+**must** follow the SE-EDU Java coding standard (basic + intermediate),
+<https://se-education.org/guides/conventions/java/intermediate.html>.
+
+**Invoke the `seedu-java-coding-standard` skill before writing or editing any
+`.java` file**, and again before reporting Java work as finished. The skill holds
+the rules in full, plus a self-audit checklist and the greps that catch the
+mechanical ones.
+
+The standard is not advisory here. Code that breaks it is unfinished, in the same
+way that code with a failing test is unfinished:
+
+* Write new code to the standard the first time, rather than fixing style
+  afterwards — a second style pass costs the student a second review.
+* When editing existing code, bring the lines you touch into line with the
+  standard, but leave untouched code alone. A diff that mixes a behaviour change
+  with a whitespace sweep is much harder to review.
+* Say which rule a change follows whenever the reason is not obvious, so the
+  student learns the rule and not just the edit.
 
 ## Java version:
 

@@ -9,9 +9,7 @@ import piplupbot.task.Task;
 import piplupbot.task.TaskList;
 import piplupbot.task.Todo;
 
-/**
- * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
- */
+// ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
  * Stores a task and confirms it to the user.

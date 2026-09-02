@@ -4,9 +4,7 @@ import java.time.LocalDateTime;
 
 import piplupbot.PiplupBotException;
 
-/**
- * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
- */
+// ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
  * A task that runs from one point in time to another,

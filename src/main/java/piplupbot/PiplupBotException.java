@@ -1,8 +1,6 @@
 package piplupbot;
 
-/**
- * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
- */
+// ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
  * An error that PiplupBot itself recognises and can explain to the user,

@@ -1,8 +1,6 @@
 package piplupbot.task;
 
-/**
- * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
- */
+// ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
  * A task with no date or time attached to it, e.g. {@code visit new theme park}.

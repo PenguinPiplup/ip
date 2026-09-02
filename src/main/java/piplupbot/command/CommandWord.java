@@ -2,9 +2,7 @@ package piplupbot.command;
 
 import piplupbot.PiplupBotException;
 
-/**
- * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
- */
+// ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
  * The words PiplupBot recognises at the start of a line, one for each command

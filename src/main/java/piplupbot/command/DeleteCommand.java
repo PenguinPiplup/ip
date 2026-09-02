@@ -6,9 +6,7 @@ import piplupbot.Ui;
 import piplupbot.task.Task;
 import piplupbot.task.TaskList;
 
-/**
- * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
- */
+// ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
  * Removes a task from the list and confirms it to the user.

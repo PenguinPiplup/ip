@@ -2,9 +2,7 @@ package piplupbot;
 
 import java.util.Scanner;
 
-/**
- * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
- */
+// ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
  * Everything the bot says to the user and everything it hears back.
@@ -29,12 +27,12 @@ public class Ui {
 
     /** The name the bot draws for itself before it says anything. */
     private static final String BANNER =
-            " ____  _       _             ____        _   \n" +
-            "|  _ \\(_)_ __ | |_   _ _ __ | __ )  ___ | |_ \n" +
-            "| |_) | | '_ \\| | | | | '_ \\|  _ \\ / _ \\| __|\n" +
-            "|  __/| | |_) | | |_| | |_) | |_) | (_) | |_ \n" +
-            "|_|   |_| .__/|_|\\__,_| .__/|____/ \\___/ \\__|\n" +
-            "        |_|           |_|                    \n";
+            " ____  _       _             ____        _   \n"
+            + "|  _ \\(_)_ __ | |_   _ _ __ | __ )  ___ | |_ \n"
+            + "| |_) | | '_ \\| | | | | '_ \\|  _ \\ / _ \\| __|\n"
+            + "|  __/| | |_) | | |_| | |_) | |_) | (_) | |_ \n"
+            + "|_|   |_| .__/|_|\\__,_| .__/|____/ \\___/ \\__|\n"
+            + "        |_|           |_|                    \n";
 
     /**
      * Reads the user's lines. It is created once and kept, because a

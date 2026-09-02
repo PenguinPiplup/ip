@@ -7,9 +7,7 @@ import piplupbot.Storage;
 import piplupbot.Ui;
 import piplupbot.task.TaskList;
 
-/**
- * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
- */
+// ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
  * One thing the user asked the bot to do, ready to be carried out.

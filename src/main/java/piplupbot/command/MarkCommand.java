@@ -7,9 +7,7 @@ import piplupbot.Ui;
 import piplupbot.task.Task;
 import piplupbot.task.TaskList;
 
-/**
- * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
- */
+// ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
  * Sets the done status of a task and confirms it to the user.

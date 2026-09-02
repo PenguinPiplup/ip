@@ -5,9 +5,7 @@ import java.time.LocalDateTime;
 import piplupbot.PiplupBotException;
 import piplupbot.Storage;
 
-/**
- * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
- */
+// ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
  * A task that must be done before a given point in time,
