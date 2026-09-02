@@ -9,9 +9,7 @@ import java.util.Locale;
 
 import piplupbot.PiplupBotException;
 
-/**
- * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
- */
+// ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
  * The one place that knows how a date and time is written, in each of the three

@@ -2,9 +2,7 @@ package piplupbot.task;
 
 import piplupbot.Storage;
 
-/**
- * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
- */
+// ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
  * A single task in the user's list: what the task is, and whether it is done.

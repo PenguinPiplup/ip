@@ -13,9 +13,7 @@ import piplupbot.task.Event;
 import piplupbot.task.Task;
 import piplupbot.task.Todo;
 
-/**
- * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
- */
+// ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
  * Keeps the task list on the hard disk, so the tasks outlive one run of the bot.
@@ -392,21 +390,22 @@ public class Storage {
         // Each kind of task writes a known number of fields, so the count is
         // checked before reading a field that a shorter line would not have.
         Task task = switch (typeCode) {
-        case "T" -> {
-            requireFieldCount(fields, 3, line);
-            yield new Todo(description);
-        }
-        case "D" -> {
-            requireFieldCount(fields, 4, line);
-            yield new Deadline(description, requireText(decodeField(fields[3]), "date", line));
-        }
-        case "E" -> {
-            requireFieldCount(fields, 5, line);
-            yield new Event(description,
-                    requireText(decodeField(fields[3]), "start time", line),
-                    requireText(decodeField(fields[4]), "end time", line));
-        }
-        default -> throw new PiplupBotException("Unknown task type: " + line);
+            case "T" -> {
+                requireFieldCount(fields, 3, line);
+                yield new Todo(description);
+            }
+            case "D" -> {
+                requireFieldCount(fields, 4, line);
+                yield new Deadline(description,
+                        requireText(decodeField(fields[3]), "date", line));
+            }
+            case "E" -> {
+                requireFieldCount(fields, 5, line);
+                yield new Event(description,
+                        requireText(decodeField(fields[3]), "start time", line),
+                        requireText(decodeField(fields[4]), "end time", line));
+            }
+            default -> throw new PiplupBotException("Unknown task type: " + line);
         };
 
         // A new task starts off not done, so only "1" needs acting on -- but
