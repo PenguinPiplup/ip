@@ -14,6 +14,8 @@ import piplupbot.task.TaskList;
  * {@code list} command, marks a task as done on the {@code mark <number>}
  * command, reverses that on the {@code unmark <number>} command,
  * removes a task on the {@code delete <number>} command,
+ * shows the tasks whose description contains some text on the
+ * {@code find <keyword>} command,
  * and exits when the user types {@code bye}.
  *
  * <p>Every change to the list is written straight to the hard disk by

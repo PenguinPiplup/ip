@@ -2,6 +2,8 @@ package piplupbot.task;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -73,6 +75,43 @@ public class TodoTest {
         todo.markAsDone();
         todo.markAsDone();
         assertEquals("X", todo.getStatusIcon());
+    }
+
+    // ---------- What a search matches ----------
+
+    @Test
+    public void descriptionContains_textInTheDescription_returnsTrue() {
+        assertTrue(new Todo("read book").descriptionContains("book"));
+    }
+
+    @Test
+    public void descriptionContains_textNotInTheDescription_returnsFalse() {
+        assertFalse(new Todo("read book").descriptionContains("homework"));
+    }
+
+    /**
+     * Part of a word matches, so a half-remembered keyword still finds the task.
+     * A rule that matched whole words only would leave {@code find boo} finding
+     * nothing, which reads as "you have no such task" rather than as "type
+     * more".
+     */
+    @Test
+    public void descriptionContains_partOfAWord_returnsTrue() {
+        assertTrue(new Todo("read book").descriptionContains("boo"));
+        assertTrue(new Todo("read book").descriptionContains("ead bo"));
+    }
+
+    /**
+     * Capitals are ignored, in both directions. This is the one decision in the
+     * matching rule that {@code String.contains} does not make by itself, so it
+     * is the one a later "simplification" would quietly drop -- and dropping it
+     * would show as a search that finds nothing rather than as a failure.
+     */
+    @Test
+    public void descriptionContains_textInADifferentCase_returnsTrue() {
+        assertTrue(new Todo("Read Book").descriptionContains("book"));
+        assertTrue(new Todo("read book").descriptionContains("BOOK"));
+        assertTrue(new Todo("Read Book").descriptionContains("d b"));
     }
 
     // ---------- What the save file holds ----------

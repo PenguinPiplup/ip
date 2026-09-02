@@ -38,6 +38,12 @@ public enum CommandWord {
     /** Displays everything stored so far. */
     LIST("list", false),
 
+    /**
+     * Displays only the tasks whose description contains some text,
+     * e.g. {@code find book}.
+     */
+    FIND("find", true),
+
     /** Marks a task as done, e.g. {@code mark 2}. */
     MARK("mark", true),
 
@@ -133,7 +139,7 @@ public enum CommandWord {
 
     /**
      * Lists every keyword the way the hint reads them, e.g.
-     * {@code "todo, deadline, event, list, mark, unmark, delete, or bye"}.
+     * {@code "todo, deadline, event, list, find, mark, unmark, delete, or bye"}.
      *
      * <p>Building the list from {@link #values()} rather than writing it out
      * means a newly added command appears in the hint by itself, so the hint

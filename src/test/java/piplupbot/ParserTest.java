@@ -15,6 +15,7 @@ import piplupbot.command.AddCommand;
 import piplupbot.command.Command;
 import piplupbot.command.DeleteCommand;
 import piplupbot.command.ExitCommand;
+import piplupbot.command.FindCommand;
 import piplupbot.command.ListCommand;
 import piplupbot.command.MarkCommand;
 import piplupbot.task.TaskList;
@@ -84,6 +85,7 @@ public class ParserTest {
         assertInstanceOf(MarkCommand.class, Parser.parse("mark 1"));
         assertInstanceOf(MarkCommand.class, Parser.parse("unmark 1"));
         assertInstanceOf(DeleteCommand.class, Parser.parse("delete 1"));
+        assertInstanceOf(FindCommand.class, Parser.parse("find book"));
         assertInstanceOf(ExitCommand.class, Parser.parse("bye"));
     }
 
@@ -95,7 +97,9 @@ public class ParserTest {
     public void parse_byeCommand_isTheOnlyExitCommand() throws PiplupBotException {
         assertTrue(Parser.parse("bye").isExit());
 
-        for (String input : new String[] {"list", "todo read book", "mark 1", "delete 1"}) {
+        for (String input : new String[] {
+            "list", "todo read book", "mark 1", "delete 1", "find book",
+        }) {
             Command command = Parser.parse(input);
             assertFalse(command.isExit(), input + " should not end the conversation");
         }
@@ -284,6 +288,55 @@ public class ParserTest {
             throws PiplupBotException {
         assertInstanceOf(MarkCommand.class, Parser.parse("mark 99"));
         assertThrows(PiplupBotException.class, () -> listAfter("mark 99"));
+    }
+
+    // ---------- Lines that should name something to look for ----------
+
+    /**
+     * A bare {@code find} is refused rather than answered. Every description
+     * contains the empty string, so an unguarded search would reply with the
+     * whole list -- a confident answer to a line that never said what to look
+     * for.
+     */
+    @Test
+    public void parse_findWithoutKeyword_exceptionThrown() {
+        assertThrows(PiplupBotException.class, () -> Parser.parse("find"));
+        assertThrows(PiplupBotException.class, () -> Parser.parse("find   "));
+    }
+
+    @Test
+    public void parse_findWithoutKeyword_messageShowsAnExample() {
+        PiplupBotException exception =
+                assertThrows(PiplupBotException.class, () -> Parser.parse("find"));
+        assertArrayEquals(
+                new String[] {"Please tell me what to look for, e.g. find book."},
+                exception.getMessageLines());
+    }
+
+    /**
+     * Everything after the command word is one keyword, spaces included, rather
+     * than several words matched separately. The list below is searched through
+     * the parsed command's own keyword, since a command keeps to itself what it
+     * was built from.
+     */
+    @Test
+    public void parse_findWithSeveralWords_looksForThemAsOnePhrase() throws PiplupBotException {
+        TaskList tasks = listAfter("todo read book", "todo return book");
+
+        assertArrayEquals(new String[] {"1.[T][ ] read book"},
+                tasks.find("read book").toNumberedLines());
+    }
+
+    /**
+     * {@code find} shows tasks without touching them, so the list is exactly as
+     * it was afterwards -- numbering included, which the search's own numbering
+     * does not disturb.
+     */
+    @Test
+    public void parse_findCommand_leavesTheListUnchanged() throws PiplupBotException {
+        assertArrayEquals(new String[] {"1.[T][ ] read book", "2.[T][ ] write notes"},
+                listAfter("todo read book", "todo write notes", "find book", "find notes")
+                        .toNumberedLines());
     }
 
     // ---------- Lines that name no command at all ----------

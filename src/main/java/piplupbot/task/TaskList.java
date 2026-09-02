@@ -118,6 +118,38 @@ public class TaskList {
     }
 
     /**
+     * Returns the tasks whose description contains the given text, in the order
+     * they appear in this list.
+     *
+     * <p>The matches come back as a {@code TaskList} rather than as lines of
+     * text, so the caller gets them numbered by the very method that numbers the
+     * full list -- one numbering rule for both, instead of a second copy of it
+     * living in whichever command does the searching.</p>
+     *
+     * <p>The list handed back holds the stored tasks themselves rather than
+     * copies of them, but is a separate list, so adding to or removing from it
+     * changes nothing here. That is what makes it safe to hand out: a search
+     * result is something to read, and the only ways to change what is stored
+     * remain {@link #add} and {@link #remove}.</p>
+     *
+     * <p>Whether a task matches is {@link Task#descriptionContains}'s question,
+     * asked of each task in turn. This method decides only which tasks to ask
+     * and in what order to keep the answers.</p>
+     *
+     * @param keyword the text to look for in each description
+     * @return the matching tasks, possibly none
+     */
+    public TaskList find(String keyword) {
+        TaskList matches = new TaskList();
+        for (Task task : tasks) {
+            if (task.descriptionContains(keyword)) {
+                matches.add(task);
+            }
+        }
+        return matches;
+    }
+
+    /**
      * Returns one line per stored task, each numbered the way the user refers
      * to it, e.g. {@code "2.[D][ ] return book (by: Oct 15 2019, 6:00 pm)"}.
      *
