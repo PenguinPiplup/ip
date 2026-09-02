@@ -42,6 +42,7 @@ public class CommandWordTest {
         assertEquals(CommandWord.MARK, CommandWord.fromInput("mark 2"));
         assertEquals(CommandWord.UNMARK, CommandWord.fromInput("unmark 2"));
         assertEquals(CommandWord.DELETE, CommandWord.fromInput("delete 3"));
+        assertEquals(CommandWord.FIND, CommandWord.fromInput("find book"));
     }
 
     /**
@@ -56,6 +57,7 @@ public class CommandWordTest {
         assertEquals(CommandWord.MARK, CommandWord.fromInput("mark"));
         assertEquals(CommandWord.TODO, CommandWord.fromInput("todo"));
         assertEquals(CommandWord.DELETE, CommandWord.fromInput("delete"));
+        assertEquals(CommandWord.FIND, CommandWord.fromInput("find"));
     }
 
     /**
@@ -109,7 +111,8 @@ public class CommandWordTest {
         String[] lines = exception.getMessageLines();
         assertEquals(2, lines.length);
         assertEquals("Sorry, I don't know what \"blah\" means.", lines[0]);
-        assertEquals("Try: todo, deadline, event, list, mark, unmark, delete, or bye.", lines[1]);
+        assertEquals("Try: todo, deadline, event, list, find, mark, unmark, delete, or bye.",
+                lines[1]);
     }
 
     // ---------- Reading what follows the keyword ----------

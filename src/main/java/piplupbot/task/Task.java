@@ -1,5 +1,7 @@
 package piplupbot.task;
 
+import java.util.Locale;
+
 import piplupbot.Storage;
 
 /**
@@ -40,6 +42,37 @@ public abstract class Task {
     public Task(String description) {
         this.description = description;
         this.isDone = false;
+    }
+
+    /**
+     * Reports whether this task's description contains the given text, ignoring
+     * the difference between capital and small letters.
+     *
+     * <p>The question is asked of the task rather than answered by a caller
+     * reading a description out of it, so what counts as a match is decided in
+     * one place, beside the field it is decided about. That matters because the
+     * rule is not the obvious one: the search is deliberately more forgiving
+     * than the rest of the bot, matching part of a word and ignoring capitals,
+     * so that {@code find boo} and {@code find BOOK} both find "read book".
+     * Someone hunting for a task they half remember should not have to type it
+     * exactly.</p>
+     *
+     * <p>Only the description is searched, never the dates a deadline or an
+     * event adds, so {@code find oct} does not match a task merely due in
+     * October. Searching the whole rendered line would be one character's
+     * change here and would quietly make every date, type label and status box
+     * searchable too.</p>
+     *
+     * <p>{@code Locale.ROOT} rather than the machine's own language, for the
+     * reason {@link DateTimes} pins {@code Locale.ENGLISH}: a Turkish machine
+     * lower-cases "I" to a dotless letter, which would make a keyword stop
+     * matching a description that plainly contains it.</p>
+     *
+     * @param text what to look for, as the user typed it
+     * @return {@code true} if the description contains it
+     */
+    public boolean descriptionContains(String text) {
+        return description.toLowerCase(Locale.ROOT).contains(text.toLowerCase(Locale.ROOT));
     }
 
     /**

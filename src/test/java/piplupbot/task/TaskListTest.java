@@ -205,6 +205,89 @@ public class TaskListTest {
         }, tasks.toNumberedLines());
     }
 
+    // ---------- Searching for a keyword ----------
+
+    /**
+     * Only the matching tasks come back, and they are numbered from 1 among
+     * themselves: "return book" was task 3 and is shown as 2. That renumbering
+     * is the part worth pinning down, because it is what makes a number read off
+     * a search result mean something different from the same number typed at
+     * {@code delete}.
+     */
+    @Test
+    public void find_keywordInSomeDescriptions_returnsOnlyThoseNumberedFromOne() {
+        TaskList tasks = listOfTodos("read book", "write notes", "return book");
+        assertArrayEquals(new String[] {"1.[T][ ] read book", "2.[T][ ] return book"},
+                tasks.find("book").toNumberedLines());
+    }
+
+    @Test
+    public void find_keywordMatchingNothing_returnsEmptyList() {
+        assertEquals(0, listOfTodos("read book", "write notes").find("homework").size());
+    }
+
+    /** The matches keep the order they were added in. */
+    @Test
+    public void find_keywordMatchingEveryTask_returnsThemInTheStoredOrder() {
+        TaskList tasks = listOfTodos("book one", "book two", "book three");
+        assertArrayEquals(
+                new String[] {"1.[T][ ] book one", "2.[T][ ] book two", "3.[T][ ] book three"},
+                tasks.find("book").toNumberedLines());
+    }
+
+    /**
+     * The keyword reaches each task as typed, so a search through the list is as
+     * forgiving about capitals as {@link Task#descriptionContains} is on its
+     * own. Lower-casing the keyword here as well would be harmless; lower-casing
+     * it instead of there would not, which is why this is checked from both
+     * ends.
+     */
+    @Test
+    public void find_keywordInADifferentCase_stillMatches() {
+        assertArrayEquals(new String[] {"1.[T][ ] Read Book"},
+                listOfTodos("Read Book", "write notes").find("bOOk").toNumberedLines());
+    }
+
+    /** Searching reads the list; it must not change what is stored. */
+    @Test
+    public void find_anyKeyword_leavesTheStoredTasksUnchanged() {
+        TaskList tasks = listOfTodos("read book", "write notes");
+        tasks.find("book");
+        tasks.find("nothing matches this");
+
+        assertArrayEquals(new String[] {"1.[T][ ] read book", "2.[T][ ] write notes"},
+                tasks.toNumberedLines());
+    }
+
+    /**
+     * A match is the stored task itself rather than a copy of it, so a search
+     * shows the task's real done status rather than a snapshot of it.
+     */
+    @Test
+    public void find_matchingTask_isTheStoredTaskItself() throws PiplupBotException {
+        Todo stored = new Todo("read book");
+        TaskList tasks = new TaskList();
+        tasks.add(stored);
+
+        assertSame(stored, tasks.find("book").get(1));
+    }
+
+    /**
+     * The result is a list of its own, so changing it changes nothing stored.
+     * Without that, handing out a search result would be a second way into the
+     * list, past {@link TaskList#add} and {@link TaskList#remove}.
+     */
+    @Test
+    public void find_returnedListChanged_storedTasksUnchanged() {
+        TaskList tasks = listOfTodos("read book");
+
+        TaskList matches = tasks.find("book");
+        matches.add(new Todo("added to the search result"));
+
+        assertEquals(1, tasks.size());
+        assertArrayEquals(new String[] {"1.[T][ ] read book"}, tasks.toNumberedLines());
+    }
+
     // ---------- The copies that keep the list this class's own ----------
 
     /**

@@ -2,7 +2,9 @@ package piplupbot.task;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -72,6 +74,23 @@ public class DeadlineTest {
         deadline.markAsDone();
         assertArrayEquals(new String[] {"D", "1", "return book", "2019-10-15T18:00"},
                 deadline.toFileFields());
+    }
+
+    // ---------- What a search matches ----------
+
+    /**
+     * A search reads the description only, so a deadline is not found by the
+     * month or the year it falls in. The case is here rather than in
+     * {@link TodoTest} because a todo has no date to be wrongly matched
+     * against: only a deadline can show that the date shown on screen is not
+     * part of what {@code find} looks at.
+     */
+    @Test
+    public void descriptionContains_textFromTheDueDate_returnsFalse() throws PiplupBotException {
+        Deadline deadline = new Deadline("return book", "2019-10-15 1800");
+        assertTrue(deadline.descriptionContains("book"));
+        assertFalse(deadline.descriptionContains("Oct"));
+        assertFalse(deadline.descriptionContains("2019"));
     }
 
     // ---------- A date the bot cannot read ----------

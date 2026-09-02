@@ -5,6 +5,7 @@ import piplupbot.command.Command;
 import piplupbot.command.CommandWord;
 import piplupbot.command.DeleteCommand;
 import piplupbot.command.ExitCommand;
+import piplupbot.command.FindCommand;
 import piplupbot.command.ListCommand;
 import piplupbot.command.MarkCommand;
 import piplupbot.task.DateTimes;
@@ -87,6 +88,7 @@ public class Parser {
         case DEADLINE -> new AddCommand(parseDeadline(input));
         case EVENT -> new AddCommand(parseEvent(input));
         case LIST -> new ListCommand();
+        case FIND -> new FindCommand(parseKeyword(input));
         case MARK -> new MarkCommand(parseTaskNumber(input, commandWord), true);
         case UNMARK -> new MarkCommand(parseTaskNumber(input, commandWord), false);
         case DELETE -> new DeleteCommand(parseTaskNumber(input, commandWord));
@@ -175,6 +177,31 @@ public class Parser {
             throw new PiplupBotException(hint);
         }
         return new Event(description, from, to);
+    }
+
+    /**
+     * Reads {@code find <keyword>}.
+     *
+     * <p>What follows the command word is taken whole, spaces and all, rather
+     * than being split into words: {@code find read book} looks for the phrase
+     * "read book", not for either word on its own. That is the simpler rule and
+     * the one a user is likely to expect from a single line of text; searching
+     * for several words at once would need a way to say whether all of them or
+     * any of them must match, which nothing in the requirements asks for.</p>
+     *
+     * @param input the whole line the user typed
+     * @return the text to look for
+     * @throws PiplupBotException if nothing follows the command word
+     */
+    private static String parseKeyword(String input) throws PiplupBotException {
+        String keyword = CommandWord.FIND.argumentOf(input);
+        // A bare "find" would otherwise match every task, since every string
+        // contains the empty string -- a confusing way to answer a line that
+        // never said what to look for.
+        if (keyword.isEmpty()) {
+            throw new PiplupBotException("Please tell me what to look for, e.g. find book.");
+        }
+        return keyword;
     }
 
     /**
