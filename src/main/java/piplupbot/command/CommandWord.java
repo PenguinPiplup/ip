@@ -67,6 +67,14 @@ public enum CommandWord {
      */
     private final boolean takesArgument;
 
+    /**
+     * Creates a command word from the keyword the user types for it.
+     * An enum's constructor is implicitly private, so the constants declared
+     * above are the only instances there will ever be.
+     *
+     * @param keyword       the word the user types, e.g. {@code "mark"}
+     * @param takesArgument whether anything may follow the keyword on the same line
+     */
     CommandWord(String keyword, boolean takesArgument) {
         this.keyword = keyword;
         this.takesArgument = takesArgument;

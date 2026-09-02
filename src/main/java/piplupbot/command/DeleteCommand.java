@@ -30,6 +30,13 @@ public class DeleteCommand extends Command {
         this.taskNumber = taskNumber;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The confirmation names the task {@link TaskList#remove} handed back
+     * rather than the number the user typed, so what is shown is the task that
+     * really was removed.</p>
+     */
     @Override
     public void execute(TaskList tasks, Ui ui, Storage storage) throws PiplupBotException {
         Task removedTask = tasks.remove(taskNumber);

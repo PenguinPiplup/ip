@@ -36,6 +36,14 @@ public class AddCommand extends Command {
         this.task = task;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The confirmation shows the task through its own {@code toString()}, so
+     * the same three lines serve a todo, a deadline and an event alike -- by the
+     * time this runs, which kind was typed has already been settled by
+     * {@link Parser}.</p>
+     */
     @Override
     public void execute(TaskList tasks, Ui ui, Storage storage) {
         tasks.add(task);

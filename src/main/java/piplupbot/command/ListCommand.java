@@ -16,6 +16,13 @@ import piplupbot.task.TaskList;
  * has nothing to save.</p>
  */
 public class ListCommand extends Command {
+    /**
+     * {@inheritDoc}
+     *
+     * <p>{@code storage} goes untouched, because showing the list changes
+     * nothing there is to save. It is still a parameter because every command is
+     * called through the same method, whether or not it needs all three.</p>
+     */
     @Override
     public void execute(TaskList tasks, Ui ui, Storage storage) {
         ui.showList("Here are the tasks in your list:", tasks.toNumberedLines());
