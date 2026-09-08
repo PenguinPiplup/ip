@@ -73,13 +73,13 @@ public class EventTest {
     /** Either end being unreadable is enough to refuse the whole event. */
     @Test
     public void constructor_unreadableStartTime_exceptionThrown() {
-        assertThrows(PiplupBotException.class,
-                () -> new Event("meeting", "sometime", "2019-10-02 1600"));
+        assertThrows(PiplupBotException.class, () ->
+                new Event("meeting", "sometime", "2019-10-02 1600"));
     }
 
     @Test
     public void constructor_unreadableEndTime_exceptionThrown() {
-        assertThrows(PiplupBotException.class,
-                () -> new Event("meeting", "2019-10-02 1400", "sometime"));
+        assertThrows(PiplupBotException.class, () ->
+                new Event("meeting", "2019-10-02 1400", "sometime"));
     }
 }

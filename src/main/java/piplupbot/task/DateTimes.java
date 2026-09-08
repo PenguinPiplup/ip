@@ -46,10 +46,10 @@ public final class DateTimes {
      */
     private static final DateTimeFormatter[] DATE_TIME_FORMATS = {
         DateTimeFormatter.ISO_LOCAL_DATE_TIME, // 2019-10-15T18:00, as stored in the file
-        strictPattern("uuuu-MM-dd HHmm"),      // 2019-10-15 1800
-        strictPattern("uuuu-MM-dd HH:mm"),     // 2019-10-15 18:00
-        strictPattern("d/M/uuuu HHmm"),        // 2/12/2019 1800
-        strictPattern("d/M/uuuu HH:mm"),       // 2/12/2019 18:00
+        strictPattern("uuuu-MM-dd HHmm"), // 2019-10-15 1800
+        strictPattern("uuuu-MM-dd HH:mm"), // 2019-10-15 18:00
+        strictPattern("d/M/uuuu HHmm"), // 2/12/2019 1800
+        strictPattern("d/M/uuuu HH:mm"), // 2/12/2019 18:00
     };
 
     /**
@@ -59,8 +59,8 @@ public final class DateTimes {
      * being made for them.
      */
     private static final DateTimeFormatter[] DATE_FORMATS = {
-        DateTimeFormatter.ISO_LOCAL_DATE,      // 2019-10-15
-        strictPattern("d/M/uuuu"),             // 2/12/2019
+        DateTimeFormatter.ISO_LOCAL_DATE, // 2019-10-15
+        strictPattern("d/M/uuuu"), // 2/12/2019
     };
 
     /**

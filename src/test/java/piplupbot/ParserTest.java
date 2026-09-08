@@ -187,8 +187,8 @@ public class ParserTest {
      */
     @Test
     public void parse_eventWithToBeforeFrom_exceptionThrown() {
-        assertThrows(PiplupBotException.class,
-                () -> Parser.parse("event meeting /to 2019-10-02 1600 /from 2019-10-02 1400"));
+        assertThrows(PiplupBotException.class, () ->
+                Parser.parse("event meeting /to 2019-10-02 1600 /from 2019-10-02 1400"));
     }
 
     // ---------- Lines that are missing something ----------
@@ -222,19 +222,19 @@ public class ParserTest {
 
     @Test
     public void parse_eventMissingASeparator_exceptionThrown() {
-        assertThrows(PiplupBotException.class,
-                () -> Parser.parse("event meeting /from 2019-10-02 1400"));
-        assertThrows(PiplupBotException.class,
-                () -> Parser.parse("event meeting /to 2019-10-02 1600"));
+        assertThrows(PiplupBotException.class, () ->
+                Parser.parse("event meeting /from 2019-10-02 1400"));
+        assertThrows(PiplupBotException.class, () ->
+                Parser.parse("event meeting /to 2019-10-02 1600"));
         assertThrows(PiplupBotException.class, () -> Parser.parse("event meeting"));
     }
 
     @Test
     public void parse_eventMissingOnePart_exceptionThrown() {
-        assertThrows(PiplupBotException.class,
-                () -> Parser.parse("event /from 2019-10-02 1400 /to 2019-10-02 1600"));
-        assertThrows(PiplupBotException.class,
-                () -> Parser.parse("event meeting /from  /to 2019-10-02 1600"));
+        assertThrows(PiplupBotException.class, () ->
+                Parser.parse("event /from 2019-10-02 1400 /to 2019-10-02 1600"));
+        assertThrows(PiplupBotException.class, () ->
+                Parser.parse("event meeting /from  /to 2019-10-02 1600"));
     }
 
     /**
@@ -244,10 +244,10 @@ public class ParserTest {
      */
     @Test
     public void parse_taskWithUnreadableDate_exceptionThrown() {
-        assertThrows(PiplupBotException.class,
-                () -> Parser.parse("deadline return book /by next Friday"));
-        assertThrows(PiplupBotException.class,
-                () -> Parser.parse("event meeting /from sometime /to 2019-10-02 1600"));
+        assertThrows(PiplupBotException.class, () ->
+                Parser.parse("deadline return book /by next Friday"));
+        assertThrows(PiplupBotException.class, () ->
+                Parser.parse("event meeting /from sometime /to 2019-10-02 1600"));
     }
 
     // ---------- Lines that should name a task number ----------
