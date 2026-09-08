@@ -52,17 +52,6 @@ import piplupbot.task.Todo;
  * never be thrown away without a copy being kept first.</p>
  */
 public class Storage {
-    /** Where the tasks are kept, as chosen by whoever created this object. */
-    private final Path filePath;
-
-    /**
-     * Where a file that could not be read in full is copied before the bot
-     * overwrites it. Without this, one damaged line would be destroyed by the
-     * very next command the user typed. It is worked out once, in the
-     * constructor, so the rescue copy always lands beside the file it came from.
-     */
-    private final Path damagedPath;
-
     /**
      * The character sequence that separates the fields of one saved task.
      * The spaces around the bar make the file readable by eye.
@@ -85,6 +74,17 @@ public class Storage {
 
     /** What a load reports when nothing went wrong: nothing. */
     private static final String[] NO_WARNING = new String[0];
+
+    /** Where the tasks are kept, as chosen by whoever created this object. */
+    private final Path filePath;
+
+    /**
+     * Where a file that could not be read in full is copied before the bot
+     * overwrites it. Without this, one damaged line would be destroyed by the
+     * very next command the user typed. It is worked out once, in the
+     * constructor, so the rescue copy always lands beside the file it came from.
+     */
+    private final Path damagedPath;
 
     /**
      * What a load produced: the tasks, and anything the user should be told

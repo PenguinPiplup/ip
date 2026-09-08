@@ -5,9 +5,7 @@ import piplupbot.Ui;
 import piplupbot.task.Task;
 import piplupbot.task.TaskList;
 
-/**
- * ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
- */
+// ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
  * Displays the tasks whose description contains a given piece of text.

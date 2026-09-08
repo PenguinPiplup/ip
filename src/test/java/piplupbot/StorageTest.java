@@ -329,17 +329,17 @@ public class StorageTest {
      */
     @Test
     public void load_linesTheBotCouldNotHaveWritten_areAllSkipped() throws Exception {
-        writeSaveFile("T | 0\n"                                  // too few fields
-                + "X | 0 | unknown type\n"                       // no such kind of task
-                + "T | 2 | not a done flag\n"                    // done flag is 0 or 1
-                + "T | 0 | \n"                                   // empty description
-                + "D | 0 | no date field\n"                      // a deadline needs its date
-                + "D | 0 | empty date | \n"                      // and it may not be blank
-                + "E | 0 | only one time | 2019-10-02T14:00\n"   // an event needs two
-                + "T | 0 | extra | field\n"                      // a todo has exactly three
-                + "D | 0 | unreadable date | last Tuesday\n"     // the date must be a date
-                + "T | 0 | stray escape \\x\n"                   // no such escape is ever written
-                + "T | 0 | read book\n");                        // the only good line
+        writeSaveFile("T | 0\n" // too few fields
+                + "X | 0 | unknown type\n" // no such kind of task
+                + "T | 2 | not a done flag\n" // done flag is 0 or 1
+                + "T | 0 | \n" // empty description
+                + "D | 0 | no date field\n" // a deadline needs its date
+                + "D | 0 | empty date | \n" // and it may not be blank
+                + "E | 0 | only one time | 2019-10-02T14:00\n" // an event needs two
+                + "T | 0 | extra | field\n" // a todo has exactly three
+                + "D | 0 | unreadable date | last Tuesday\n" // the date must be a date
+                + "T | 0 | stray escape \\x\n" // no such escape is ever written
+                + "T | 0 | read book\n"); // the only good line
 
         Storage.LoadResult loaded = new Storage(saveFile()).load();
 
