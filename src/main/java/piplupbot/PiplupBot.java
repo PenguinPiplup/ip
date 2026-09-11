@@ -2,7 +2,6 @@ package piplupbot;
 
 import java.nio.file.Path;
 
-import javafx.application.Application;
 import piplupbot.command.Command;
 import piplupbot.task.TaskList;
 
@@ -33,7 +32,7 @@ import piplupbot.task.TaskList;
  * each line, just as a {@link Command} is, and that is what lets one bot serve
  * two faces: {@link #run} drives it from the console with a {@link TextUi}, and
  * the window, which is itself a {@link GuiUi}, drives it by handing over
- * itself. {@link #launch} decides which of the two the user gets. They differ
+ * itself. {@link Launcher} decides which of the two the user gets. They differ
  * only in how a line reaches the bot and how the answer is shown -- never in
  * what the answer is, because both go through {@link #respondTo}.</p>
  *
@@ -60,9 +59,6 @@ public class PiplupBot {
      * forward slash elsewhere.</p>
      */
     public static final Path DEFAULT_FILE_PATH = Path.of("data", "piplupbot.txt");
-
-    /** The argument that asks for the console instead of the window. */
-    private static final String CLI_FLAG = "--cli";
 
     /** Where the tasks are kept between runs. */
     private final Storage storage;
@@ -178,29 +174,6 @@ public class PiplupBot {
         boolean isExit = false;
         while (!isExit && ui.hasNextCommand()) {
             isExit = respondTo(ui.readCommand(), ui);
-        }
-    }
-
-    /**
-     * Starts the bot in the window, or in the console if the first argument is
-     * {@code --cli}. {@link Launcher} sends every start of the program here, so
-     * this is the one place that decides which face the user gets.
-     *
-     * <p>For the window, JavaFX is given the {@link GuiUi} class rather than an
-     * object: JavaFX creates the window itself, and the window makes its own bot
-     * with the same save file. JavaFX is loaded only when the window is chosen,
-     * so the console starts as quickly as it always did, and without JavaFX's
-     * warnings.</p>
-     *
-     * @param args {@code --cli} for the console; nothing, for the window
-     */
-    public static void launch(String[] args) {
-        boolean isCli = args.length > 0 && args[0].equals(CLI_FLAG);
-        if (isCli) {
-            new PiplupBot(DEFAULT_FILE_PATH).run();
-        } else {
-            // Returns once the window has been closed.
-            Application.launch(GuiUi.class, args);
         }
     }
 
