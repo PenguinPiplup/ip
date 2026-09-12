@@ -60,7 +60,7 @@ public class ParserTest {
      */
     private TaskList listAfter(String... inputs) throws PiplupBotException {
         TaskList tasks = new TaskList();
-        Ui ui = new Ui();
+        Ui ui = new TextUi();
         Storage storage = new Storage(tempDir.resolve("piplupbot.txt"));
 
         for (String input : inputs) {

@@ -24,6 +24,22 @@ dependencies {
 
     // Source: https://mvnrepository.com/artifact/com.joestelmach/natty
     implementation("com.joestelmach:natty:0.13")
+
+    // javafx dependencies
+    String javaFxVersion = '17.0.7'
+
+    implementation("org.openjfx:javafx-base:${javaFxVersion}:win")
+    implementation("org.openjfx:javafx-base:${javaFxVersion}:mac")
+    implementation("org.openjfx:javafx-base:${javaFxVersion}:linux")
+    implementation("org.openjfx:javafx-controls:${javaFxVersion}:win")
+    implementation("org.openjfx:javafx-controls:${javaFxVersion}:mac")
+    implementation("org.openjfx:javafx-controls:${javaFxVersion}:linux")
+    implementation("org.openjfx:javafx-fxml:${javaFxVersion}:win")
+    implementation("org.openjfx:javafx-fxml:${javaFxVersion}:mac")
+    implementation("org.openjfx:javafx-fxml:${javaFxVersion}:linux")
+    implementation("org.openjfx:javafx-graphics:${javaFxVersion}:win")
+    implementation("org.openjfx:javafx-graphics:${javaFxVersion}:mac")
+    implementation("org.openjfx:javafx-graphics:${javaFxVersion}:linux")
 }
 
 test {
@@ -41,7 +57,11 @@ test {
 }
 
 application {
-    mainClass = 'piplupbot.PiplupBot'
+    // Opens the window; add --cli (./gradlew run --args=--cli) for the console instead.
+    mainClass = 'piplupbot.Launcher'
+    // JavaFX loads native code, which Java 24 and later warn about -- and will one
+    // day refuse -- unless it is allowed. This allows it for ./gradlew run.
+    applicationDefaultJvmArgs = ['--enable-native-access=ALL-UNNAMED']
 }
 
 checkstyle {
@@ -57,8 +77,13 @@ jar {
 
 shadowJar {
     archiveFileName = 'piplupbot.jar'
+    // The same permission for java -jar piplupbot.jar, which reads it from the manifest.
+    manifest {
+        attributes 'Enable-Native-Access': 'ALL-UNNAMED'
+    }
 }
 
 run {
+    // Lets the console version (--args=--cli) read what is typed in the terminal.
     standardInput = System.in
 }

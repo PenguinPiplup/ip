@@ -8,7 +8,7 @@ import piplupbot.task.TaskList;
 // ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
- * A simple command line chatbot.
+ * A simple chatbot that keeps a list of tasks, in the console or in a window.
  * It greets the user, stores three kinds of task -- {@code todo},
  * {@code deadline} and {@code event} -- lists the stored tasks on the
  * {@code list} command, marks a task as done on the {@code mark <number>}
@@ -24,10 +24,17 @@ import piplupbot.task.TaskList;
  *
  * <p>This class is the conversation and nothing else. It hands each line to
  * {@link Parser}, asks the {@link Command} that comes back to carry itself out,
- * and stops when one of them says the conversation is over. What a command
+ * and reports when one of them says the conversation is over. What a command
  * <em>does</em> is that command's own business, holding the tasks is
- * {@link TaskList}'s, and saying things out loud -- and hearing what the user
- * typed -- is {@link Ui}'s.</p>
+ * {@link TaskList}'s, and saying things out loud is {@link Ui}'s.</p>
+ *
+ * <p>The bot does not keep a {@link Ui} of its own. It is handed one along with
+ * each line, just as a {@link Command} is, and that is what lets one bot serve
+ * two faces: {@link #run} drives it from the console with a {@link TextUi}, and
+ * the window, which is itself a {@link GuiUi}, drives it by handing over
+ * itself. {@link Launcher} decides which of the two the user gets. They differ
+ * only in how a line reaches the bot and how the answer is shown -- never in
+ * what the answer is, because both go through {@link #respondTo}.</p>
  *
  * <p>So nothing here knows how a command is spelled, what any of them do, how a
  * list is indexed, or how a reply is laid out on screen. The measure of that is
@@ -35,18 +42,29 @@ import piplupbot.task.TaskList;
  * leaves it untouched.</p>
  */
 public class PiplupBot {
+    /**
+     * Where the tasks are kept unless the bot is told otherwise. The console and
+     * the window both use it, which is what makes them share one list of tasks.
+     *
+     * <p>The path is relative, so it is resolved against whatever directory the
+     * bot is started in -- normally the project root, giving
+     * {@code ./data/piplupbot.txt}. The text-UI tests rely on this: they start
+     * the program in a scratch directory of their own, so the file they write
+     * is not the one holding real tasks, and no test-only setting is needed to
+     * arrange it.</p>
+     *
+     * <p>The parts of the path are passed separately rather than as one string,
+     * so the separator between them is never written down here: {@code Path.of}
+     * joins them with whatever the machine uses, a backslash on Windows and a
+     * forward slash elsewhere.</p>
+     */
+    public static final Path DEFAULT_FILE_PATH = Path.of("data", "piplupbot.txt");
+
     /** Where the tasks are kept between runs. */
     private final Storage storage;
 
     /** The tasks the user has stored, as read from {@link #storage} at startup. */
     private final TaskList tasks;
-
-    /**
-     * Everything the bot says and hears. The bot keeps one of these for the
-     * whole run, and asks it to do all the printing and reading, so no method
-     * here touches {@code System.out} or {@code System.in} itself.
-     */
-    private final Ui ui;
 
     /**
      * What to tell the user about the save file, or an empty array if it was
@@ -73,7 +91,6 @@ public class PiplupBot {
      *                 {@code Path.of("data", "piplupbot.txt")}
      */
     public PiplupBot(Path filePath) {
-        this.ui = new Ui();
         this.storage = new Storage(filePath);
 
         Storage.LoadResult loaded = storage.load();
@@ -84,11 +101,11 @@ public class PiplupBot {
     }
 
     /**
-     * Holds the conversation, from the greeting to {@code bye}.
-     * Everything it needs was settled by the constructor, so this method is the
-     * conversation itself and nothing else.
+     * Greets the user, then tells them about any trouble reading the save file.
+     *
+     * @param ui where to say it
      */
-    public void run() {
+    public void greet(Ui ui) {
         ui.showWelcome();
 
         // Anything wrong with the save file is said after the greeting rather
@@ -97,58 +114,80 @@ public class PiplupBot {
         if (loadWarningLines.length > 0) {
             ui.show(loadWarningLines);
         }
+    }
+
+    /**
+     * Carries out one line the user typed, and reports whether it ended the
+     * conversation.
+     *
+     * <p>This is the one step both faces take for every line, so a command
+     * behaves the same whether it was typed in the console or in the window.
+     * The spaces around the line are removed here rather than trusted to be
+     * gone already: the console's reader trims every line, but the window's
+     * text box does not.</p>
+     *
+     * @param input the line the user typed
+     * @param ui    where to say what happened
+     * @return {@code true} if the line ended the conversation
+     */
+    public boolean respondTo(String input, Ui ui) {
+        String line = input.trim();
+        if (line.isEmpty()) {
+            // A blank line names no command, so there is nothing to report.
+            return false;
+        }
+
+        // One try/catch for the whole conversation: the parser and the
+        // commands decide *what* went wrong and throw, while this block is
+        // the single place that decides *how* the problem is shown. A new
+        // command therefore gets its error reporting for free.
+        try {
+            // Reading the line and acting on it are two separate steps, and
+            // this method takes no part in either. Parser.parse() turns the
+            // line into a command -- or refuses it -- and the command carries
+            // itself out, so nothing here names a single one of them.
+            Command command = Parser.parse(line);
+            command.execute(tasks, ui, storage);
+
+            // Only the command knows whether it was the last one, so it is
+            // asked rather than recognised: this method never mentions "bye".
+            return command.isExit();
+        } catch (PiplupBotException e) {
+            // The bot explains the problem and carries on with the next line,
+            // instead of letting the error stop the conversation.
+            ui.showError(e);
+            return false;
+        }
+    }
+
+    /**
+     * Holds the conversation in the console, from the greeting to {@code bye}.
+     * Each line is handled by {@link #respondTo}, so all this method does is
+     * read lines and stop at the right moment.
+     */
+    public void run() {
+        TextUi ui = new TextUi();
+        greet(ui);
 
         // Keep reading commands until one of them says the conversation is over,
         // or until the input runs out (e.g. Ctrl-D / piped input).
         boolean isExit = false;
         while (!isExit && ui.hasNextCommand()) {
-            String input = ui.readCommand();
-            if (input.isEmpty()) {
-                // A blank line names no command, so there is nothing to report.
-                continue;
-            }
-
-            // One try/catch for the whole conversation: the parser and the
-            // commands decide *what* went wrong and throw, while this block is
-            // the single place that decides *how* the problem is shown. A new
-            // command therefore gets its error reporting for free.
-            try {
-                // Reading the line and acting on it are two separate steps, and
-                // this method takes no part in either. Parser.parse() turns the
-                // line into a command -- or refuses it -- and the command carries
-                // itself out, so nothing here names a single one of them.
-                Command command = Parser.parse(input);
-                command.execute(tasks, ui, storage);
-
-                // Only the command knows whether it was the last one, so it is
-                // asked rather than recognised: this loop never mentions "bye".
-                isExit = command.isExit();
-            } catch (PiplupBotException e) {
-                // The bot explains the problem and carries on with the next line,
-                // instead of letting the error stop the conversation.
-                ui.showError(e);
-            }
+            isExit = respondTo(ui.readCommand(), ui);
         }
     }
 
     /**
-     * Starts the bot with its usual save file.
+     * Starts the bot in the console, with its usual save file.
      *
-     * <p>The path is relative, so it is resolved against whatever directory the
-     * bot is started in -- normally the project root, giving
-     * {@code ./data/piplupbot.txt}. The text-UI tests rely on this: they start
-     * the program in a scratch directory of their own, so the file they write
-     * is not the one holding real tasks, and no test-only setting is needed to
-     * arrange it.</p>
-     *
-     * <p>The parts of the path are passed separately rather than as one string,
-     * so the separator between them is never written down here: {@code Path.of}
-     * joins them with whatever the machine uses, a backslash on Windows and a
-     * forward slash elsewhere.</p>
+     * <p>This is the console whatever the arguments, so that starting this class
+     * directly -- as the text-UI tests do, and as IntelliJ does from the run
+     * button beside this method -- still gives the console it always gave.
+     * {@link Launcher} is the way in that opens the window.</p>
      *
      * @param args ignored; the bot takes its instructions from the conversation
      */
     public static void main(String[] args) {
-        new PiplupBot(Path.of("data", "piplupbot.txt")).run();
+        new PiplupBot(DEFAULT_FILE_PATH).run();
     }
 }

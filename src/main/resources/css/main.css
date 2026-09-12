@@ -1,0 +1,63 @@
+/*
+ * How PiplupBot's window looks.
+ *
+ * The layout files in the view folder give each part of the window a style
+ * class, DialogBox adds one saying whose message it is, and each rule below
+ * decides how the parts with that class look. So the colors and shapes can
+ * change here without any change to the layout or the Java code.
+ * MainWindow.fxml is what attaches this stylesheet to the window.
+ *
+ * JavaFX's CSS works like the web's, but its property names start with -fx-.
+ *
+ * ACKNOWLEDGEMENTS: This file was written with the help of Claude.
+ */
+
+/* The conversation, and the scrolling area around it, are plain white. */
+.scroll-pane,
+.scroll-pane:focused,
+.scroll-pane > .viewport,
+.conversation {
+    -fx-background-color: #ffffff;
+    -fx-background-insets: 0;
+}
+
+.conversation {
+    -fx-padding: 10 0 10 0;
+    -fx-spacing: 6;
+}
+
+/* One message: a picture and a speech bubble, side by side. */
+.dialog-box {
+    -fx-padding: 4 12 4 12;
+    -fx-spacing: 8;
+}
+
+.bubble {
+    -fx-padding: 8 12 8 12;
+    -fx-background-radius: 12;
+    -fx-font-size: 13px;
+}
+
+.dialog-box.user .bubble {
+    -fx-background-color: #eef1f5;
+    -fx-text-fill: #1f2933;
+}
+
+/* The bot's replies are in Piplup blue. */
+.dialog-box.bot .bubble {
+    -fx-background-color: #dcecfb;
+    -fx-text-fill: #0c3c6e;
+}
+
+/* Errors are red, so that a mistake stands out from an ordinary reply. */
+.dialog-box.error .bubble {
+    -fx-background-color: #fcebeb;
+    -fx-text-fill: #8a1f1f;
+}
+
+/* The box to type in, with the Send button beside it. */
+.input-bar {
+    -fx-padding: 10 12 10 12;
+    -fx-spacing: 8;
+    -fx-border-color: #d9dee4 transparent transparent transparent;
+}
