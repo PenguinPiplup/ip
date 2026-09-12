@@ -72,9 +72,6 @@ public class Storage {
      */
     private static final char SEPARATOR_MARK = '|';
 
-    /** What a load reports when nothing went wrong: nothing. */
-    private static final String[] NO_WARNING = new String[0];
-
     /** Where the tasks are kept, as chosen by whoever created this object. */
     private final Path filePath;
 
@@ -96,10 +93,15 @@ public class Storage {
      * only the tasks is what let an earlier version lose a damaged line in
      * silence.</p>
      *
+     * <p>The warning is taken as varargs, so each branch of {@link #load} lists
+     * the lines it wants to say instead of packing them into an array first,
+     * and a load with nothing to report simply leaves them out. A record's last
+     * component may be varargs just as a method's last parameter may.</p>
+     *
      * @param tasks        the tasks that were read, in the order the file held them
-     * @param warningLines what to tell the user, or an empty array if all is well
+     * @param warningLines what to tell the user, or nothing at all if all is well
      */
-    public record LoadResult(ArrayList<Task> tasks, String[] warningLines) {
+    public record LoadResult(ArrayList<Task> tasks, String... warningLines) {
         /**
          * Reports whether anything went wrong while reading the file.
          *
@@ -190,7 +192,7 @@ public class Storage {
         // A file that is not there is what the very first run sees, and an empty
         // list is the right answer for it -- so this is not worth a word.
         if (!Files.exists(filePath)) {
-            return new LoadResult(tasks, NO_WARNING);
+            return new LoadResult(tasks);
         }
 
         List<String> lines;
@@ -199,11 +201,10 @@ public class Storage {
         } catch (IOException e) {
             // The file is there but cannot be read at all: the wrong permissions,
             // a directory in its place, or bytes that are not text.
-            return new LoadResult(tasks, new String[] {
-                "I could not read " + displayPath(filePath) + " (" + e + ").",
-                "I have started with an empty list, so your next command would overwrite it.",
-                preserveDamagedFile()
-            });
+            return new LoadResult(tasks,
+                    "I could not read " + displayPath(filePath) + " (" + e + ").",
+                    "I have started with an empty list, so your next command would overwrite it.",
+                    preserveDamagedFile());
         }
 
         int skipped = 0;
@@ -218,15 +219,14 @@ public class Storage {
         }
 
         if (skipped == 0) {
-            return new LoadResult(tasks, NO_WARNING);
+            return new LoadResult(tasks);
         }
-        return new LoadResult(tasks, new String[] {
-            "I could not understand " + skipped + (skipped == 1 ? " line" : " lines")
-                    + " in " + displayPath(filePath) + ", so I skipped "
-                    + (skipped == 1 ? "it" : "them") + ".",
-            "Those tasks are not in the list, and your next command would overwrite them.",
-            preserveDamagedFile()
-        });
+        return new LoadResult(tasks,
+                "I could not understand " + skipped + (skipped == 1 ? " line" : " lines")
+                        + " in " + displayPath(filePath) + ", so I skipped "
+                        + (skipped == 1 ? "it" : "them") + ".",
+                "Those tasks are not in the list, and your next command would overwrite them.",
+                preserveDamagedFile());
     }
 
     /**
