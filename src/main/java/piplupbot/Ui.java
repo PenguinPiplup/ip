@@ -47,10 +47,17 @@ public interface Ui {
      * words. The heading is a parameter because the same items can be introduced
      * differently depending on why they are being shown.</p>
      *
+     * <p>The items are taken as varargs, like {@link #show}'s lines, so the two
+     * ways of showing a reply are called the same way. An array still passes
+     * unchanged -- that is what varargs is underneath -- so a caller holding a
+     * whole list, as {@code list} and {@code find} do, hands it straight over,
+     * while one with a couple of lines in mind writes them out instead of
+     * wrapping them in an array first.</p>
+     *
      * @param heading the line that introduces the items
      * @param items   the lines to show beneath it, possibly none
      */
-    default void showList(String heading, String[] items) {
+    default void showList(String heading, String... items) {
         String[] lines = new String[items.length + 1];
         lines[0] = heading;
         System.arraycopy(items, 0, lines, 1, items.length);
