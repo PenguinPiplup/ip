@@ -126,6 +126,8 @@ public class Storage {
         // in the same directory, so the two are obviously a pair.
         this.damagedPath =
                 this.filePath.resolveSibling(this.filePath.getFileName() + ".damaged");
+        assert !this.damagedPath.equals(this.filePath)
+                : "The rescue copy would overwrite the save file: " + this.filePath;
     }
 
     /**
@@ -290,7 +292,10 @@ public class Storage {
             if (i > 0) {
                 line.append(FIELD_SEPARATOR);
             }
-            line.append(encodeField(fields[i]));
+            String encodedField = encodeField(fields[i]);
+            assert !encodedField.contains(FIELD_SEPARATOR)
+                    : "Escaping left a separator inside a field: " + encodedField;
+            line.append(encodedField);
         }
         return line.toString();
     }

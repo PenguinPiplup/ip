@@ -106,6 +106,9 @@ public enum CommandWord {
      * @return the rest of the line, possibly empty
      */
     public String argumentOf(String input) {
+        assert input.startsWith(keyword)
+                : "argumentOf(" + keyword + ") was given a line not starting with it: \""
+                        + input + "\"";
         return input.substring(keyword.length()).trim();
     }
 

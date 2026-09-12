@@ -70,6 +70,7 @@ public class TaskList {
      * @param task the task to remember
      */
     public void add(Task task) {
+        assert task != null : "A null task was added to the list";
         tasks.add(task);
     }
 

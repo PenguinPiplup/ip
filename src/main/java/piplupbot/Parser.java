@@ -91,6 +91,10 @@ public class Parser {
      *                            is missing or mistaking what should follow it
      */
     public static Command parse(String input) throws PiplupBotException {
+        assert !input.isBlank() : "parse() was given a blank line: \"" + input + "\"";
+        assert input.stripLeading().equals(input)
+                : "parse() expects the leading spaces already removed: \"" + input + "\"";
+
         CommandWord commandWord = CommandWord.fromInput(input);
         return switch (commandWord) {
             case TODO -> new AddCommand(parseTodo(input));
@@ -178,6 +182,8 @@ public class Parser {
         if (fromSeparator < 0 || toSeparator < 0) {
             throw new PiplupBotException(hint);
         }
+        assert toSeparator > fromSeparator
+                : "The /to separator was found before the /from one: " + details;
 
         String description = details.substring(0, fromSeparator).trim();
         String from = details.substring(fromSeparator + FROM_SEPARATOR.length(), toSeparator).trim();
