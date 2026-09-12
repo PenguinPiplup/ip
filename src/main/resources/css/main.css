@@ -1,9 +1,11 @@
 /*
  * How PiplupBot's window looks.
  *
- * GuiUi and DialogBox give each part of the window a style class, and each
- * rule below decides how the parts with that class look. So the colours and
- * shapes can change here without any change to the Java code.
+ * The layout files in the view folder give each part of the window a style
+ * class, DialogBox adds one saying whose message it is, and each rule below
+ * decides how the parts with that class look. So the colors and shapes can
+ * change here without any change to the layout or the Java code.
+ * MainWindow.fxml is what attaches this stylesheet to the window.
  *
  * JavaFX's CSS works like the web's, but its property names start with -fx-.
  *

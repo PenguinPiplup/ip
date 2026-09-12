@@ -1,17 +1,18 @@
 package piplupbot;
 
+import java.io.IOException;
 import java.net.URL;
 
 import javafx.animation.PauseTransition;
 import javafx.application.Application;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -35,28 +36,23 @@ import javafx.util.Duration;
  * no-argument constructor, and calls {@link #start}. Since nothing can be passed
  * to that constructor, the window makes its own bot, keeping its tasks in the
  * same file as the console -- which is what lets the two faces share one list.
- * It is also why the controls and pictures can be made along with the object:
- * by the time JavaFX makes it, JavaFX is already running.</p>
+ * It is also why the pictures can be made along with the object: by the time
+ * JavaFX makes it, JavaFX is already running.</p>
  *
- * <p>The window is a {@link BorderPane}, which has a region for each edge and
- * one for the center: the conversation fills the center, and the input bar sits
- * at the bottom. The regions left empty are free for later -- a list of tasks
- * on the right, say. How the parts look is kept out of the Java code, in the
- * stylesheet {@code main.css}, so the colours can change without this class
- * changing.</p>
+ * <p>What the window is made of, and where each part sits, is not written here
+ * but in the layout file {@code view/MainWindow.fxml}, and how the parts look is
+ * in the stylesheet {@code css/main.css}. This class is the layout file's
+ * <em>controller</em>: loading the file puts each part it names into the field
+ * of the same name marked {@code @FXML}, and makes the input box and the Send
+ * button call {@link #handleInput}. What is left here is behavior -- what
+ * happens when a line is sent, and how a reply is added.</p>
  */
 public class GuiUi extends Application implements Ui {
-    /** Width of the window when it opens, in pixels. */
-    private static final double WINDOW_WIDTH = 480;
-
-    /** Height of the window when it opens, in pixels. */
-    private static final double WINDOW_HEIGHT = 560;
-
     /** How long the goodbye stays on screen before the window closes. */
     private static final Duration GOODBYE_DELAY = Duration.seconds(1.5);
 
-    /** Where the window's stylesheet is, among the program's own files. */
-    private static final String STYLESHEET_PATH = "/css/main.css";
+    /** Where the window's layout file is, among the program's own files. */
+    private static final String MAIN_WINDOW_PATH = "/view/MainWindow.fxml";
 
     /** Where the picture shown beside the user's messages is. */
     private static final String USER_IMAGE_PATH = "/images/user.png";
@@ -68,35 +64,47 @@ public class GuiUi extends Application implements Ui {
     private final PiplupBot bot = new PiplupBot(PiplupBot.DEFAULT_FILE_PATH);
 
     /** The picture shown beside the user's messages. */
-    private final Image userImage = new Image(getResourceUrl(USER_IMAGE_PATH));
+    private final Image userImage = new Image(getResourceUrl(USER_IMAGE_PATH).toExternalForm());
 
     /** The picture shown beside the bot's replies. */
-    private final Image botImage = new Image(getResourceUrl(BOT_IMAGE_PATH));
+    private final Image botImage = new Image(getResourceUrl(BOT_IMAGE_PATH).toExternalForm());
+
+    /** The scrolling area around the conversation. */
+    @FXML
+    private ScrollPane scrollPane;
 
     /** Everything said so far, one {@link DialogBox} per message, oldest at the top. */
-    private final VBox conversation = new VBox();
+    @FXML
+    private VBox conversation;
 
     /** The box the user types each command into. */
-    private final TextField inputBox = new TextField();
+    @FXML
+    private TextField inputBox;
 
     /** The button that sends what is in the input box, as pressing Enter does. */
-    private final Button sendButton = new Button("Send");
+    @FXML
+    private Button sendButton;
 
     /**
-     * Lays out the window, greets the user, and shows the window.
+     * Loads the window's layout, greets the user, and shows the window.
      *
      * @param stage the window JavaFX has created for this application
+     * @throws IOException if the layout file cannot be read
      */
     @Override
-    public void start(Stage stage) {
-        Scene scene = new Scene(buildLayout(stage), WINDOW_WIDTH, WINDOW_HEIGHT);
-        scene.getStylesheets().add(getResourceUrl(STYLESHEET_PATH));
+    public void start(Stage stage) throws IOException {
+        FXMLLoader loader = new FXMLLoader(getResourceUrl(MAIN_WINDOW_PATH));
+        // This object is the controller, rather than one the loader would make
+        // for itself. That is what puts the parts into this object's fields, so
+        // the replies that show() adds land in the window on the screen.
+        loader.setController(this);
+        Parent layout = loader.load();
 
         // This window is the Ui, so the greeting arrives through show() below.
         bot.greet(this);
 
         stage.setTitle("PiplupBot");
-        stage.setScene(scene);
+        stage.setScene(new Scene(layout));
         stage.show();
         inputBox.requestFocus();
     }
@@ -117,9 +125,9 @@ public class GuiUi extends Application implements Ui {
     /**
      * {@inheritDoc}
      *
-     * <p>Here the explanation gets a bubble of a different colour from an
+     * <p>Here the explanation gets a bubble of a different color from an
      * ordinary reply, so that a mistake stands out. The console, which has no
-     * colours, shows the same words in the same way as any other reply.</p>
+     * colors, shows the same words in the same way as any other reply.</p>
      */
     @Override
     public void showError(PiplupBotException e) {
@@ -128,45 +136,25 @@ public class GuiUi extends Application implements Ui {
     }
 
     /**
-     * Returns the window's content: the conversation, able to scroll, above the
-     * input box and the Send button.
-     *
-     * @param stage the window to close after {@code bye}
-     * @return the whole of the window's content
+     * Finishes setting up the window, once loading its layout file has put the
+     * parts into the fields marked {@code @FXML}. The loader calls this itself,
+     * finding it by its name.
      */
-    private BorderPane buildLayout(Stage stage) {
-        // The conversation soon outgrows the window, so it scrolls. Fitting it to
-        // the width makes a long reply wrap onto more lines instead of making the
-        // window scroll sideways.
-        ScrollPane scrollPane = new ScrollPane(conversation);
-        scrollPane.setFitToWidth(true);
-        conversation.getStyleClass().add("conversation");
+    @FXML
+    private void initialize() {
         // Whenever a new message makes the conversation taller, scroll to the
         // bottom, so the newest message is always the one in view.
         conversation.heightProperty().addListener(observable -> scrollPane.setVvalue(1.0));
-
-        inputBox.setPromptText("Type a command, e.g. todo read book");
-        // The input box takes whatever width the button leaves over.
-        HBox.setHgrow(inputBox, Priority.ALWAYS);
-        // Pressing Enter in the box and clicking the button both send the line.
-        inputBox.setOnAction(event -> handleInput(stage));
-        sendButton.setOnAction(event -> handleInput(stage));
-        HBox inputBar = new HBox(inputBox, sendButton);
-        inputBar.getStyleClass().add("input-bar");
-
-        BorderPane layout = new BorderPane();
-        layout.setCenter(scrollPane);
-        layout.setBottom(inputBar);
-        return layout;
     }
 
     /**
      * Sends the line in the input box to the bot, which answers through
      * {@link #show}, then closes the window if the line ended the conversation.
-     *
-     * @param stage the window to close after {@code bye}
+     * The layout file makes both pressing Enter in the box and clicking the
+     * Send button call this.
      */
-    private void handleInput(Stage stage) {
+    @FXML
+    private void handleInput() {
         String input = inputBox.getText();
         inputBox.clear();
         if (input.isBlank()) {
@@ -183,14 +171,16 @@ public class GuiUi extends Application implements Ui {
             inputBox.setDisable(true);
             sendButton.setDisable(true);
             PauseTransition pause = new PauseTransition(GOODBYE_DELAY);
-            pause.setOnFinished(event -> stage.close());
+            // Hiding a window is how it is closed: Stage.close() does just this.
+            pause.setOnFinished(event -> inputBox.getScene().getWindow().hide());
             pause.play();
         }
     }
 
     /**
      * Returns the address of one of the files that come with the program, such
-     * as a picture, in the form JavaFX asks for.
+     * as a picture or a layout file. {@link DialogBox} uses it too, to find its
+     * own layout file.
      *
      * <p>The path is looked up among the program's own files -- the ones in
      * {@code src/main/resources} -- rather than in the folder the program was
@@ -203,12 +193,13 @@ public class GuiUi extends Application implements Ui {
      * @return the file's address
      * @throws IllegalStateException if the program has no such file
      */
-    private static String getResourceUrl(String path) {
+    static URL getResourceUrl(String path) {
         URL url = GuiUi.class.getResource(path);
         if (url == null) {
-            // Say which file is missing, instead of failing later with a bare NullPointerException.
+            // Say which file is missing. Otherwise a picture fails with a bare
+            // NullPointerException, and a layout file with "Location is not set".
             throw new IllegalStateException("Missing resource: " + path);
         }
-        return url.toExternalForm();
+        return url;
     }
 }

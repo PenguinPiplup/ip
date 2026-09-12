@@ -1,12 +1,14 @@
 package piplupbot;
 
+import java.io.IOException;
+
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
-import javafx.scene.shape.Circle;
 
 // ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
@@ -22,19 +24,29 @@ import javafx.scene.shape.Circle;
  * is wanted, which reads better at the call than a {@code true} or
  * {@code false} would.</p>
  *
- * <p>This class decides only what a message is made of and which side it sits
- * on. How it looks -- the bubble's colour, its rounded corners, the gaps around
- * it -- is decided by the window's stylesheet, {@code main.css}, which finds
- * each part by the style class given to it here: {@code dialog-box} for the
- * whole message and {@code bubble} for the words, plus {@code user},
- * {@code bot} or {@code error} for whose message it is.</p>
+ * <p>What a message is made of is described in the layout file
+ * {@code view/DialogBox.fxml}, laid out as one of the user's; for the bot's,
+ * this class swaps the two parts round. How it looks -- the bubble's color, its
+ * rounded corners, the gaps around it -- is decided by the window's stylesheet,
+ * {@code main.css}, which finds each part by its style class: {@code dialog-box}
+ * for the whole message and {@code bubble} for the words, both given in the
+ * layout file, plus {@code user}, {@code bot} or {@code error}, given here, for
+ * whose message it is.</p>
  *
  * <p>It is an {@link HBox} -- a row of nodes, laid out left to right -- so the
  * window can add it to the conversation like any other node.</p>
  */
 public class DialogBox extends HBox {
-    /** Width and height of the picture beside each message, in pixels. */
-    private static final double PICTURE_SIZE = 40;
+    /** Where the layout file for one message is, among the program's own files. */
+    private static final String DIALOG_BOX_PATH = "/view/DialogBox.fxml";
+
+    /** The speech bubble holding the words. */
+    @FXML
+    private Label bubble;
+
+    /** The round picture of whoever said the words. */
+    @FXML
+    private ImageView pictureView;
 
     /**
      * Creates a message with the given words and picture, on the user's side of
@@ -45,28 +57,27 @@ public class DialogBox extends HBox {
      * @param isFromUser whether the user said them, rather than the bot
      */
     private DialogBox(String text, Image picture, boolean isFromUser) {
-        Label bubble = new Label(text);
-        bubble.setWrapText(true);
-        // A label can be squeezed shorter than its text needs, and then cuts the
-        // text off with "...". Never letting it be shorter than it would like to
-        // be keeps every line of a long reply.
-        bubble.setMinHeight(Region.USE_PREF_SIZE);
-        bubble.getStyleClass().add("bubble");
+        FXMLLoader loader = new FXMLLoader(GuiUi.getResourceUrl(DIALOG_BOX_PATH));
+        // The layout file fills in this object rather than making a new one, and
+        // this object is also its controller, so the parts land in the fields above.
+        loader.setRoot(this);
+        loader.setController(this);
+        try {
+            loader.load();
+        } catch (IOException e) {
+            // The file comes with the program, so failing to read it is a bug in the
+            // program rather than something the user could fix.
+            throw new IllegalStateException("Cannot load " + DIALOG_BOX_PATH, e);
+        }
 
-        ImageView pictureView = new ImageView(picture);
-        pictureView.setFitWidth(PICTURE_SIZE);
-        pictureView.setFitHeight(PICTURE_SIZE);
-        // Only the part of the picture inside this circle is drawn, which makes it round.
-        pictureView.setClip(new Circle(PICTURE_SIZE / 2, PICTURE_SIZE / 2, PICTURE_SIZE / 2));
-
-        if (isFromUser) {
-            getChildren().addAll(bubble, pictureView);
-            setAlignment(Pos.TOP_RIGHT);
-        } else {
-            getChildren().addAll(pictureView, bubble);
+        bubble.setText(text);
+        pictureView.setImage(picture);
+        if (!isFromUser) {
+            // The layout file puts the words first, as on the user's side; the bot's
+            // side is its mirror image.
+            getChildren().setAll(pictureView, bubble);
             setAlignment(Pos.TOP_LEFT);
         }
-        getStyleClass().add("dialog-box");
     }
 
     /**
@@ -98,7 +109,7 @@ public class DialogBox extends HBox {
 
     /**
      * Returns the bot's explanation of an error. It sits where the bot's other
-     * replies do, but the stylesheet gives it a colour of its own, so that a
+     * replies do, but the stylesheet gives it a color of its own, so that a
      * mistake stands out from an ordinary reply.
      *
      * @param text    the explanation, with a line break between its lines
