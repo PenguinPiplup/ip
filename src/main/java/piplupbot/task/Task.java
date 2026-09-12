@@ -38,6 +38,8 @@ public abstract class Task {
      * @param description what the task is
      */
     public Task(String description) {
+        assert description != null && !description.isBlank()
+                : "A task was created with no description";
         this.description = description;
         this.isDone = false;
     }
