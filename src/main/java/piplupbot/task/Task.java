@@ -24,13 +24,27 @@ import piplupbot.Storage;
 public abstract class Task {
     /**
      * What the user typed, e.g. {@code read book}.
-     * {@code protected} rather than {@code private} so that future subclasses
-     * (deadlines, events, and so on) can read it directly.
+     *
+     * <p>It is {@code private}, not {@code protected}: no subclass reads it.
+     * {@link Todo}, {@link Deadline} and {@link Event} hand their description to
+     * this class's constructor and then leave it alone, so opening the field up
+     * to them would buy nothing and cost the guarantee below.</p>
+     *
+     * <p>It is {@code final} because the constructor is the one place that checks
+     * a description is not blank. A field a subclass could reassign afterwards
+     * would make that check a hope rather than a promise -- and a blank
+     * description is one this bot would save happily and then refuse to load
+     * back, losing the task.</p>
      */
-    protected String description;
+    private final String description;
 
-    /** Whether the task has been completed. */
-    protected boolean isDone;
+    /**
+     * Whether the task has been completed.
+     * {@code private} for the same reason as the description, but not
+     * {@code final}: {@link #markAsDone} and {@link #markAsNotDone} are the two
+     * ways it is meant to change.
+     */
+    private boolean isDone;
 
     /**
      * Creates a task that is not done yet.
