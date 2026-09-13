@@ -18,8 +18,12 @@ public class Deadline extends Task {
      * task is created, so every later use of it -- showing it, saving it, and in
      * a later version comparing or sorting by it -- can rely on it being a date
      * at all.
+     *
+     * <p>{@code private final} for the reason {@link Task}'s own fields are:
+     * this class has no subclasses to share it with, and a date accepted once by
+     * {@link DateTimes#parse} should not be replaceable afterwards.</p>
      */
-    protected LocalDateTime by;
+    private final LocalDateTime by;
 
     /**
      * Creates a deadline that is not done yet.
@@ -37,11 +41,11 @@ public class Deadline extends Task {
     /**
      * {@inheritDoc}
      *
-     * @return {@code "D"}, the code for a deadline
+     * @return {@link TaskType#DEADLINE}
      */
     @Override
-    protected String getTypeCode() {
-        return "D";
+    protected TaskType getType() {
+        return TaskType.DEADLINE;
     }
 
     /**

@@ -1,6 +1,7 @@
 package piplupbot;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -189,6 +190,25 @@ public class ParserTest {
     public void parse_eventWithToBeforeFrom_exceptionThrown() {
         assertThrows(PiplupBotException.class, () ->
                 Parser.parse("event meeting /to 2019-10-02 1600 /from 2019-10-02 1400"));
+    }
+
+    /**
+     * Only the first occurrence of a separator is the separator; everything
+     * after it, a second {@code /by} included, belongs to the part it opens.
+     *
+     * <p>This has its own case because {@link Parser} now finds every separator
+     * of every command through one shared method. A change there -- taking the
+     * last {@code /by} rather than the first, say, to be "more forgiving" --
+     * would move this line from refused to accepted, and would do the same to
+     * {@code /from} and {@code /to} without either being edited. The date quoted
+     * back to the user is what shows where the line was actually cut.</p>
+     */
+    @Test
+    public void parse_deadlineWithRepeatedSeparator_firstSeparatorWins() {
+        PiplupBotException exception = assertThrows(PiplupBotException.class, () ->
+                Parser.parse("deadline return book /by 2019-10-15 1800 /by 2019-10-16 1800"));
+        assertEquals("I don't understand the date \"2019-10-15 1800 /by 2019-10-16 1800\".",
+                exception.getMessageLines()[0]);
     }
 
     // ---------- Lines that are missing something ----------

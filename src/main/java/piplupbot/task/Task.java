@@ -1,5 +1,7 @@
 package piplupbot.task;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import piplupbot.Storage;
@@ -24,13 +26,27 @@ import piplupbot.Storage;
 public abstract class Task {
     /**
      * What the user typed, e.g. {@code read book}.
-     * {@code protected} rather than {@code private} so that future subclasses
-     * (deadlines, events, and so on) can read it directly.
+     *
+     * <p>It is {@code private}, not {@code protected}: no subclass reads it.
+     * {@link Todo}, {@link Deadline} and {@link Event} hand their description to
+     * this class's constructor and then leave it alone, so opening the field up
+     * to them would buy nothing and cost the guarantee below.</p>
+     *
+     * <p>It is {@code final} because the constructor is the one place that checks
+     * a description is not blank. A field a subclass could reassign afterwards
+     * would make that check a hope rather than a promise -- and a blank
+     * description is one this bot would save happily and then refuse to load
+     * back, losing the task.</p>
      */
-    protected String description;
+    private final String description;
 
-    /** Whether the task has been completed. */
-    protected boolean isDone;
+    /**
+     * Whether the task has been completed.
+     * {@code private} for the same reason as the description, but not
+     * {@code final}: {@link #markAsDone} and {@link #markAsNotDone} are the two
+     * ways it is meant to change.
+     */
+    private boolean isDone;
 
     /**
      * Creates a task that is not done yet.
@@ -95,19 +111,19 @@ public abstract class Task {
     }
 
     /**
-     * Returns the single letter that says which kind of task this is.
+     * Returns which kind of task this is.
      * Each subclass answers for itself, which is why this class does not need
      * to store the kind or ask what it is: calling this method on a
      * {@code Task} reaches the right subclass's answer on its own.
      *
-     * <p>The letter is the one piece of type information a subclass has to
-     * supply, because both the label shown on screen and the code written to the
-     * save file are built from it. Keeping one source for the two means they
-     * cannot drift apart.</p>
+     * <p>The kind is the one piece of type information a subclass has to supply,
+     * because both the label shown on screen and the code written to the save
+     * file are built from it. Keeping one source for the two means they cannot
+     * drift apart.</p>
      *
-     * @return the letter naming the kind of task, e.g. {@code "T"}
+     * @return the kind of task, e.g. {@link TaskType#TODO}
      */
-    protected abstract String getTypeCode();
+    protected abstract TaskType getType();
 
     /**
      * Returns the label that says which kind of task this is, as the task list
@@ -116,7 +132,7 @@ public abstract class Task {
      * @return the type code in square brackets, e.g. {@code "[T]"}
      */
     protected String getTypeLabel() {
-        return "[" + getTypeCode() + "]";
+        return "[" + getType().getCode() + "]";
     }
 
     /**
@@ -147,12 +163,16 @@ public abstract class Task {
      * @return the shared fields followed by {@code extras}
      */
     protected String[] withExtraFields(String... extras) {
-        String[] fields = new String[3 + extras.length];
-        fields[0] = getTypeCode();
-        fields[1] = isDone ? "1" : "0";
-        fields[2] = description;
-        System.arraycopy(extras, 0, fields, 3, extras.length);
-        return fields;
+        // The parts are added in order rather than assigned to numbered slots,
+        // so this method says which shared fields there are and which comes
+        // first without also having to state how many -- a count only the
+        // reading end needs, and which Storage now keeps on its own.
+        List<String> fields = new ArrayList<>();
+        fields.add(getType().getCode());
+        fields.add(isDone ? "1" : "0");
+        fields.add(description);
+        fields.addAll(List.of(extras));
+        return fields.toArray(new String[0]);
     }
 
     /**

@@ -11,11 +11,15 @@ import piplupbot.PiplupBotException;
  * e.g. {@code team project meeting 2019-10-02 1400 to 1600}.
  */
 public class Event extends Task {
-    /** When the event starts, as a real point in time. */
-    protected LocalDateTime from;
+    /**
+     * When the event starts, as a real point in time.
+     * {@code private final} for the reason {@link Deadline}'s due date is: no
+     * subclass shares it, and a date accepted once should not be replaceable.
+     */
+    private final LocalDateTime from;
 
-    /** When the event ends, as a real point in time. */
-    protected LocalDateTime to;
+    /** When the event ends, as a real point in time, and likewise unchangeable. */
+    private final LocalDateTime to;
 
     /**
      * Creates an event that is not done yet.
@@ -35,11 +39,11 @@ public class Event extends Task {
     /**
      * {@inheritDoc}
      *
-     * @return {@code "E"}, the code for an event
+     * @return {@link TaskType#EVENT}
      */
     @Override
-    protected String getTypeCode() {
-        return "E";
+    protected TaskType getType() {
+        return TaskType.EVENT;
     }
 
     /**

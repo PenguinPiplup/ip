@@ -139,23 +139,11 @@ public class Parser {
      *                            missing, or the date cannot be understood
      */
     private static Deadline parseDeadline(String input) throws PiplupBotException {
-        String details = CommandWord.DEADLINE.argumentOf(input);
-        String hint = "A deadline needs a /by part, "
-                + "e.g. deadline return book /by 2019-10-15 1800.";
-
-        int separator = details.indexOf(BY_SEPARATOR);
-        if (separator < 0) {
-            throw new PiplupBotException(hint);
-        }
-
-        String description = details.substring(0, separator).trim();
-        String by = details.substring(separator + BY_SEPARATOR.length()).trim();
-        // Reject the command unless there is text on both sides of "/by", so a
-        // half-typed line reports a hint instead of storing a nameless task.
-        if (description.isEmpty() || by.isEmpty()) {
-            throw new PiplupBotException(hint);
-        }
-        return new Deadline(description, by);
+        String[] parts = splitIntoParts(CommandWord.DEADLINE.argumentOf(input),
+                "A deadline needs a /by part, "
+                        + "e.g. deadline return book /by 2019-10-15 1800.",
+                BY_SEPARATOR);
+        return new Deadline(parts[0], parts[1]);
     }
 
     /**
@@ -169,29 +157,63 @@ public class Parser {
      *                            time cannot be understood
      */
     private static Event parseEvent(String input) throws PiplupBotException {
-        String details = CommandWord.EVENT.argumentOf(input);
-        String hint = "An event needs a /from and a /to part, "
-                + "e.g. event project meeting /from 2019-10-02 1400 /to 2019-10-02 1600.";
+        String[] parts = splitIntoParts(CommandWord.EVENT.argumentOf(input),
+                "An event needs a /from and a /to part, "
+                        + "e.g. event project meeting /from 2019-10-02 1400 /to 2019-10-02 1600.",
+                FROM_SEPARATOR, TO_SEPARATOR);
+        return new Event(parts[0], parts[1], parts[2]);
+    }
 
-        int fromSeparator = details.indexOf(FROM_SEPARATOR);
-        // Look for "/to" only after "/from", so that a description containing
-        // "/to" earlier in the line cannot be mistaken for the separator.
-        int toSeparator = fromSeparator < 0
-                ? -1
-                : details.indexOf(TO_SEPARATOR, fromSeparator + FROM_SEPARATOR.length());
-        if (fromSeparator < 0 || toSeparator < 0) {
-            throw new PiplupBotException(hint);
-        }
-        assert toSeparator > fromSeparator
-                : "The /to separator was found before the /from one: " + details;
+    /**
+     * Splits what the user typed after a command word on the separators that
+     * command uses, and returns the trimmed parts between and around them.
+     *
+     * <p>{@code deadline} and {@code event} differ only in how many separators
+     * they use, so the rule for cutting a line apart is written once here rather
+     * than once per command. Each of them used to carry its own copy, and the
+     * copies had already begun to differ: only the event one searched for a
+     * separator after the one before it. Sharing the code shares that decision
+     * too, so a third command with a separator of its own gets it for free.</p>
+     *
+     * <p>Every part must have something in it, so a half-typed line reports the
+     * hint instead of storing a task with no description or no date.</p>
+     *
+     * @param details    everything the user typed after the command word
+     * @param hint       what to tell the user when the line cannot be read
+     * @param separators the separators this command uses, in the order they are
+     *                   expected to appear
+     * @return one more part than there are separators, each trimmed and not empty
+     * @throws PiplupBotException if a separator is missing or a part is empty
+     */
+    private static String[] splitIntoParts(String details, String hint, String... separators)
+            throws PiplupBotException {
+        assert separators.length > 0 : "splitIntoParts() was given nothing to split on";
 
-        String description = details.substring(0, fromSeparator).trim();
-        String from = details.substring(fromSeparator + FROM_SEPARATOR.length(), toSeparator).trim();
-        String to = details.substring(toSeparator + TO_SEPARATOR.length()).trim();
-        if (description.isEmpty() || from.isEmpty() || to.isEmpty()) {
-            throw new PiplupBotException(hint);
+        String[] parts = new String[separators.length + 1];
+        int partStart = 0;
+        for (int i = 0; i < separators.length; i++) {
+            // Searching from partStart rather than from the start of the line is
+            // what puts the separators in order: each is found only after the
+            // part it ends, so "event lunch /to dinner /from ... /to ..." keeps
+            // the first "/to" as ordinary text. It also means only the first
+            // occurrence of a separator counts, so a second "/by" stays part of
+            // the date rather than starting a field the command has no room for.
+            int separator = details.indexOf(separators[i], partStart);
+            if (separator < 0) {
+                throw new PiplupBotException(hint);
+            }
+            parts[i] = details.substring(partStart, separator).trim();
+            partStart = separator + separators[i].length();
         }
-        return new Event(description, from, to);
+        // Whatever follows the last separator is the last part.
+        parts[parts.length - 1] = details.substring(partStart).trim();
+
+        for (String part : parts) {
+            if (part.isEmpty()) {
+                throw new PiplupBotException(hint);
+            }
+        }
+        return parts;
     }
 
     /**

@@ -20,10 +20,10 @@ public class Todo extends Task {
     /**
      * {@inheritDoc}
      *
-     * @return {@code "T"}, the code for a todo
+     * @return {@link TaskType#TODO}
      */
     @Override
-    protected String getTypeCode() {
-        return "T";
+    protected TaskType getType() {
+        return TaskType.TODO;
     }
 }
