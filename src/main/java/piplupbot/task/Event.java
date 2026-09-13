@@ -39,11 +39,11 @@ public class Event extends Task {
     /**
      * {@inheritDoc}
      *
-     * @return {@code "E"}, the code for an event
+     * @return {@link TaskType#EVENT}
      */
     @Override
-    protected String getTypeCode() {
-        return "E";
+    protected TaskType getType() {
+        return TaskType.EVENT;
     }
 
     /**

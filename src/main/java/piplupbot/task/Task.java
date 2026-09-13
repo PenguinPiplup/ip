@@ -1,5 +1,7 @@
 package piplupbot.task;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import piplupbot.Storage;
@@ -109,19 +111,19 @@ public abstract class Task {
     }
 
     /**
-     * Returns the single letter that says which kind of task this is.
+     * Returns which kind of task this is.
      * Each subclass answers for itself, which is why this class does not need
      * to store the kind or ask what it is: calling this method on a
      * {@code Task} reaches the right subclass's answer on its own.
      *
-     * <p>The letter is the one piece of type information a subclass has to
-     * supply, because both the label shown on screen and the code written to the
-     * save file are built from it. Keeping one source for the two means they
-     * cannot drift apart.</p>
+     * <p>The kind is the one piece of type information a subclass has to supply,
+     * because both the label shown on screen and the code written to the save
+     * file are built from it. Keeping one source for the two means they cannot
+     * drift apart.</p>
      *
-     * @return the letter naming the kind of task, e.g. {@code "T"}
+     * @return the kind of task, e.g. {@link TaskType#TODO}
      */
-    protected abstract String getTypeCode();
+    protected abstract TaskType getType();
 
     /**
      * Returns the label that says which kind of task this is, as the task list
@@ -130,7 +132,7 @@ public abstract class Task {
      * @return the type code in square brackets, e.g. {@code "[T]"}
      */
     protected String getTypeLabel() {
-        return "[" + getTypeCode() + "]";
+        return "[" + getType().getCode() + "]";
     }
 
     /**
@@ -161,12 +163,16 @@ public abstract class Task {
      * @return the shared fields followed by {@code extras}
      */
     protected String[] withExtraFields(String... extras) {
-        String[] fields = new String[3 + extras.length];
-        fields[0] = getTypeCode();
-        fields[1] = isDone ? "1" : "0";
-        fields[2] = description;
-        System.arraycopy(extras, 0, fields, 3, extras.length);
-        return fields;
+        // The parts are added in order rather than assigned to numbered slots,
+        // so this method says which shared fields there are and which comes
+        // first without also having to state how many -- a count only the
+        // reading end needs, and which Storage now keeps on its own.
+        List<String> fields = new ArrayList<>();
+        fields.add(getType().getCode());
+        fields.add(isDone ? "1" : "0");
+        fields.add(description);
+        fields.addAll(List.of(extras));
+        return fields.toArray(new String[0]);
     }
 
     /**

@@ -41,11 +41,11 @@ public class Deadline extends Task {
     /**
      * {@inheritDoc}
      *
-     * @return {@code "D"}, the code for a deadline
+     * @return {@link TaskType#DEADLINE}
      */
     @Override
-    protected String getTypeCode() {
-        return "D";
+    protected TaskType getType() {
+        return TaskType.DEADLINE;
     }
 
     /**

@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 import piplupbot.task.Deadline;
 import piplupbot.task.Event;
 import piplupbot.task.Task;
+import piplupbot.task.TaskType;
 import piplupbot.task.Todo;
 
 // ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
@@ -71,6 +72,26 @@ public class Storage {
      * the start of the next.
      */
     private static final char SEPARATOR_MARK = '|';
+
+    /**
+     * How many fields every saved task begins with: the type code, the done flag
+     * and the description, in the order {@link Task#toFileFields} writes them.
+     * A task's own fields follow them, which is why this is also where those
+     * start.
+     */
+    private static final int SHARED_FIELD_COUNT = 3;
+
+    /** Where the type code sits in a saved line. */
+    private static final int TYPE_CODE_INDEX = 0;
+
+    /** Where the done flag sits in a saved line. */
+    private static final int DONE_FLAG_INDEX = 1;
+
+    /** Where the description sits in a saved line. */
+    private static final int DESCRIPTION_INDEX = 2;
+
+    /** Where a task's own fields begin, after the shared three. */
+    private static final int EXTRA_FIELDS_INDEX = SHARED_FIELD_COUNT;
 
     /** Where the tasks are kept, as chosen by whoever created this object. */
     private final Path filePath;
@@ -369,6 +390,15 @@ public class Storage {
      * task to rebuild -- the one place in the program that has to decide a task's
      * kind from data rather than letting the object answer for itself.
      *
+     * <p>The letter is turned into a {@link TaskType} before anything is done
+     * with it, which buys two things. The kind knows how many fields its lines
+     * carry, so the length is checked once here instead of separately in every
+     * branch; and the {@code switch} names every constant, so adding a kind of
+     * task leaves a gap the compiler reports -- a {@code switch} expression over
+     * an enum must cover all of them. That is why there is no {@code default}
+     * branch: adding one would answer the compiler's question on the new kind's
+     * behalf, and let a task be saved that could never be loaded back.</p>
+     *
      * <p>Every check here rejects a line the bot could not itself have written.
      * They matter because the file is ordinary text that anything can edit:
      * without them a hand-edited line could produce a task with no description,
@@ -389,38 +419,30 @@ public class Storage {
         // a line stopping after a separator is rejected below instead of quietly
         // losing its last field.
         String[] fields = line.split(Pattern.quote(FIELD_SEPARATOR), -1);
-        if (fields.length < 3) {
+        if (fields.length < SHARED_FIELD_COUNT) {
             throw new PiplupBotException("Not enough fields: " + line);
         }
 
-        String typeCode = fields[0];
-        String doneFlag = fields[1];
-        String description = requireText(decodeField(fields[2]), "description", line);
+        // Each kind of task writes a known number of fields, so the kind is read
+        // first and the length checked against it -- once, rather than once per
+        // branch -- before any field a shorter line would not have.
+        TaskType type = TaskType.fromCode(fields[TYPE_CODE_INDEX]);
+        requireFieldCount(fields, SHARED_FIELD_COUNT + type.getExtraFieldCount(), line);
 
-        // Each kind of task writes a known number of fields, so the count is
-        // checked before reading a field that a shorter line would not have.
-        Task task = switch (typeCode) {
-            case "T" -> {
-                requireFieldCount(fields, 3, line);
-                yield new Todo(description);
-            }
-            case "D" -> {
-                requireFieldCount(fields, 4, line);
-                yield new Deadline(description,
-                        requireText(decodeField(fields[3]), "date", line));
-            }
-            case "E" -> {
-                requireFieldCount(fields, 5, line);
-                yield new Event(description,
-                        requireText(decodeField(fields[3]), "start time", line),
-                        requireText(decodeField(fields[4]), "end time", line));
-            }
-            default -> throw new PiplupBotException("Unknown task type: " + line);
+        String description = requireText(decodeField(fields[DESCRIPTION_INDEX]), "description", line);
+        Task task = switch (type) {
+            case TODO -> new Todo(description);
+            case DEADLINE -> new Deadline(description,
+                    requireText(decodeField(fields[EXTRA_FIELDS_INDEX]), "date", line));
+            case EVENT -> new Event(description,
+                    requireText(decodeField(fields[EXTRA_FIELDS_INDEX]), "start time", line),
+                    requireText(decodeField(fields[EXTRA_FIELDS_INDEX + 1]), "end time", line));
         };
 
         // A new task starts off not done, so only "1" needs acting on -- but
         // anything other than the two flags the file is meant to hold means the
         // line was not written by this program, so it is rejected.
+        String doneFlag = fields[DONE_FLAG_INDEX];
         if (doneFlag.equals("1")) {
             task.markAsDone();
         } else if (!doneFlag.equals("0")) {
