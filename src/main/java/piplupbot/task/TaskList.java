@@ -1,6 +1,7 @@
 package piplupbot.task;
 
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 import piplupbot.PiplupBotException;
 
@@ -141,13 +142,9 @@ public class TaskList {
      * @return the matching tasks, possibly none
      */
     public TaskList find(String keyword) {
-        TaskList matches = new TaskList();
-        for (Task task : tasks) {
-            if (task.descriptionContains(keyword)) {
-                matches.add(task);
-            }
-        }
-        return matches;
+        return new TaskList(tasks.stream()
+                .filter(task -> task.descriptionContains(keyword))
+                .collect(Collectors.toCollection(ArrayList::new)));
     }
 
     /**
