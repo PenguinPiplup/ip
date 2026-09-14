@@ -1,5 +1,7 @@
 package piplupbot;
 
+import java.util.Arrays;
+
 import piplupbot.command.AddCommand;
 import piplupbot.command.Command;
 import piplupbot.command.CommandWord;
@@ -208,10 +210,8 @@ public class Parser {
         // Whatever follows the last separator is the last part.
         parts[parts.length - 1] = details.substring(partStart).trim();
 
-        for (String part : parts) {
-            if (part.isEmpty()) {
-                throw new PiplupBotException(hint);
-            }
+        if (Arrays.stream(parts).anyMatch(String::isEmpty)) {
+            throw new PiplupBotException(hint);
         }
         return parts;
     }

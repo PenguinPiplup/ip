@@ -1,5 +1,8 @@
 package piplupbot.command;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 import piplupbot.PiplupBotException;
 
 // ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
@@ -131,13 +134,12 @@ public enum CommandWord {
      * @throws PiplupBotException if the line names no command
      */
     public static CommandWord fromInput(String input) throws PiplupBotException {
-        for (CommandWord commandWord : values()) {
-            if (commandWord.matches(input)) {
-                return commandWord;
-            }
-        }
-        throw new PiplupBotException("Sorry, I don't know what \"" + input + "\" means.",
-                "Try: " + keywordList() + ".");
+        return Arrays.stream(values())
+                .filter(commandWord -> commandWord.matches(input))
+                .findFirst()
+                .orElseThrow(() -> new PiplupBotException(
+                        "Sorry, I don't know what \"" + input + "\" means.",
+                        "Try: " + keywordList() + "."));
     }
 
     /**
@@ -152,16 +154,14 @@ public enum CommandWord {
      */
     private static String keywordList() {
         CommandWord[] commandWords = values();
-        StringBuilder list = new StringBuilder();
-        for (int i = 0; i < commandWords.length; i++) {
-            if (i > 0) {
-                list.append(", ");
-            }
-            if (i == commandWords.length - 1) {
-                list.append("or ");
-            }
-            list.append(commandWords[i].keyword);
-        }
-        return list.toString();
+        assert commandWords.length > 1 : "keywordList() assumes at least two commands to list";
+
+        // The last keyword is held back and added with its "or", so everything
+        // before it is a plain comma-separated join -- which is what
+        // Collectors.joining is for.
+        String exceptLast = Arrays.stream(commandWords, 0, commandWords.length - 1)
+                .map(commandWord -> commandWord.keyword)
+                .collect(Collectors.joining(", "));
+        return exceptLast + ", or " + commandWords[commandWords.length - 1].keyword;
     }
 }

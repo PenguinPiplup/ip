@@ -5,8 +5,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import piplupbot.task.Deadline;
 import piplupbot.task.Event;
@@ -165,10 +167,9 @@ public class Storage {
         // Each task hands over its own fields: the list does not need to know
         // which kind of task it is holding, exactly as when the tasks are
         // printed. Turning those fields into a line is this class's job.
-        List<String> lines = new ArrayList<>();
-        for (Task task : tasks) {
-            lines.add(encodeLine(task.toFileFields()));
-        }
+        List<String> lines = tasks.stream()
+                .map(task -> encodeLine(task.toFileFields()))
+                .toList();
 
         try {
             // getParent() is the "data" directory, or null if the path names a
@@ -308,17 +309,9 @@ public class Storage {
      * @return the line to write to the file
      */
     private static String encodeLine(String[] fields) {
-        StringBuilder line = new StringBuilder();
-        for (int i = 0; i < fields.length; i++) {
-            if (i > 0) {
-                line.append(FIELD_SEPARATOR);
-            }
-            String encodedField = encodeField(fields[i]);
-            assert !encodedField.contains(FIELD_SEPARATOR)
-                    : "Escaping left a separator inside a field: " + encodedField;
-            line.append(encodedField);
-        }
-        return line.toString();
+        return Arrays.stream(fields)
+                .map(Storage::encodeField)
+                .collect(Collectors.joining(FIELD_SEPARATOR));
     }
 
     /**
@@ -344,7 +337,14 @@ public class Storage {
             }
             encoded.append(character);
         }
-        return encoded.toString();
+
+        // Asserted here rather than in encodeLine: that a field comes back with
+        // no separator loose inside it is a promise of this method's escaping,
+        // so this is where it can be checked against the work that made it true.
+        String encodedField = encoded.toString();
+        assert !encodedField.contains(FIELD_SEPARATOR)
+                : "Escaping left a separator inside a field: " + encodedField;
+        return encodedField;
     }
 
     /**

@@ -1,5 +1,7 @@
 package piplupbot.task;
 
+import java.util.Arrays;
+
 import piplupbot.PiplupBotException;
 import piplupbot.Storage;
 
@@ -89,11 +91,9 @@ public enum TaskType {
      *                            the line is skipped rather than guessed at
      */
     public static TaskType fromCode(String code) throws PiplupBotException {
-        for (TaskType type : values()) {
-            if (type.code.equals(code)) {
-                return type;
-            }
-        }
-        throw new PiplupBotException("Unknown task type: " + code);
+        return Arrays.stream(values())
+                .filter(type -> type.code.equals(code))
+                .findFirst()
+                .orElseThrow(() -> new PiplupBotException("Unknown task type: " + code));
     }
 }
