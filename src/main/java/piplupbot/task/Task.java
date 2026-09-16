@@ -1,8 +1,10 @@
 package piplupbot.task;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 import piplupbot.Storage;
 
@@ -89,6 +91,55 @@ public abstract class Task {
      */
     public boolean descriptionContains(String text) {
         return description.toLowerCase(Locale.ROOT).contains(text.toLowerCase(Locale.ROOT));
+    }
+
+    /**
+     * Returns what the user typed, e.g. {@code read book}.
+     *
+     * <p>Package-private rather than public: it exists so that
+     * {@link SortKey#NAME} can order tasks by their descriptions, not so that
+     * the rest of the program can read a description out of a task. A task
+     * shows its own description through {@link #toString()} and hands it over
+     * for saving through {@link #toFileFields()}, which is how everything
+     * outside this package gets at it.</p>
+     *
+     * @return the description, never blank
+     */
+    String getDescription() {
+        return description;
+    }
+
+    /**
+     * Reports whether the task has been completed.
+     * {@link #getStatusIcon()} answers the same question for the screen, but in
+     * the screen's own words; ordering tasks by {@code " "} before {@code "X"}
+     * would tie {@link SortKey#DONE}'s order to that wording, so that a change
+     * to the status box would quietly change the sort.
+     *
+     * @return {@code true} if the task is done
+     */
+    boolean isDone() {
+        return isDone;
+    }
+
+    /**
+     * Returns the date this task is sorted by, or nothing if it has none.
+     *
+     * <p>A todo has no date at all, so the answer here is
+     * {@link Optional#empty()} and every {@link Todo} inherits it;
+     * {@link Deadline} answers with its due date and {@link Event} with its
+     * start. Asking the task is the whole of the rule {@link SortKey#DATE}
+     * needs: the comparator never has to test which kind of task it is holding,
+     * any more than printing one does.</p>
+     *
+     * <p>An {@link Optional} rather than {@code null}, so that "this task has no
+     * date" is something the type says out loud and a caller cannot forget to
+     * check for.</p>
+     *
+     * @return the date to sort by, or empty for a task that has none
+     */
+    Optional<LocalDateTime> getSortDateTime() {
+        return Optional.empty();
     }
 
     /**

@@ -1,6 +1,7 @@
 package piplupbot.task;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import piplupbot.PiplupBotException;
 import piplupbot.Storage;
@@ -46,6 +47,16 @@ public class Deadline extends Task {
     @Override
     protected TaskType getType() {
         return TaskType.DEADLINE;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @return when the task is due, which is what a deadline is sorted by
+     */
+    @Override
+    Optional<LocalDateTime> getSortDateTime() {
+        return Optional.of(by);
     }
 
     /**

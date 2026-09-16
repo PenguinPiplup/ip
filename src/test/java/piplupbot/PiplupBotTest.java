@@ -72,6 +72,37 @@ public class PiplupBotTest {
         assertEquals(List.of("Here are the tasks in your list:\n1.[T][X] read book"), ui.replies);
     }
 
+    /**
+     * The window has no test plan of its own, so this is what checks that
+     * {@code sort} works there too: the same reply the console gives, and a
+     * save file holding the tasks in the new order rather than the order they
+     * were added in. It is also the only place the sorted order is checked
+     * against the file at all -- each text-UI case starts a fresh program, so
+     * none of them can see what a sort left behind.
+     *
+     * <p>The saved line format is unchanged: the same fields, the same
+     * separator and the same ISO date as before this command existed. Only
+     * which line comes first is different, which is why a file written by an
+     * earlier version still loads.</p>
+     */
+    @Test
+    public void respondTo_sortCommand_answersWithTheSortedListAndSavesTheNewOrder()
+            throws Exception {
+        PiplupBot bot = new PiplupBot(saveFile());
+        bot.respondTo("todo read book", ui);
+        bot.respondTo("deadline return book /by 2019-10-15 1800", ui);
+        ui.replies.clear();
+
+        assertFalse(bot.respondTo("sort date", ui));
+
+        assertEquals(List.of("Here are your tasks, sorted by date:\n"
+                        + "1.[D][ ] return book (by: Oct 15 2019 06:00 PM)\n"
+                        + "2.[T][ ] read book"),
+                ui.replies);
+        assertEquals("D | 0 | return book | 2019-10-15T18:00\nT | 0 | read book\n",
+                Files.readString(saveFile()));
+    }
+
     /** {@code bye} ends the conversation, and still says goodbye first. */
     @Test
     public void respondTo_bye_saysGoodbyeAndEndsConversation() {
