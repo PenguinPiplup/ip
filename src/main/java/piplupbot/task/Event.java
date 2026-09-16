@@ -1,6 +1,7 @@
 package piplupbot.task;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import piplupbot.PiplupBotException;
 
@@ -44,6 +45,20 @@ public class Event extends Task {
     @Override
     protected TaskType getType() {
         return TaskType.EVENT;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>An event is sorted by when it starts rather than by when it ends,
+     * because what someone reading down a list wants to know is what is
+     * happening next. The end time is shown, but never ordered by.</p>
+     *
+     * @return when the event starts
+     */
+    @Override
+    Optional<LocalDateTime> getSortDateTime() {
+        return Optional.of(from);
     }
 
     /**

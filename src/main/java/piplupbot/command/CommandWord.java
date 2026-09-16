@@ -47,6 +47,12 @@ public enum CommandWord {
      */
     FIND("find", true),
 
+    /**
+     * Puts the list into a given order, e.g. {@code sort date} or
+     * {@code sort name desc}.
+     */
+    SORT("sort", true),
+
     /** Marks a task as done, e.g. {@code mark 2}. */
     MARK("mark", true),
 

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -45,6 +46,18 @@ public class TaskListTest {
             tasks.add(new Todo(description));
         }
         return tasks;
+    }
+
+    /**
+     * Returns each stored task's description, in the order they are stored, so a
+     * case about ordering can say what it expects without spelling out every
+     * rendered row.
+     *
+     * @param tasks the list to read
+     * @return the descriptions, in the order the user sees them
+     */
+    private static List<String> descriptionsOf(TaskList tasks) {
+        return tasks.asList().stream().map(Task::getDescription).toList();
     }
 
     // ---------- Counting and adding ----------
@@ -286,6 +299,93 @@ public class TaskListTest {
 
         assertEquals(1, tasks.size());
         assertArrayEquals(new String[] {"1.[T][ ] read book"}, tasks.toNumberedLines());
+    }
+
+    // ---------- Sorting ----------
+
+    /**
+     * Sorting rearranges the tasks this list holds rather than handing back a
+     * sorted copy, so the list itself comes back in the new order.
+     */
+    @Test
+    public void sort_byDate_reordersTheStoredTasks() throws PiplupBotException {
+        TaskList tasks = new TaskList();
+        tasks.add(new Todo("read book"));
+        tasks.add(new Deadline("return book", "2019-10-15 1800"));
+        tasks.add(new Event("meeting", "2019-10-02 1400", "2019-10-02 1600"));
+
+        tasks.sort(SortKey.DATE, SortDirection.ASC);
+
+        assertEquals(List.of("meeting", "return book", "read book"), descriptionsOf(tasks));
+    }
+
+    /**
+     * The point of sorting in place: the numbers shown afterwards are the ones
+     * {@link TaskList#get} and {@link TaskList#remove} take, so a user who sorts
+     * and then types {@code mark 1} marks the first row they were just shown.
+     * Sorting a copy would leave the two disagreeing, in the way a search result
+     * already does.
+     */
+    @Test
+    public void sort_thenGet_findsTheTaskShownAtThatNumber() throws PiplupBotException {
+        TaskList tasks = listOfTodos("c", "a", "b");
+
+        tasks.sort(SortKey.NAME, SortDirection.ASC);
+
+        assertEquals("a", tasks.get(1).getDescription());
+        assertEquals("c", tasks.get(3).getDescription());
+    }
+
+    /** Sorting moves tasks about; it must not lose or duplicate one. */
+    @Test
+    public void sort_anyKey_keepsEveryTaskExactlyOnce() {
+        TaskList tasks = listOfTodos("c", "a", "b");
+
+        tasks.sort(SortKey.NAME, SortDirection.DESC);
+
+        assertEquals(3, tasks.size());
+        assertEquals(List.of("c", "b", "a"), descriptionsOf(tasks));
+    }
+
+    @Test
+    public void sort_emptyList_leavesItEmpty() {
+        TaskList tasks = new TaskList();
+
+        tasks.sort(SortKey.DATE, SortDirection.ASC);
+
+        assertEquals(0, tasks.size());
+        assertArrayEquals(new String[] {}, tasks.toNumberedLines());
+    }
+
+    /**
+     * One sort refines another rather than undoing it: sorting by done status
+     * after sorting by date leaves each group still in date order. That follows
+     * from {@code List.sort} being stable, which is why {@link SortKey} needs no
+     * tie-breaking rule of its own -- and it is exactly what would be lost if
+     * one were added.
+     */
+    @Test
+    public void sort_twice_secondSortKeepsTheFirstOrderWithinEachGroup()
+            throws PiplupBotException {
+        // The descriptions deliberately run the opposite way to the dates, so a
+        // tie broken by description would give a different answer from a tie
+        // left alone -- without that, this case would pass either way.
+        Deadline alpha = new Deadline("alpha", "2019-10-15 1800");
+        Deadline pending = new Deadline("pending", "2019-10-02 1400");
+        Deadline zulu = new Deadline("zulu", "2019-10-01 0900");
+        alpha.markAsDone();
+        zulu.markAsDone();
+
+        TaskList tasks = new TaskList();
+        tasks.add(alpha);
+        tasks.add(pending);
+        tasks.add(zulu);
+
+        tasks.sort(SortKey.DATE, SortDirection.ASC);
+        tasks.sort(SortKey.DONE, SortDirection.ASC);
+
+        // The unfinished task first, then the finished two still in date order.
+        assertEquals(List.of("pending", "zulu", "alpha"), descriptionsOf(tasks));
     }
 
     // ---------- The copies that keep the list this class's own ----------

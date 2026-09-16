@@ -10,9 +10,12 @@ import piplupbot.command.ExitCommand;
 import piplupbot.command.FindCommand;
 import piplupbot.command.ListCommand;
 import piplupbot.command.MarkCommand;
+import piplupbot.command.SortCommand;
 import piplupbot.task.DateTimes;
 import piplupbot.task.Deadline;
 import piplupbot.task.Event;
+import piplupbot.task.SortDirection;
+import piplupbot.task.SortKey;
 import piplupbot.task.Task;
 import piplupbot.task.TaskList;
 import piplupbot.task.Todo;
@@ -104,6 +107,7 @@ public class Parser {
             case EVENT -> new AddCommand(parseEvent(input));
             case LIST -> new ListCommand();
             case FIND -> new FindCommand(parseKeyword(input));
+            case SORT -> parseSort(input);
             case MARK -> new MarkCommand(parseTaskNumber(input, commandWord), true);
             case UNMARK -> new MarkCommand(parseTaskNumber(input, commandWord), false);
             case DELETE -> new DeleteCommand(parseTaskNumber(input, commandWord));
@@ -239,6 +243,42 @@ public class Parser {
             throw new PiplupBotException("Please tell me what to look for, e.g. find book.");
         }
         return keyword;
+    }
+
+    /**
+     * Reads {@code sort <key>} or {@code sort <key> <direction>}.
+     *
+     * <p>The key has to be given, for the reason a bare {@code find} is refused:
+     * a line that never said what to sort by would otherwise be answered by
+     * quietly picking a key on the user's behalf. The direction may be left out,
+     * and then means {@link SortDirection#ASC} -- the ordinary case, so the
+     * ordinary line stays short.</p>
+     *
+     * <p>Everything after the key is read as the direction, spaces and all,
+     * rather than just the next word. That is what makes
+     * {@code sort date desc now} report a direction it could not understand
+     * instead of quietly ignoring the word it had no room for.</p>
+     *
+     * @param input the whole line the user typed
+     * @return the command the line asks for
+     * @throws PiplupBotException if no key is given, or the key or the direction
+     *                            is not one this bot knows
+     */
+    private static SortCommand parseSort(String input) throws PiplupBotException {
+        String argument = CommandWord.SORT.argumentOf(input);
+        if (argument.isEmpty()) {
+            throw new PiplupBotException("Please tell me what to sort by, e.g. sort date.",
+                    SortKey.getKeywordHint());
+        }
+
+        // Split once rather than on every space, so that the key is the first
+        // word and whatever follows it stays in one piece.
+        String[] parts = argument.split("\\s+", 2);
+        SortKey key = SortKey.fromKeyword(parts[0]);
+        SortDirection direction = parts.length < 2
+                ? SortDirection.ASC
+                : SortDirection.fromKeyword(parts[1]);
+        return new SortCommand(key, direction);
     }
 
     /**

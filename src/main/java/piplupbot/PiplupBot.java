@@ -16,6 +16,8 @@ import piplupbot.task.TaskList;
  * removes a task on the {@code delete <number>} command,
  * shows the tasks whose description contains some text on the
  * {@code find <keyword>} command,
+ * puts the list into a given order on the {@code sort <key> [asc|desc]}
+ * command,
  * and exits when the user types {@code bye}.
  *
  * <p>Every change to the list is written straight to the hard disk by

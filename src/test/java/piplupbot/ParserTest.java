@@ -19,6 +19,7 @@ import piplupbot.command.ExitCommand;
 import piplupbot.command.FindCommand;
 import piplupbot.command.ListCommand;
 import piplupbot.command.MarkCommand;
+import piplupbot.command.SortCommand;
 import piplupbot.task.TaskList;
 
 /**
@@ -87,6 +88,7 @@ public class ParserTest {
         assertInstanceOf(MarkCommand.class, Parser.parse("unmark 1"));
         assertInstanceOf(DeleteCommand.class, Parser.parse("delete 1"));
         assertInstanceOf(FindCommand.class, Parser.parse("find book"));
+        assertInstanceOf(SortCommand.class, Parser.parse("sort date"));
         assertInstanceOf(ExitCommand.class, Parser.parse("bye"));
     }
 
@@ -99,7 +101,7 @@ public class ParserTest {
         assertTrue(Parser.parse("bye").isExit());
 
         for (String input : new String[] {
-            "list", "todo read book", "mark 1", "delete 1", "find book",
+            "list", "todo read book", "mark 1", "delete 1", "find book", "sort date",
         }) {
             Command command = Parser.parse(input);
             assertFalse(command.isExit(), input + " should not end the conversation");
@@ -357,6 +359,66 @@ public class ParserTest {
         assertArrayEquals(new String[] {"1.[T][ ] read book", "2.[T][ ] write notes"},
                 listAfter("todo read book", "todo write notes", "find book", "find notes")
                         .toNumberedLines());
+    }
+
+    // ---------- Lines that should name a sort key ----------
+
+    /**
+     * A bare {@code sort} is refused rather than answered, for the reason a bare
+     * {@code find} is: picking a key on the user's behalf would be a confident
+     * answer to a line that never said what to sort by.
+     */
+    @Test
+    public void parse_sortWithoutKey_exceptionThrown() {
+        assertThrows(PiplupBotException.class, () -> Parser.parse("sort"));
+        assertThrows(PiplupBotException.class, () -> Parser.parse("sort   "));
+    }
+
+    @Test
+    public void parse_sortWithoutKey_messageShowsAnExampleAndListsTheKeys() {
+        PiplupBotException exception =
+                assertThrows(PiplupBotException.class, () -> Parser.parse("sort"));
+        assertArrayEquals(new String[] {
+            "Please tell me what to sort by, e.g. sort date.",
+            "Try: date, name, type, or done.",
+        }, exception.getMessageLines());
+    }
+
+    /** Keys are matched exactly and in lower case, as command words are. */
+    @Test
+    public void parse_sortWithUnknownKey_exceptionThrown() {
+        assertThrows(PiplupBotException.class, () -> Parser.parse("sort Date"));
+        assertThrows(PiplupBotException.class, () -> Parser.parse("sort chronologically"));
+    }
+
+    /**
+     * Everything after the key is read as the direction, so a word the command
+     * has no room for is reported rather than quietly ignored: without that,
+     * {@code sort date desc now} would sort and say nothing about the "now".
+     */
+    @Test
+    public void parse_sortWithUnreadableDirection_exceptionThrown() {
+        assertThrows(PiplupBotException.class, () -> Parser.parse("sort date descending"));
+        assertThrows(PiplupBotException.class, () -> Parser.parse("sort date ASC"));
+        assertThrows(PiplupBotException.class, () -> Parser.parse("sort date desc now"));
+    }
+
+    /** A direction left out means ascending, which is the ordinary case. */
+    @Test
+    public void parse_sortWithNoDirection_sortsAscending() throws PiplupBotException {
+        assertArrayEquals(new String[] {"1.[T][ ] a", "2.[T][ ] b", "3.[T][ ] c"},
+                listAfter("todo c", "todo a", "todo b", "sort name").toNumberedLines());
+    }
+
+    /**
+     * Unlike {@code find}, {@code sort} changes the list it is given: the tasks
+     * come back in the new order, which is what makes the numbers beside them
+     * usable at {@code mark} and {@code delete}.
+     */
+    @Test
+    public void parse_sortCommand_rearrangesTheStoredList() throws PiplupBotException {
+        assertArrayEquals(new String[] {"1.[T][ ] c", "2.[T][ ] b", "3.[T][ ] a"},
+                listAfter("todo c", "todo a", "todo b", "sort name desc").toNumberedLines());
     }
 
     // ---------- Lines that name no command at all ----------

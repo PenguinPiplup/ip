@@ -111,7 +111,8 @@ public class CommandWordTest {
         String[] lines = exception.getMessageLines();
         assertEquals(2, lines.length);
         assertEquals("Sorry, I don't know what \"blah\" means.", lines[0]);
-        assertEquals("Try: todo, deadline, event, list, find, mark, unmark, delete, or bye.",
+        assertEquals(
+                "Try: todo, deadline, event, list, find, sort, mark, unmark, delete, or bye.",
                 lines[1]);
     }
 

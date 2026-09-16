@@ -8,7 +8,8 @@ import piplupbot.PiplupBotException;
 // ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
- * The tasks the user has stored, in the order they were added.
+ * The tasks the user has stored, in the order they were added until a
+ * {@code sort} puts them into another one.
  *
  * <p>This class owns the collection itself and the one rule that goes with it:
  * the user names a task by the number {@code list} showed, counting from 1,
@@ -28,7 +29,7 @@ import piplupbot.PiplupBotException;
  * type, and each object's own {@code toString()} decides how it appears.</p>
  */
 public class TaskList {
-    /** The stored tasks, first added first. */
+    /** The stored tasks, in the order the user sees them. */
     private final ArrayList<Task> tasks;
 
     /**
@@ -102,6 +103,29 @@ public class TaskList {
     public Task remove(int taskNumber) throws PiplupBotException {
         requireTaskNumber(taskNumber);
         return tasks.remove(taskNumber - 1);
+    }
+
+    /**
+     * Rearranges the stored tasks into the order the given key and direction
+     * describe.
+     *
+     * <p>The tasks are reordered in place rather than a sorted copy being handed
+     * back, so the numbers {@link #toNumberedLines()} shows afterwards are the
+     * ones {@link #get} and {@link #remove} take: a user who sorts and then
+     * types {@code mark 2} marks the second row they were just shown. The price
+     * is that the order the tasks were added in is kept nowhere afterwards, so
+     * nothing can restore it.</p>
+     *
+     * <p>{@code List.sort} is stable -- tasks that compare equal keep the order
+     * they were already in -- which is what lets one sort refine another:
+     * sorting by date and then by done status leaves each group still in date
+     * order. {@link SortKey} therefore needs no tie-breaking rule of its own.</p>
+     *
+     * @param key       what to order the tasks by
+     * @param direction whether that order runs forwards or backwards
+     */
+    public void sort(SortKey key, SortDirection direction) {
+        tasks.sort(key.getComparator(direction));
     }
 
     /**

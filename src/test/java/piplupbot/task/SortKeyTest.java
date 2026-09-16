@@ -1,0 +1,232 @@
+package piplupbot.task;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
+import piplupbot.PiplupBotException;
+
+/**
+ * Tests {@link SortKey}, which decides what order {@code sort} puts the tasks
+ * into.
+ *
+ * <p>These comparators are worth testing closely because every one of their
+ * rules is invisible in the reply: a list that comes back in the wrong order
+ * still looks like a perfectly good list, and the user has no way of telling
+ * that the bot meant something else by "sorted". Three of the rules in
+ * particular would survive being broken without anything else noticing:</p>
+ *
+ * <ul>
+ *   <li>a dateless task sorts last in <em>both</em> directions, which a
+ *       comparator that simply reversed everything would get wrong only for
+ *       {@code desc};</li>
+ *   <li>an event is ordered by when it starts, not when it ends, which shows
+ *       only for an event that spans another task's date;</li>
+ *   <li>tasks that tie keep the order they were already in, which shows only
+ *       when two tasks really do tie.</li>
+ * </ul>
+ */
+public class SortKeyTest {
+
+    /**
+     * Sorts the given tasks by the given key and returns their descriptions in
+     * the order they ended up in, so a case can say what it expects to see
+     * rather than how to look for it.
+     *
+     * @param key       what to order by
+     * @param direction whether that order runs forwards or backwards
+     * @param tasks     the tasks to sort, in the order they start out in
+     * @return each task's description, in the sorted order
+     */
+    private static List<String> descriptionsSorted(SortKey key, SortDirection direction,
+            Task... tasks) {
+        List<Task> ordered = new ArrayList<>(List.of(tasks));
+        ordered.sort(key.getComparator(direction));
+        return ordered.stream().map(Task::getDescription).toList();
+    }
+
+    // ---------- Sorting by date ----------
+
+    @Test
+    public void getComparator_dateAscending_ordersDatedTasksEarliestFirst()
+            throws PiplupBotException {
+        assertEquals(List.of("meeting", "return book"),
+                descriptionsSorted(SortKey.DATE, SortDirection.ASC,
+                        new Deadline("return book", "2019-10-15 1800"),
+                        new Event("meeting", "2019-10-02 1400", "2019-10-02 1600")));
+    }
+
+    /**
+     * A todo has no date, and is therefore put after every task that has one --
+     * not treated as a date at one end of time, which is what an
+     * {@code Optional} of {@code LocalDateTime.MIN} would amount to.
+     */
+    @Test
+    public void getComparator_dateAscending_putsTodosAfterEveryDatedTask()
+            throws PiplupBotException {
+        assertEquals(List.of("meeting", "return book", "read book", "write notes"),
+                descriptionsSorted(SortKey.DATE, SortDirection.ASC,
+                        new Todo("read book"),
+                        new Deadline("return book", "2019-10-15 1800"),
+                        new Todo("write notes"),
+                        new Event("meeting", "2019-10-02 1400", "2019-10-02 1600")));
+    }
+
+    /**
+     * The decision this case guards: {@code desc} reverses the dates but not the
+     * grouping, so the todos stay at the bottom. Reversing the whole comparator
+     * -- the obvious way to write it -- would float them to the top instead,
+     * burying the very tasks the user asked to see.
+     */
+    @Test
+    public void getComparator_dateDescending_reversesTheDatesButStillPutsTodosLast()
+            throws PiplupBotException {
+        assertEquals(List.of("return book", "meeting", "read book", "write notes"),
+                descriptionsSorted(SortKey.DATE, SortDirection.DESC,
+                        new Todo("read book"),
+                        new Deadline("return book", "2019-10-15 1800"),
+                        new Todo("write notes"),
+                        new Event("meeting", "2019-10-02 1400", "2019-10-02 1600")));
+    }
+
+    /**
+     * An event is ordered by when it starts. The event below begins before the
+     * deadline and ends after it, so sorting by the end time instead would put
+     * the two the other way round -- the one arrangement of dates that tells the
+     * two rules apart.
+     */
+    @Test
+    public void getComparator_dateKey_ordersAnEventByItsStartNotItsEnd()
+            throws PiplupBotException {
+        assertEquals(List.of("conference", "return book"),
+                descriptionsSorted(SortKey.DATE, SortDirection.ASC,
+                        new Deadline("return book", "2019-10-15 1800"),
+                        new Event("conference", "2019-10-01 0900", "2019-10-30 1700")));
+    }
+
+    /**
+     * Two tasks due at the same moment keep the order they were already in.
+     * Nothing in {@link SortKey} arranges that -- it is {@code List.sort} being
+     * stable -- so this case is what would notice a tie-breaking rule being
+     * added, or a sort that is not stable being used instead.
+     */
+    @Test
+    public void getComparator_datesThatTie_keepsTheOrderTheyWereAlreadyIn()
+            throws PiplupBotException {
+        assertEquals(List.of("standup", "report"),
+                descriptionsSorted(SortKey.DATE, SortDirection.ASC,
+                        new Event("standup", "2019-10-02 1400", "2019-10-02 1600"),
+                        new Deadline("report", "2019-10-02 1400")));
+    }
+
+    // ---------- Sorting by the other three keys ----------
+
+    /**
+     * Alphabetical order ignores capitals, as {@code find} does, so a
+     * capitalised description sorts among the others rather than ahead of all of
+     * them -- which is what plain {@code String} comparison would do, since every
+     * capital letter has a lower character code than every small one.
+     */
+    @Test
+    public void getComparator_nameKey_ignoresCapitals() {
+        assertEquals(List.of("apples", "Bananas", "cherries"),
+                descriptionsSorted(SortKey.NAME, SortDirection.ASC,
+                        new Todo("cherries"), new Todo("Bananas"), new Todo("apples")));
+    }
+
+    @Test
+    public void getComparator_nameDescending_reversesTheAlphabet() {
+        assertEquals(List.of("cherries", "Bananas", "apples"),
+                descriptionsSorted(SortKey.NAME, SortDirection.DESC,
+                        new Todo("cherries"), new Todo("Bananas"), new Todo("apples")));
+    }
+
+    @Test
+    public void getComparator_typeKey_ordersTodosThenDeadlinesThenEvents()
+            throws PiplupBotException {
+        assertEquals(List.of("read book", "return book", "meeting"),
+                descriptionsSorted(SortKey.TYPE, SortDirection.ASC,
+                        new Event("meeting", "2019-10-02 1400", "2019-10-02 1600"),
+                        new Deadline("return book", "2019-10-15 1800"),
+                        new Todo("read book")));
+    }
+
+    @Test
+    public void getComparator_doneKey_putsUnfinishedWorkFirst() {
+        Todo finished = new Todo("read book");
+        finished.markAsDone();
+
+        assertEquals(List.of("write notes", "read book"),
+                descriptionsSorted(SortKey.DONE, SortDirection.ASC,
+                        finished, new Todo("write notes")));
+    }
+
+    @Test
+    public void getComparator_doneDescending_putsFinishedWorkFirst() {
+        Todo finished = new Todo("read book");
+        finished.markAsDone();
+
+        assertEquals(List.of("read book", "write notes"),
+                descriptionsSorted(SortKey.DONE, SortDirection.DESC,
+                        finished, new Todo("write notes")));
+    }
+
+    /**
+     * Every task ties on a key they all share, and they all keep their places.
+     * This is the same stability the date case relies on, checked where a tie is
+     * the rule rather than the exception: it is what lets one sort refine
+     * another instead of undoing it.
+     */
+    @Test
+    public void getComparator_tasksThatAllTie_leavesTheOrderAlone() {
+        assertEquals(List.of("c", "a", "b"),
+                descriptionsSorted(SortKey.TYPE, SortDirection.ASC,
+                        new Todo("c"), new Todo("a"), new Todo("b")));
+    }
+
+    // ---------- Reading the keyword ----------
+
+    @Test
+    public void fromKeyword_everyKeyword_returnsThatKey() throws PiplupBotException {
+        for (SortKey key : SortKey.values()) {
+            assertEquals(key, SortKey.fromKeyword(key.getKeyword()));
+        }
+    }
+
+    /**
+     * The match is exact, so a capitalised key is refused rather than guessed
+     * at -- the same rule the command words themselves follow.
+     */
+    @Test
+    public void fromKeyword_capitalisedOrUnknownWord_exceptionThrown() {
+        assertThrows(PiplupBotException.class, () -> SortKey.fromKeyword("Date"));
+        assertThrows(PiplupBotException.class, () -> SortKey.fromKeyword("chronological"));
+        assertThrows(PiplupBotException.class, () -> SortKey.fromKeyword(""));
+    }
+
+    /**
+     * The refusal has to leave the user able to try again, so it quotes what
+     * they typed and lists every key. Checking the list in full also checks the
+     * grammar that builds it -- the commas, and the "or" before the last one.
+     */
+    @Test
+    public void fromKeyword_unknownWord_messageQuotesItAndListsEveryKey() {
+        PiplupBotException exception =
+                assertThrows(PiplupBotException.class, () -> SortKey.fromKeyword("xyz"));
+
+        assertArrayEquals(new String[] {
+            "Sorry, I don't know how to sort by \"xyz\".",
+            "Try: date, name, type, or done.",
+        }, exception.getMessageLines());
+    }
+
+    @Test
+    public void getKeywordHint_namesEveryKeyInDeclarationOrder() {
+        assertEquals("Try: date, name, type, or done.", SortKey.getKeywordHint());
+    }
+}
