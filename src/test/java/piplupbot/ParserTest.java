@@ -209,7 +209,7 @@ public class ParserTest {
     public void parse_deadlineWithRepeatedSeparator_firstSeparatorWins() {
         PiplupBotException exception = assertThrows(PiplupBotException.class, () ->
                 Parser.parse("deadline return book /by 2019-10-15 1800 /by 2019-10-16 1800"));
-        assertEquals("I don't understand the date \"2019-10-15 1800 /by 2019-10-16 1800\".",
+        assertEquals("Pip... I don't understand the date \"2019-10-15 1800 /by 2019-10-16 1800\".",
                 exception.getMessageLines()[0]);
     }
 
@@ -225,7 +225,7 @@ public class ParserTest {
         PiplupBotException exception =
                 assertThrows(PiplupBotException.class, () -> Parser.parse("todo"));
         assertArrayEquals(
-                new String[] {"A todo needs a description, e.g. todo borrow book."},
+                new String[] {"Pip... A todo needs a description, e.g. todo borrow book."},
                 exception.getMessageLines());
     }
 
@@ -296,7 +296,7 @@ public class ParserTest {
     public void parse_taskNumberNotANumber_messageNamesTheTypedCommand() {
         PiplupBotException exception =
                 assertThrows(PiplupBotException.class, () -> Parser.parse("delete three"));
-        assertArrayEquals(new String[] {"Please give me a task number, e.g. delete 2."},
+        assertArrayEquals(new String[] {"Pip... Please give me a task number, e.g. delete 2."},
                 exception.getMessageLines());
     }
 
@@ -331,7 +331,7 @@ public class ParserTest {
         PiplupBotException exception =
                 assertThrows(PiplupBotException.class, () -> Parser.parse("find"));
         assertArrayEquals(
-                new String[] {"Please tell me what to look for, e.g. find book."},
+                new String[] {"Pip... Please tell me what to look for, e.g. find book."},
                 exception.getMessageLines());
     }
 
@@ -379,7 +379,7 @@ public class ParserTest {
         PiplupBotException exception =
                 assertThrows(PiplupBotException.class, () -> Parser.parse("sort"));
         assertArrayEquals(new String[] {
-            "Please tell me what to sort by, e.g. sort date.",
+            "Pip... Please tell me what to sort by, e.g. sort date.",
             "Try: date, name, type, or done.",
         }, exception.getMessageLines());
     }

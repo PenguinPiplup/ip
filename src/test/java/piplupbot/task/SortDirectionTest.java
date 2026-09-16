@@ -47,7 +47,7 @@ public class SortDirectionTest {
                 assertThrows(PiplupBotException.class, () -> SortDirection.fromKeyword("desc now"));
 
         assertArrayEquals(new String[] {
-            "Sorry, I don't know the sort direction \"desc now\".",
+            "Pip... I don't know the sort direction \"desc now\".",
             "Try: asc or desc.",
         }, exception.getMessageLines());
     }

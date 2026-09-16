@@ -52,9 +52,9 @@ public class PiplupBotTest {
         PiplupBot bot = new PiplupBot(saveFile());
 
         assertFalse(bot.respondTo("todo read book", ui));
-        assertEquals(List.of("Got it. I've added this task:\n"
+        assertEquals(List.of("Piplup! I've tucked this task under my wing:\n"
                         + "  [T][ ] read book\n"
-                        + "Now you have 1 tasks in the list."),
+                        + "Now you have 1 task in the list."),
                 ui.replies);
         assertEquals("T | 0 | read book\n", Files.readString(saveFile()));
     }
@@ -107,7 +107,7 @@ public class PiplupBotTest {
     @Test
     public void respondTo_bye_saysGoodbyeAndEndsConversation() {
         assertTrue(new PiplupBot(saveFile()).respondTo("bye", ui));
-        assertEquals(List.of("Bye. Hope to see you again soon!"), ui.replies);
+        assertEquals(List.of("Pip-pip! Off for a swim. Hope to see you again soon!"), ui.replies);
     }
 
     /**
@@ -119,7 +119,7 @@ public class PiplupBotTest {
     public void respondTo_unknownCommand_explainsAndCarriesOn() {
         assertFalse(new PiplupBot(saveFile()).respondTo("blah", ui));
         assertEquals(1, ui.replies.size());
-        assertTrue(ui.replies.get(0).startsWith("Sorry, I don't know what \"blah\" means."));
+        assertTrue(ui.replies.get(0).startsWith("Pip... I don't know what \"blah\" means."));
     }
 
     /** A blank line names no command, so it gets no reply, not even an error. */

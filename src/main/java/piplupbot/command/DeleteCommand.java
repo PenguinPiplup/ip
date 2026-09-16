@@ -38,9 +38,9 @@ public class DeleteCommand extends Command {
     @Override
     public void execute(TaskList tasks, Ui ui, Storage storage) throws PiplupBotException {
         Task removedTask = tasks.remove(taskNumber);
-        ui.show("Noted. I've removed this task:",
+        ui.show("Splash! I've washed this task away:",
                 "  " + removedTask,
-                "Now you have " + tasks.size() + " tasks in the list.");
+                describeTaskCount(tasks.size()));
         save(tasks, ui, storage);
     }
 }

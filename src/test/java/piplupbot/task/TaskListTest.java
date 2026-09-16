@@ -134,7 +134,7 @@ public class TaskListTest {
     public void get_numberNamingNoTask_messageNamesThatNumber() {
         TaskList tasks = listOfTodos("only task");
         PiplupBotException exception = assertThrows(PiplupBotException.class, () -> tasks.get(5));
-        assertArrayEquals(new String[] {"There is no task numbered 5."},
+        assertArrayEquals(new String[] {"Pip... There is no task numbered 5."},
                 exception.getMessageLines());
     }
 

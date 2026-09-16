@@ -55,8 +55,8 @@ public class MarkCommand extends Command {
         }
 
         String confirmation = isTaskDone
-                ? "Nice! I've marked this task as done:"
-                : "OK, I've marked this task as not done yet:";
+                ? "Piplup! One more fish in the bucket. I've marked this task as done:"
+                : "Pip-pip, no rush! I've marked this task as not done yet:";
         ui.show(confirmation, "  " + task);
         save(tasks, ui, storage);
     }

@@ -85,7 +85,7 @@ public enum SortDirection {
                 .filter(direction -> direction.keyword.equals(keyword))
                 .findFirst()
                 .orElseThrow(() -> new PiplupBotException(
-                        "Sorry, I don't know the sort direction \"" + keyword + "\".",
+                        "Pip... I don't know the sort direction \"" + keyword + "\".",
                         getKeywordHint()));
     }
 

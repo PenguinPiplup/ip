@@ -220,7 +220,7 @@ public class SortKeyTest {
                 assertThrows(PiplupBotException.class, () -> SortKey.fromKeyword("xyz"));
 
         assertArrayEquals(new String[] {
-            "Sorry, I don't know how to sort by \"xyz\".",
+            "Pip... I don't know how to sort by \"xyz\".",
             "Try: date, name, type, or done.",
         }, exception.getMessageLines());
     }

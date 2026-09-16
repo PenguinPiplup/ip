@@ -68,14 +68,14 @@ public interface Ui {
      * Greets the user.
      */
     default void showWelcome() {
-        show("Hello! I'm PiplupBot.", "What can I do for you?");
+        show("Hello! I'm PiplupBot. Pip-pip!", "What can I do for you?");
     }
 
     /**
      * Says goodbye, in answer to the {@code bye} command.
      */
     default void showGoodbye() {
-        show("Bye. Hope to see you again soon!");
+        show("Pip-pip! Off for a swim. Hope to see you again soon!");
     }
 
     /**

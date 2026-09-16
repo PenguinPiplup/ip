@@ -134,7 +134,7 @@ public enum SortKey {
                 .filter(key -> key.keyword.equals(keyword))
                 .findFirst()
                 .orElseThrow(() -> new PiplupBotException(
-                        "Sorry, I don't know how to sort by \"" + keyword + "\".",
+                        "Pip... I don't know how to sort by \"" + keyword + "\".",
                         getKeywordHint()));
     }
 

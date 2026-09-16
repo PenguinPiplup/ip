@@ -129,7 +129,7 @@ public final class DateTimes {
             }
         }
 
-        throw new PiplupBotException("I don't understand the date \"" + trimmed + "\".",
+        throw new PiplupBotException("Pip... I don't understand the date \"" + trimmed + "\".",
                 FORMAT_HINT);
     }
 

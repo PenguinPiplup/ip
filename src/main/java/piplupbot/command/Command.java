@@ -28,9 +28,10 @@ import piplupbot.task.TaskList;
  *
  * <p>This is an abstract class rather than an interface because it carries
  * shared behaviour as well as a shape: {@link #isExit()} answers {@code false}
- * for every command but one, and {@link #save} is the same three lines in every
- * command that changes the list. Subclasses inherit both instead of repeating
- * them.</p>
+ * for every command but one, {@link #save} is the same three lines in every
+ * command that changes the list, and {@link #describeTaskCount} is the same
+ * closing sentence for every add and delete. Subclasses inherit all three
+ * instead of repeating them.</p>
  */
 public abstract class Command {
     /**
@@ -89,5 +90,25 @@ public abstract class Command {
         } catch (PiplupBotException e) {
             ui.showError(e);
         }
+    }
+
+    /**
+     * Returns the sentence that tells the user how many tasks the list now
+     * holds, e.g. {@code "Now you have 1 task in the list."}.
+     *
+     * <p>Only a count of exactly one takes the singular. Zero takes the plural,
+     * as it does in ordinary English: "0 tasks", not "0 task".</p>
+     *
+     * <p>It lives here because {@link AddCommand} and {@link DeleteCommand} both
+     * end their confirmation with this sentence, and two copies of the
+     * singular/plural rule could fall out of step. It is {@code static} because
+     * the answer depends only on the number, not on which command asks.</p>
+     *
+     * @param taskCount how many tasks the list holds
+     * @return the sentence reporting that number
+     */
+    protected static String describeTaskCount(int taskCount) {
+        String noun = (taskCount == 1) ? "task" : "tasks";
+        return "Now you have " + taskCount + " " + noun + " in the list.";
     }
 }

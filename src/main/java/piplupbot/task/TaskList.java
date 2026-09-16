@@ -206,7 +206,7 @@ public class TaskList {
      */
     private void requireTaskNumber(int taskNumber) throws PiplupBotException {
         if (taskNumber < 1 || taskNumber > tasks.size()) {
-            throw new PiplupBotException("There is no task numbered " + taskNumber + ".");
+            throw new PiplupBotException("Pip... There is no task numbered " + taskNumber + ".");
         }
     }
 }

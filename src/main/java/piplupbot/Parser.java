@@ -125,7 +125,7 @@ public class Parser {
     private static Todo parseTodo(String input) throws PiplupBotException {
         String description = CommandWord.TODO.argumentOf(input);
         if (description.isEmpty()) {
-            throw new PiplupBotException("A todo needs a description, e.g. todo borrow book.");
+            throw new PiplupBotException("Pip... A todo needs a description, e.g. todo borrow book.");
         }
         return new Todo(description);
     }
@@ -146,7 +146,7 @@ public class Parser {
      */
     private static Deadline parseDeadline(String input) throws PiplupBotException {
         String[] parts = splitIntoParts(CommandWord.DEADLINE.argumentOf(input),
-                "A deadline needs a /by part, "
+                "Pip... A deadline needs a /by part, "
                         + "e.g. deadline return book /by 2019-10-15 1800.",
                 BY_SEPARATOR);
         return new Deadline(parts[0], parts[1]);
@@ -164,7 +164,7 @@ public class Parser {
      */
     private static Event parseEvent(String input) throws PiplupBotException {
         String[] parts = splitIntoParts(CommandWord.EVENT.argumentOf(input),
-                "An event needs a /from and a /to part, "
+                "Pip... An event needs a /from and a /to part, "
                         + "e.g. event project meeting /from 2019-10-02 1400 /to 2019-10-02 1600.",
                 FROM_SEPARATOR, TO_SEPARATOR);
         return new Event(parts[0], parts[1], parts[2]);
@@ -240,7 +240,7 @@ public class Parser {
         // contains the empty string -- a confusing way to answer a line that
         // never said what to look for.
         if (keyword.isEmpty()) {
-            throw new PiplupBotException("Please tell me what to look for, e.g. find book.");
+            throw new PiplupBotException("Pip... Please tell me what to look for, e.g. find book.");
         }
         return keyword;
     }
@@ -267,7 +267,7 @@ public class Parser {
     private static SortCommand parseSort(String input) throws PiplupBotException {
         String argument = CommandWord.SORT.argumentOf(input);
         if (argument.isEmpty()) {
-            throw new PiplupBotException("Please tell me what to sort by, e.g. sort date.",
+            throw new PiplupBotException("Pip... Please tell me what to sort by, e.g. sort date.",
                     SortKey.getKeywordHint());
         }
 
@@ -306,7 +306,7 @@ public class Parser {
             // Translate Java's own exception into the bot's own kind, so that the
             // main loop has just one kind of error to report.
             throw new PiplupBotException(
-                    "Please give me a task number, e.g. " + commandWord.getKeyword() + " 2.");
+                    "Pip... Please give me a task number, e.g. " + commandWord.getKeyword() + " 2.");
         }
     }
 }

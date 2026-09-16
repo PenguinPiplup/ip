@@ -95,7 +95,7 @@ public enum CommandWord {
 
     /**
      * Returns the word the user types for this command, for use in hints such
-     * as {@code "Please give me a task number, e.g. mark 2."}.
+     * as {@code "Pip... Please give me a task number, e.g. mark 2."}.
      *
      * @return the keyword, e.g. {@code "mark"}
      */
@@ -144,7 +144,7 @@ public enum CommandWord {
                 .filter(commandWord -> commandWord.matches(input))
                 .findFirst()
                 .orElseThrow(() -> new PiplupBotException(
-                        "Sorry, I don't know what \"" + input + "\" means.",
+                        "Pip... I don't know what \"" + input + "\" means.",
                         "Try: " + keywordList() + "."));
     }
 
