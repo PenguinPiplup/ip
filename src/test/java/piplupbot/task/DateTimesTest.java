@@ -99,7 +99,7 @@ public class DateTimesTest {
         assertEquals(LocalDateTime.of(2019, 12, 2, 0, 0), DateTimes.parse("2/12/2019"));
     }
 
-    // ---------- Surrounding spaces ----------
+    // ---------- Spaces around and inside the date ----------
 
     /**
      * The text arrives from a split on {@code /by} or {@code /to}, so it may
@@ -109,6 +109,30 @@ public class DateTimesTest {
     public void parse_surroundingWhitespace_returnsDateTime() throws PiplupBotException {
         assertEquals(LocalDateTime.of(2019, 10, 15, 18, 0),
                 DateTimes.parse("   2019-10-15 1800   "));
+    }
+
+    /**
+     * Every layout has one space between the day and the time, so without the
+     * step that squeezes spaces together, a second one typed by accident would
+     * make a good date unreadable. Both layouts are tried, as each has its own
+     * pattern.
+     */
+    @Test
+    public void parse_severalSpacesBeforeTime_returnsDateTime() throws PiplupBotException {
+        assertEquals(LocalDateTime.of(2019, 10, 15, 18, 0), DateTimes.parse("2019-10-15   1800"));
+        assertEquals(LocalDateTime.of(2019, 12, 2, 18, 0), DateTimes.parse("2/12/2019  18:00"));
+    }
+
+    /**
+     * The spaces are squeezed only to read the date; a date that still cannot
+     * be read is quoted back as it was typed, so the user recognises it.
+     */
+    @Test
+    public void parse_severalSpacesInUnreadableDate_messageQuotesTheTypedText() {
+        PiplupBotException exception =
+                assertThrows(PiplupBotException.class, () -> DateTimes.parse("2019-10-15  2500"));
+        assertEquals("Pip... I don't understand the date \"2019-10-15  2500\".",
+                exception.getMessageLines()[0]);
     }
 
     // ---------- Dates that do not exist on the calendar ----------

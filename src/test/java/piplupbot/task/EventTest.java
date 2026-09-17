@@ -2,7 +2,9 @@ package piplupbot.task;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +17,9 @@ import piplupbot.PiplupBotException;
  * cases. They are written to the file as two fields rather than as one combined
  * "2-4pm", so that reading the file back does not have to take them apart again
  * -- and they must not be able to swap places, which is what the cases below
- * check by giving the two ends different times.</p>
+ * check by giving the two ends different times. For the same reason, the end
+ * must come after the start, and two events are the same event only if both
+ * of their times match.</p>
  *
  * <p>The behaviour every task shares is checked in {@link TodoTest} rather than
  * repeated here.</p>
@@ -81,5 +85,66 @@ public class EventTest {
     public void constructor_unreadableEndTime_exceptionThrown() {
         assertThrows(PiplupBotException.class, () ->
                 new Event("meeting", "2019-10-02 1400", "sometime"));
+    }
+
+    // ---------- The end must come after the start ----------
+
+    @Test
+    public void constructor_endBeforeStart_exceptionThrown() {
+        assertThrows(PiplupBotException.class, () ->
+                new Event("meeting", "2019-10-02 1600", "2019-10-02 1400"));
+    }
+
+    /**
+     * An event that ends the moment it starts is refused as well. This is the
+     * case that tells {@code isAfter} from "not before", which would let it in.
+     */
+    @Test
+    public void constructor_endSameAsStart_exceptionThrown() {
+        assertThrows(PiplupBotException.class, () ->
+                new Event("meeting", "2019-10-02 1400", "2019-10-02 1400"));
+    }
+
+    /** The smallest gap the bot can store is enough, so the rule is not stricter than it says. */
+    @Test
+    public void constructor_endOneMinuteAfterStart_accepted() throws PiplupBotException {
+        assertEquals("[E][ ] meeting (from: Oct 2 2019 02:00 PM to: Oct 2 2019 02:01 PM)",
+                new Event("meeting", "2019-10-02 1400", "2019-10-02 1401").toString());
+    }
+
+    /**
+     * The message shows both times as the bot read them. A date typed without a
+     * time means midnight, which is how a one-day event typed as two bare dates
+     * ends up refused -- and the message is where the user finds that out.
+     */
+    @Test
+    public void constructor_endSameAsStart_messageShowsBothTimes() {
+        PiplupBotException exception = assertThrows(PiplupBotException.class, () ->
+                new Event("trip", "2019-10-02", "2019-10-02"));
+        assertArrayEquals(new String[] {
+            "Pip... An event has to end after it starts.",
+            "This one starts Oct 2 2019 12:00 AM and ends Oct 2 2019 12:00 AM.",
+        }, exception.getMessageLines());
+    }
+
+    // ---------- Telling one event from another ----------
+
+    /**
+     * Two events are the same only if they start and end together. Comparing
+     * just the start -- the date an event is sorted by -- would treat these two
+     * as one.
+     */
+    @Test
+    public void isDuplicateOf_sameStartDifferentEnd_false() throws PiplupBotException {
+        Event shortMeeting = new Event("meeting", "2019-10-02 1400", "2019-10-02 1500");
+        Event longMeeting = new Event("meeting", "2019-10-02 1400", "2019-10-02 1700");
+        assertFalse(shortMeeting.isDuplicateOf(longMeeting));
+    }
+
+    @Test
+    public void isDuplicateOf_sameStartAndEnd_true() throws PiplupBotException {
+        Event meeting = new Event("meeting", "2019-10-02 1400", "2019-10-02 1500");
+        Event sameMeeting = new Event("Meeting", "2019-10-02 14:00", "2/10/2019 1500");
+        assertTrue(meeting.isDuplicateOf(sameMeeting));
     }
 }

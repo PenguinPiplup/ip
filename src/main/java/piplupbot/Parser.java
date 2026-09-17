@@ -73,6 +73,12 @@ public class Parser {
     private static final String TO_SEPARATOR = " /to ";
 
     /**
+     * What a task number looks like: one or more of the digits 0 to 9, and
+     * nothing else -- no sign, and no digits from other writing systems.
+     */
+    private static final String TASK_NUMBER_PATTERN = "[0-9]+";
+
+    /**
      * Reads a whole line and returns the command it asks for, ready to run.
      *
      * <p>The command is built but not carried out, so a line that cannot be
@@ -92,13 +98,18 @@ public class Parser {
      *
      * @param input the whole line the user typed, already trimmed and not empty
      * @return the command the line asks for
-     * @throws PiplupBotException if the line names no command, or names one but
-     *                            is missing or mistaking what should follow it
+     * @throws PiplupBotException if the line holds a control character, names no
+     *                            command, or names one but is missing or
+     *                            mistaking what should follow it
      */
     public static Command parse(String input) throws PiplupBotException {
         assert !input.isBlank() : "parse() was given a blank line: \"" + input + "\"";
         assert input.stripLeading().equals(input)
                 : "parse() expects the leading spaces already removed: \"" + input + "\"";
+
+        // Checked first, because the reply to an unknown command quotes the line
+        // back, and a control character printed to the console can garble it.
+        requirePlainText(input);
 
         CommandWord commandWord = CommandWord.fromInput(input);
         return switch (commandWord) {
@@ -113,6 +124,33 @@ public class Parser {
             case DELETE -> new DeleteCommand(parseTaskNumber(input, commandWord));
             case BYE -> new ExitCommand();
         };
+    }
+
+    /**
+     * Checks that a line holds no control characters, such as a tab, or the
+     * invisible codes some consoles send when an arrow key is pressed.
+     *
+     * <p>Left in, such a character would be stored in a description, where it
+     * prints as garbage -- or moves the cursor -- every time the task is listed.
+     * A tab is also easy to mistake for a space: {@code todo<tab>read book}
+     * would be refused as an unknown command, with no visible reason why.
+     * Refusing the line up front, and saying what is wrong with it, is clearer
+     * than either.</p>
+     *
+     * <p>Neither face can actually deliver a line break, so there is no need to
+     * worry about one splitting a saved task in two: the console reads a line at
+     * a time, and the window's text box strips control characters as they are
+     * typed or pasted.</p>
+     *
+     * @param input the whole line the user typed
+     * @throws PiplupBotException if the line holds a control character
+     */
+    private static void requirePlainText(String input) throws PiplupBotException {
+        if (input.chars().anyMatch(Character::isISOControl)) {
+            throw new PiplupBotException(
+                    "Pip... That line has a tab or another control character in it.",
+                    "Please type it again with plain spaces, and without the arrow keys.");
+        }
     }
 
     /**
@@ -142,7 +180,8 @@ public class Parser {
      * @param input the whole line the user typed
      * @return the task the line describes
      * @throws PiplupBotException if the description or the {@code /by} part is
-     *                            missing, or the date cannot be understood
+     *                            missing, the {@code /by} part is given twice, or
+     *                            the date cannot be understood
      */
     private static Deadline parseDeadline(String input) throws PiplupBotException {
         String[] parts = splitIntoParts(CommandWord.DEADLINE.argumentOf(input),
@@ -159,8 +198,9 @@ public class Parser {
      * @param input the whole line the user typed
      * @return the task the line describes
      * @throws PiplupBotException if the description, the {@code /from} part
-     *                            or the {@code /to} part is missing, or either
-     *                            time cannot be understood
+     *                            or the {@code /to} part is missing, either part
+     *                            is given twice, either time cannot be
+     *                            understood, or the event ends before it starts
      */
     private static Event parseEvent(String input) throws PiplupBotException {
         String[] parts = splitIntoParts(CommandWord.EVENT.argumentOf(input),
@@ -189,7 +229,8 @@ public class Parser {
      * @param separators the separators this command uses, in the order they are
      *                   expected to appear
      * @return one more part than there are separators, each trimmed and not empty
-     * @throws PiplupBotException if a separator is missing or a part is empty
+     * @throws PiplupBotException if a separator is missing or repeated, or a part
+     *                            is empty
      */
     private static String[] splitIntoParts(String details, String hint, String... separators)
             throws PiplupBotException {
@@ -201,13 +242,12 @@ public class Parser {
             // Searching from partStart rather than from the start of the line is
             // what puts the separators in order: each is found only after the
             // part it ends, so "event lunch /to dinner /from ... /to ..." keeps
-            // the first "/to" as ordinary text. It also means only the first
-            // occurrence of a separator counts, so a second "/by" stays part of
-            // the date rather than starting a field the command has no room for.
+            // the first "/to" as ordinary text.
             int separator = details.indexOf(separators[i], partStart);
             if (separator < 0) {
                 throw new PiplupBotException(hint);
             }
+            requireNoRepeat(details, separators[i], separator);
             parts[i] = details.substring(partStart, separator).trim();
             partStart = separator + separators[i].length();
         }
@@ -218,6 +258,33 @@ public class Parser {
             throw new PiplupBotException(hint);
         }
         return parts;
+    }
+
+    /**
+     * Checks that a separator does not appear again after the place it was
+     * found, as the second {@code /by} does in
+     * {@code deadline return book /by 2019-10-15 1800 /by 2019-10-16 1800}.
+     *
+     * <p>A second copy is most likely a part typed twice. Without this check it
+     * would be swallowed into the part the first copy opens, and the user would
+     * be told that {@code 2019-10-15 1800 /by 2019-10-16 1800} is not a date --
+     * true, but little help in finding what to fix.</p>
+     *
+     * <p>The search starts one character after the first copy rather than at its
+     * end, so two copies sharing the space between them, as in
+     * {@code " /by /by "}, still count as two.</p>
+     *
+     * @param details   everything the user typed after the command word
+     * @param separator the separator that was found, e.g. {@code " /by "}
+     * @param position  where in {@code details} it was found
+     * @throws PiplupBotException if the separator appears again further on
+     */
+    private static void requireNoRepeat(String details, String separator, int position)
+            throws PiplupBotException {
+        if (details.indexOf(separator, position + 1) >= 0) {
+            throw new PiplupBotException(
+                    "Pip... Please give the " + separator.trim() + " part only once.");
+        }
     }
 
     /**
@@ -291,22 +358,33 @@ public class Parser {
      * @param input       the whole line the user typed
      * @param commandWord the command the line names
      * @return the number typed after the command word
-     * @throws PiplupBotException if what follows the command word is not a number
+     * @throws PiplupBotException if what follows the command word is not a whole
+     *                            number written with the digits 0 to 9 alone
      */
     private static int parseTaskNumber(String input, CommandWord commandWord)
             throws PiplupBotException {
         // Everything after the command word should be the task number.
         // argumentOf() copes with the word on its own, e.g. a bare "mark", which
-        // leaves an empty argument that parseInt rejects like any other non-number.
+        // leaves an empty argument that the check below rejects like any other
+        // non-number.
         String argument = commandWord.argumentOf(input);
+        String hint = "Pip... Please give me a task number, e.g. " + commandWord.getKeyword() + " 2.";
+
+        // parseInt on its own is too forgiving: it accepts "+1", "-1", and digits
+        // from other writing systems, such as Arabic-Indic ones. None of those is
+        // how list shows a task number, so only plain digits are let through.
+        if (!argument.matches(TASK_NUMBER_PATTERN)) {
+            throw new PiplupBotException(hint);
+        }
 
         try {
             return Integer.parseInt(argument);
         } catch (NumberFormatException e) {
-            // Translate Java's own exception into the bot's own kind, so that the
-            // main loop has just one kind of error to report.
-            throw new PiplupBotException(
-                    "Pip... Please give me a task number, e.g. " + commandWord.getKeyword() + " 2.");
+            // Only digits get this far, so the number is too large for an int --
+            // more tasks than any list could hold. Java's own exception is
+            // translated into the bot's own kind, so that the main loop has just
+            // one kind of error to report.
+            throw new PiplupBotException(hint);
         }
     }
 }

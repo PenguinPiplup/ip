@@ -37,15 +37,20 @@ public class TaskListTest {
      * Builds a list holding the given descriptions as todos, so each test can
      * say what it is about rather than how to set itself up.
      *
-     * @param descriptions what each task is, in the order they are added
+     * <p>The todos go to the constructor rather than through
+     * {@link TaskList#add}, so setting up a list cannot fail, and the many cases
+     * that only read from one need not declare the exception {@code add} may
+     * throw. The cases about adding call {@code add} themselves.</p>
+     *
+     * @param descriptions what each task is, in the order they are stored
      * @return a list holding one todo per description
      */
     private static TaskList listOfTodos(String... descriptions) {
-        TaskList tasks = new TaskList();
+        ArrayList<Task> todos = new ArrayList<>();
         for (String description : descriptions) {
-            tasks.add(new Todo(description));
+            todos.add(new Todo(description));
         }
-        return tasks;
+        return new TaskList(todos);
     }
 
     /**
@@ -68,8 +73,95 @@ public class TaskListTest {
     }
 
     @Test
-    public void add_severalTasks_sizeCountsThemAll() {
-        assertEquals(3, listOfTodos("a", "b", "c").size());
+    public void add_severalTasks_sizeCountsThemAll() throws PiplupBotException {
+        TaskList tasks = new TaskList();
+        tasks.add(new Todo("a"));
+        tasks.add(new Todo("b"));
+        tasks.add(new Todo("c"));
+        assertEquals(3, tasks.size());
+    }
+
+    // ---------- Refusing a task the list already holds ----------
+
+    /**
+     * The guard the duplicate check exists for: the same task typed twice is
+     * refused, and the list keeps only the first copy.
+     */
+    @Test
+    public void add_sameTaskTwice_exceptionThrownAndListUnchanged() throws PiplupBotException {
+        TaskList tasks = new TaskList();
+        tasks.add(new Deadline("return book", "2019-10-15 1800"));
+
+        assertThrows(PiplupBotException.class, () ->
+                tasks.add(new Deadline("return book", "2019-10-15 1800")));
+        assertEquals(1, tasks.size());
+    }
+
+    /**
+     * The refusal shows the stored copy with the number {@code list} gives it.
+     * The copy is the second of two, so a message that always said 1 -- or
+     * that counted from 0 -- would fail.
+     */
+    @Test
+    public void add_sameTaskTwice_messageShowsStoredTaskWithItsNumber() {
+        TaskList tasks = listOfTodos("write notes", "read book");
+
+        PiplupBotException exception = assertThrows(PiplupBotException.class, () ->
+                tasks.add(new Todo("read book")));
+        assertArrayEquals(new String[] {
+            "Pip... You already have this task in your list:",
+            "  2.[T][ ] read book",
+        }, exception.getMessageLines());
+    }
+
+    /**
+     * Capitals are ignored when comparing descriptions. Comparing them exactly
+     * is the more obvious code, so this case is what keeps "Read Book" from
+     * slipping in beside "read book".
+     */
+    @Test
+    public void add_sameTaskInOtherCapitals_exceptionThrown() {
+        TaskList tasks = listOfTodos("read book");
+        assertThrows(PiplupBotException.class, () -> tasks.add(new Todo("Read Book")));
+    }
+
+    /**
+     * The done status is ignored too: finishing a task does not make a second
+     * copy of it welcome. Comparing the saved fields whole would include the
+     * done flag, and this case would then fail.
+     */
+    @Test
+    public void add_sameTaskAsADoneOne_exceptionThrown() throws PiplupBotException {
+        TaskList tasks = listOfTodos("read book");
+        tasks.get(1).markAsDone();
+        assertThrows(PiplupBotException.class, () -> tasks.add(new Todo("read book")));
+    }
+
+    /**
+     * Only the same details make a duplicate, so a description may be reused
+     * with any other kind of task or any other time. The last event starts with
+     * the first one and ends later: comparing only the dates a task is sorted by
+     * would wrongly refuse it.
+     */
+    @Test
+    public void add_sameDescriptionWithOtherDetails_accepted() throws PiplupBotException {
+        TaskList tasks = new TaskList();
+        tasks.add(new Todo("team meeting"));
+        tasks.add(new Deadline("team meeting", "2019-10-02 1400"));
+        tasks.add(new Event("team meeting", "2019-10-02 1400", "2019-10-02 1600"));
+        tasks.add(new Event("team meeting", "2019-10-09 1400", "2019-10-09 1600"));
+        tasks.add(new Event("team meeting", "2019-10-02 1400", "2019-10-02 1700"));
+        assertEquals(5, tasks.size());
+    }
+
+    /**
+     * The constructor takes the tasks as they are, repeats included, because
+     * they come from the save file: a repeat there was typed in by hand, and
+     * dropping it without a word could lose the one copy that was done.
+     */
+    @Test
+    public void constructor_givenRepeatedTasks_keepsThemAll() {
+        assertEquals(2, listOfTodos("read book", "read book").size());
     }
 
     // ---------- Reading a task by the number the user sees ----------
@@ -291,7 +383,7 @@ public class TaskListTest {
      * list, past {@link TaskList#add} and {@link TaskList#remove}.
      */
     @Test
-    public void find_returnedListChanged_storedTasksUnchanged() {
+    public void find_returnedListChanged_storedTasksUnchanged() throws PiplupBotException {
         TaskList tasks = listOfTodos("read book");
 
         TaskList matches = tasks.find("book");

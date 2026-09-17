@@ -65,14 +65,36 @@ public class TaskList {
     }
 
     /**
-     * Adds a task to the end of the list.
-     * It takes a {@code Task} rather than a description, so the same method
-     * works for every kind of task without needing to know which one it got.
+     * Adds a task to the end of the list, unless the list already holds the same
+     * task. It takes a {@code Task} rather than a description, so the same
+     * method works for every kind of task without needing to know which one it
+     * got.
+     *
+     * <p>Duplicates are refused here, rather than by the command that adds, for
+     * the reason task numbers are checked here: this class owns the collection,
+     * so a rule about what it may hold cannot be skipped by a caller that
+     * forgets it. What counts as the same task is {@link Task#isDuplicateOf}'s
+     * question.</p>
+     *
+     * <p>Only adding is checked. The tasks read from the save file go to the
+     * constructor as they are, because a repeat there was typed into the file by
+     * hand, and dropping it would lose whatever set the two copies apart -- one
+     * of them being done, say. {@code delete} is how to remove it.</p>
      *
      * @param task the task to remember
+     * @throws PiplupBotException if the list already holds a task with the same
+     *                            details, whether or not that one is done
      */
-    public void add(Task task) {
+    public void add(Task task) throws PiplupBotException {
         assert task != null : "A null task was added to the list";
+        for (int i = 0; i < tasks.size(); i++) {
+            if (tasks.get(i).isDuplicateOf(task)) {
+                // Showing the stored task with its number, as list would, says
+                // which one it is and what to type to act on it.
+                throw new PiplupBotException("Pip... You already have this task in your list:",
+                        "  " + toNumberedLine(i));
+            }
+        }
         tasks.add(task);
     }
 
@@ -190,9 +212,22 @@ public class TaskList {
     public String[] toNumberedLines() {
         String[] lines = new String[tasks.size()];
         for (int i = 0; i < tasks.size(); i++) {
-            lines[i] = (i + 1) + "." + tasks.get(i);
+            lines[i] = toNumberedLine(i);
         }
         return lines;
+    }
+
+    /**
+     * Returns one stored task with its number in front, e.g.
+     * {@code "2.[T][ ] read book"}.
+     * {@link #toNumberedLines()} and the duplicate check in {@link #add} both
+     * show a task this way, so the layout is written once for the two.
+     *
+     * @param index where the task is in the list, counting from 0
+     * @return the task's number, counting from 1, followed by the task itself
+     */
+    private String toNumberedLine(int index) {
+        return (index + 1) + "." + tasks.get(index);
     }
 
     /**

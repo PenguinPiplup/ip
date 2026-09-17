@@ -34,9 +34,10 @@ import piplupbot.task.TaskList;
  * <p>The rules that are easiest to break by accident are the ones about where a
  * separator is looked for. {@code /by}, {@code /from} and {@code /to} are
  * matched surrounded by spaces, so a description may contain those very
- * characters; and {@code /to} is looked for only after {@code /from}, so the two
- * cannot be read in the wrong order. Both are invisible in ordinary use and
- * would be lost by "simplifying" the search.</p>
+ * characters; {@code /to} is looked for only after {@code /from}, so the two
+ * cannot be read in the wrong order; and a separator given twice is refused. All
+ * three are invisible in ordinary use and would be lost by "simplifying" the
+ * search.</p>
  *
  * <p>A command deliberately keeps to itself what it was built from, so a
  * successful parse is checked by carrying the command out and looking at the
@@ -195,22 +196,53 @@ public class ParserTest {
     }
 
     /**
-     * Only the first occurrence of a separator is the separator; everything
-     * after it, a second {@code /by} included, belongs to the part it opens.
+     * A separator typed twice is refused by name. Before this check, the second
+     * {@code /by} was swallowed into the date, and the user was told only that
+     * {@code 2019-10-15 1800 /by 2019-10-16 1800} is not a date -- true, but
+     * little help in finding the mistake.
      *
-     * <p>This has its own case because {@link Parser} now finds every separator
-     * of every command through one shared method. A change there -- taking the
-     * last {@code /by} rather than the first, say, to be "more forgiving" --
-     * would move this line from refused to accepted, and would do the same to
-     * {@code /from} and {@code /to} without either being edited. The date quoted
-     * back to the user is what shows where the line was actually cut.</p>
+     * <p>{@link Parser} finds every separator of every command through one
+     * shared method, so the next case checks that the rule reaches
+     * {@code /from} and {@code /to} as well.</p>
      */
     @Test
-    public void parse_deadlineWithRepeatedSeparator_firstSeparatorWins() {
+    public void parse_deadlineWithRepeatedSeparator_messageNamesTheSeparator() {
         PiplupBotException exception = assertThrows(PiplupBotException.class, () ->
                 Parser.parse("deadline return book /by 2019-10-15 1800 /by 2019-10-16 1800"));
-        assertEquals("Pip... I don't understand the date \"2019-10-15 1800 /by 2019-10-16 1800\".",
-                exception.getMessageLines()[0]);
+        assertArrayEquals(new String[] {"Pip... Please give the /by part only once."},
+                exception.getMessageLines());
+    }
+
+    /**
+     * Each of an event's separators is checked for a repeat anywhere after it
+     * -- including after the other separator, which is where a check confined
+     * to one part would miss a second {@code /from}.
+     */
+    @Test
+    public void parse_eventWithRepeatedSeparator_messageNamesTheSeparator() {
+        String event = "event meeting /from 2019-10-02 1400 /to 2019-10-02 1600";
+
+        PiplupBotException repeatedFrom = assertThrows(PiplupBotException.class, () ->
+                Parser.parse(event + " /from 2019-10-02 1500"));
+        assertEquals("Pip... Please give the /from part only once.",
+                repeatedFrom.getMessageLines()[0]);
+
+        PiplupBotException repeatedTo = assertThrows(PiplupBotException.class, () ->
+                Parser.parse(event + " /to 2019-10-02 1700"));
+        assertEquals("Pip... Please give the /to part only once.",
+                repeatedTo.getMessageLines()[0]);
+    }
+
+    /**
+     * Two copies sharing the one space between them are still two copies. A
+     * search for the second that began after the end of the first would miss
+     * them, because that space would already be used up.
+     */
+    @Test
+    public void parse_separatorRepeatedWithOneSpaceBetween_exceptionThrown() {
+        PiplupBotException exception = assertThrows(PiplupBotException.class, () ->
+                Parser.parse("deadline return book /by /by 2019-10-15 1800"));
+        assertEquals("Pip... Please give the /by part only once.", exception.getMessageLines()[0]);
     }
 
     // ---------- Lines that are missing something ----------
@@ -285,6 +317,43 @@ public class ParserTest {
     public void parse_taskNumberNotANumber_exceptionThrown() {
         assertThrows(PiplupBotException.class, () -> Parser.parse("mark two"));
         assertThrows(PiplupBotException.class, () -> Parser.parse("delete 1 2"));
+    }
+
+    /**
+     * {@code Integer.parseInt} accepts a sign, and digits from other writing
+     * systems, none of which is how {@code list} numbers a task. Without the
+     * digit check, {@code mark +1} would quietly mark task 1, and none of these
+     * lines would be refused here.
+     */
+    @Test
+    public void parse_taskNumberNotPlainDigits_exceptionThrown() {
+        assertThrows(PiplupBotException.class, () -> Parser.parse("mark +1"));
+        assertThrows(PiplupBotException.class, () -> Parser.parse("unmark -1"));
+        // U+0661 is the Arabic-Indic digit one, which parseInt reads as 1.
+        assertThrows(PiplupBotException.class, () -> Parser.parse("delete \u0661"));
+    }
+
+    /**
+     * Leading zeros are still plain digits, so the digit check must not be
+     * written so strictly that it refuses {@code mark 01}.
+     */
+    @Test
+    public void parse_taskNumberWithLeadingZero_accepted() throws PiplupBotException {
+        assertArrayEquals(new String[] {"1.[T][X] read book"},
+                listAfter("todo read book", "mark 01").toNumberedLines());
+    }
+
+    /**
+     * A number too large for an {@code int} passes the digit check, so it is
+     * {@code parseInt} that refuses it. The catch around that call is what turns
+     * the refusal into a reply rather than a crash.
+     */
+    @Test
+    public void parse_taskNumberTooLarge_messageAsksForANumber() {
+        PiplupBotException exception =
+                assertThrows(PiplupBotException.class, () -> Parser.parse("mark 99999999999"));
+        assertArrayEquals(new String[] {"Pip... Please give me a task number, e.g. mark 2."},
+                exception.getMessageLines());
     }
 
     /**
@@ -427,5 +496,35 @@ public class ParserTest {
     public void parse_unknownCommand_exceptionThrown() {
         assertThrows(PiplupBotException.class, () -> Parser.parse("blah"));
         assertThrows(PiplupBotException.class, () -> Parser.parse("list now"));
+    }
+
+    // ---------- Characters a line may not hold ----------
+
+    /**
+     * A tab looks like a space but is not one, so a line holding one is refused
+     * with the reason. The check comes before the command word is matched: a
+     * tab straight after {@code todo} would otherwise be answered with "I don't
+     * know what ... means", quoting the tab back, which the message checked
+     * here rules out.
+     */
+    @Test
+    public void parse_lineWithTab_messageNamesTheProblem() {
+        PiplupBotException exception =
+                assertThrows(PiplupBotException.class, () -> Parser.parse("todo\tread book"));
+        assertArrayEquals(new String[] {
+            "Pip... That line has a tab or another control character in it.",
+            "Please type it again with plain spaces, and without the arrow keys.",
+        }, exception.getMessageLines());
+    }
+
+    /**
+     * Inside a description, a control character would otherwise be stored. An
+     * arrow key pressed in some consoles types ESC followed by {@code [A}, which
+     * would then move the cursor every time the task was listed.
+     */
+    @Test
+    public void parse_descriptionWithControlCharacter_exceptionThrown() {
+        assertThrows(PiplupBotException.class, () -> Parser.parse("todo read\tbook"));
+        assertThrows(PiplupBotException.class, () -> Parser.parse("todo read book\u001b[A"));
     }
 }

@@ -52,7 +52,8 @@ import piplupbot.task.Todo;
  * <p>Because the file is ordinary text that anything on the machine can edit,
  * move or damage, reading it is written defensively: a file that is missing,
  * empty, unreadable or partly nonsense must still leave the bot usable, and must
- * never be thrown away without a copy being kept first.</p>
+ * never be thrown away without a copy being kept first. Writing is careful in
+ * the same way: a save that fails part-way leaves the previous file whole.</p>
  */
 public class Storage {
     /**
@@ -95,6 +96,12 @@ public class Storage {
     /** Where a task's own fields begin, after the shared three. */
     private static final int EXTRA_FIELDS_INDEX = SHARED_FIELD_COUNT;
 
+    /**
+     * The invisible character that some editors, such as older versions of
+     * Notepad, put at the very start of a file they save as UTF-8.
+     */
+    private static final String BYTE_ORDER_MARK = "\uFEFF";
+
     /** Where the tasks are kept, as chosen by whoever created this object. */
     private final Path filePath;
 
@@ -103,8 +110,16 @@ public class Storage {
      * overwrites it. Without this, one damaged line would be destroyed by the
      * very next command the user typed. It is worked out once, in the
      * constructor, so the rescue copy always lands beside the file it came from.
+     * If a different copy already has this name, a numbered name is used
+     * instead; see {@link #chooseRescuePath}.
      */
     private final Path damagedPath;
+
+    /**
+     * Where a save is written before it takes the save file's place, so that a
+     * save that fails part-way never leaves the save file half-written.
+     */
+    private final Path tempPath;
 
     /**
      * What a load produced: the tasks, and anything the user should be told
@@ -149,6 +164,7 @@ public class Storage {
         // in the same directory, so the two are obviously a pair.
         this.damagedPath =
                 this.filePath.resolveSibling(this.filePath.getFileName() + ".damaged");
+        this.tempPath = this.filePath.resolveSibling(this.filePath.getFileName() + ".tmp");
         assert !this.damagedPath.equals(this.filePath)
                 : "The rescue copy would overwrite the save file: " + this.filePath;
     }
@@ -188,11 +204,35 @@ public class Storage {
             // is shared between machines or compared against a recorded copy.
             // An empty list writes an empty file, not a file holding one blank line.
             String text = lines.isEmpty() ? "" : String.join("\n", lines) + "\n";
-            Files.writeString(filePath, text);
+
+            // The new contents are written beside the save file first, and moved
+            // into its place only once they are complete. Writing straight over
+            // the save file would empty it the moment writing began, so a full
+            // disk or a crash part-way through would lose every task. ATOMIC_MOVE
+            // asks for the swap to happen in a single step, so at any moment the
+            // save file is either the whole old version or the whole new one.
+            Files.writeString(tempPath, text);
+            Files.move(tempPath, filePath, StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException e) {
+            deleteIfPossible(tempPath);
             throw new PiplupBotException(
                     "I could not save your tasks to " + displayPath(filePath) + " (" + e + ").",
                     "Your change is in this session only, and will be lost when I close.");
+        }
+    }
+
+    /**
+     * Removes what a failed save left behind, if anything.
+     * A failure to remove it is not reported: what the user needs to hear is
+     * that the save failed, and the next save overwrites the file anyway.
+     *
+     * @param path the file to remove, which may not exist
+     */
+    private static void deleteIfPossible(Path path) {
+        try {
+            Files.deleteIfExists(path);
+        } catch (IOException e) {
+            // Nothing more can be done; the save's own failure is being reported.
         }
     }
 
@@ -206,6 +246,10 @@ public class Storage {
      * cases the bot is about to overwrite what it could not understand, so the
      * file is copied aside first and the user is told both what was lost and
      * where the copy is.</p>
+     *
+     * <p>Two things a text editor may add are not damage, because no task is
+     * lost by dropping them: a byte order mark at the start of the file, and
+     * blank lines. Both are passed over without a word.</p>
      *
      * @return the tasks that were read, together with anything the user should
      *         be told about the file
@@ -221,7 +265,11 @@ public class Storage {
 
         List<String> lines;
         try {
-            lines = Files.readAllLines(filePath);
+            // Read as one piece rather than line by line, so that a byte order
+            // mark can be dropped before the text is split. Left in, it would
+            // stick to the first task's type code and make that line unreadable.
+            // String.lines() splits exactly where Files.readAllLines() would.
+            lines = stripByteOrderMark(Files.readString(filePath)).lines().toList();
         } catch (IOException e) {
             // The file is there but cannot be read at all: the wrong permissions,
             // a directory in its place, or bytes that are not text.
@@ -233,6 +281,11 @@ public class Storage {
 
         int skipped = 0;
         for (String line : lines) {
+            if (line.isBlank()) {
+                // A blank line holds no task, so passing over it loses nothing,
+                // and warning about it would only raise a false alarm.
+                continue;
+            }
             try {
                 tasks.add(parseTask(line));
             } catch (PiplupBotException e) {
@@ -272,13 +325,69 @@ public class Storage {
         }
 
         try {
-            Files.copy(filePath, damagedPath, StandardCopyOption.REPLACE_EXISTING);
-            return "I have kept the file as it was in " + displayPath(damagedPath) + ".";
+            Path rescuePath = chooseRescuePath();
+            // The path chosen may already hold this very file -- the bot started
+            // twice on the same damage -- and then there is nothing to copy.
+            if (!Files.exists(rescuePath)) {
+                Files.copy(filePath, rescuePath);
+            }
+            return "I have kept the file as it was in " + displayPath(rescuePath) + ".";
         } catch (IOException e) {
             // Even the copy failed. Say so plainly rather than implying a safety
             // net that is not there.
             return "I could not keep a copy of it (" + e + "), so please back it up yourself.";
         }
+    }
+
+    /**
+     * Returns where to keep the copy of a damaged save file:
+     * {@code piplupbot.txt.damaged} if that name is free, or else the first free
+     * name among {@code piplupbot.txt.damaged-2}, {@code piplupbot.txt.damaged-3}
+     * and so on. A name that already holds exactly the same contents is used
+     * again, rather than being skipped.
+     *
+     * <p>Always copying to the one name would replace the copy an earlier
+     * damaged start took, and that copy may be the only record of tasks the user
+     * has not yet typed back in. So an existing copy is never overwritten. The
+     * cost is one file per different damaged version, left for the user to tidy
+     * away.</p>
+     *
+     * @return a path that is free, or that already holds a copy of the save file
+     * @throws IOException if an existing copy cannot be compared with the save file
+     */
+    private Path chooseRescuePath() throws IOException {
+        Path candidate = damagedPath;
+        int copyNumber = 1;
+        while (Files.exists(candidate) && !holdsSameContents(candidate)) {
+            copyNumber++;
+            candidate = damagedPath.resolveSibling(damagedPath.getFileName() + "-" + copyNumber);
+        }
+        return candidate;
+    }
+
+    /**
+     * Reports whether a file holds exactly the same bytes as the save file.
+     *
+     * @param path the file to compare with the save file
+     * @return {@code true} if it is an ordinary file whose bytes all match
+     * @throws IOException if either file cannot be read
+     */
+    private boolean holdsSameContents(Path path) throws IOException {
+        // Files.mismatch() gives the position of the first difference, or -1 if
+        // it finds none. A folder by that name is never the same, and cannot be
+        // compared at all, so it is ruled out first.
+        return Files.isRegularFile(path) && Files.mismatch(path, filePath) == -1L;
+    }
+
+    /**
+     * Returns the text without the byte order mark some editors put at its
+     * start, or unchanged if it has none.
+     *
+     * @param text the whole save file, as read
+     * @return the same text, minus a byte order mark at the start
+     */
+    private static String stripByteOrderMark(String text) {
+        return text.startsWith(BYTE_ORDER_MARK) ? text.substring(BYTE_ORDER_MARK.length()) : text;
     }
 
     /**
@@ -404,9 +513,10 @@ public class Storage {
      * without them a hand-edited line could produce a task with no description,
      * or a deadline with no date, which no command would ever let a user create.
      * The dates themselves are checked by the {@link Deadline} and {@link Event}
-     * constructors, which reject a date they cannot read with the same
-     * {@link PiplupBotException} the checks here throw -- so a damaged date is
-     * skipped along with every other kind of damaged line.</p>
+     * constructors, which reject a date they cannot read -- or an event that
+     * ends before it starts -- with the same {@link PiplupBotException} the
+     * checks here throw, so a damaged date is skipped along with every other
+     * kind of damaged line.</p>
      *
      * @param line one line of the save file
      * @return the task the line describes

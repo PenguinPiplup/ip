@@ -1,6 +1,7 @@
 package piplupbot.command;
 
 import piplupbot.Parser;
+import piplupbot.PiplupBotException;
 import piplupbot.Storage;
 import piplupbot.Ui;
 import piplupbot.task.Deadline;
@@ -41,9 +42,13 @@ public class AddCommand extends Command {
      * the same three lines serve a todo, a deadline and an event alike -- by the
      * time this runs, which kind was typed has already been settled by
      * {@link Parser}.</p>
+     *
+     * <p>A task the list already holds is refused by {@link TaskList#add}
+     * before anything is said, so no confirmation is shown and nothing is
+     * saved.</p>
      */
     @Override
-    public void execute(TaskList tasks, Ui ui, Storage storage) {
+    public void execute(TaskList tasks, Ui ui, Storage storage) throws PiplupBotException {
         tasks.add(task);
         ui.show("Piplup! I've tucked this task under my wing:",
                 "  " + task,

@@ -1,6 +1,7 @@
 package piplupbot.task;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import piplupbot.PiplupBotException;
@@ -57,6 +58,16 @@ public class Deadline extends Task {
     @Override
     Optional<LocalDateTime> getSortDateTime() {
         return Optional.of(by);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @return the due date, on its own
+     */
+    @Override
+    List<LocalDateTime> getDateTimes() {
+        return List.of(by);
     }
 
     /**

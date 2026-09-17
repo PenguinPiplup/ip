@@ -104,6 +104,12 @@ public final class DateTimes {
      * throwing. Failing to match is therefore expected here and is not an error:
      * only running out of layouts to try is.</p>
      *
+     * <p>Every layout has exactly one space between the day and the time, while
+     * a person may well type two. So each run of spaces is turned into a single
+     * one before the layouts are tried, and {@code 2019-10-15  1800} is read
+     * like {@code 2019-10-15 1800}. What the user typed is still what an error
+     * quotes back, so that they can recognise it.</p>
+     *
      * @param text the date as written, with or without surrounding spaces
      * @return the date and time it names
      * @throws PiplupBotException if no accepted layout matches, so that the
@@ -112,10 +118,11 @@ public final class DateTimes {
      */
     public static LocalDateTime parse(String text) throws PiplupBotException {
         String trimmed = text.trim();
+        String singleSpaced = trimmed.replaceAll("\\s+", " ");
 
         for (DateTimeFormatter format : DATE_TIME_FORMATS) {
             try {
-                return LocalDateTime.parse(trimmed, format);
+                return LocalDateTime.parse(singleSpaced, format);
             } catch (DateTimeParseException e) {
                 // Not this layout; try the next one.
             }
@@ -123,7 +130,7 @@ public final class DateTimes {
 
         for (DateTimeFormatter format : DATE_FORMATS) {
             try {
-                return LocalDate.parse(trimmed, format).atStartOfDay();
+                return LocalDate.parse(singleSpaced, format).atStartOfDay();
             } catch (DateTimeParseException e) {
                 // Not this layout either.
             }

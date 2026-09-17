@@ -1,6 +1,7 @@
 package piplupbot.task;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import piplupbot.PiplupBotException;
@@ -25,16 +26,32 @@ public class Event extends Task {
     /**
      * Creates an event that is not done yet.
      *
+     * <p>The event must end after it starts. That is checked here rather than
+     * where the typed line is read, so that an event loaded from the save file is
+     * held to the same rule: a hand-edited line that breaks it is skipped as
+     * damaged, like any other line no command could have produced. Ending at the
+     * very moment it starts is refused too -- an event that takes no time at all
+     * is far more likely to be a mistyped time than a plan.</p>
+     *
      * @param description what the task is
      * @param from        when it starts, in any of the layouts {@link DateTimes}
      *                    accepts
-     * @param to          when it ends, in the same layouts
-     * @throws PiplupBotException if either time is not a date this bot understands
+     * @param to          when it ends, in the same layouts; later than {@code from}
+     * @throws PiplupBotException if either time is not a date this bot
+     *                            understands, or the event does not end after it
+     *                            starts
      */
     public Event(String description, String from, String to) throws PiplupBotException {
         super(description);
         this.from = DateTimes.parse(from);
         this.to = DateTimes.parse(to);
+        if (!this.to.isAfter(this.from)) {
+            // Both times are shown as the bot understood them, since a date typed
+            // without a time means midnight -- a reason the user might not guess.
+            throw new PiplupBotException("Pip... An event has to end after it starts.",
+                    "This one starts " + DateTimes.format(this.from)
+                            + " and ends " + DateTimes.format(this.to) + ".");
+        }
     }
 
     /**
@@ -59,6 +76,16 @@ public class Event extends Task {
     @Override
     Optional<LocalDateTime> getSortDateTime() {
         return Optional.of(from);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @return the start, then the end
+     */
+    @Override
+    List<LocalDateTime> getDateTimes() {
+        return List.of(from, to);
     }
 
     /**

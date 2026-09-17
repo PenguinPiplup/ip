@@ -3,6 +3,7 @@ package piplupbot;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -33,7 +34,8 @@ import piplupbot.task.Todo;
  * uses. The second is what happens when the file is not what the bot wrote --
  * hand-edited, truncated, or left by an older version. None of those may stop
  * the bot starting, and none may be overwritten without a copy being kept
- * first.</p>
+ * first. A third, smaller group checks that a save which fails leaves the
+ * previous file as it was.</p>
  *
  * <p>Every case works inside a folder JUnit creates and deletes for it, so no
  * test can read or damage the real save file.</p>
@@ -217,6 +219,51 @@ public class StorageTest {
         assertTrue(Files.exists(nested));
     }
 
+    // ---------- A save that goes wrong ----------
+
+    /**
+     * A save is written to a temporary file and then moved into place, so after
+     * one that works, the save file is all that is left.
+     */
+    @Test
+    public void save_successfulSave_leavesNoTemporaryFile() throws Exception {
+        new Storage(saveFile()).save(listOf(new Todo("read book")));
+
+        assertFalse(Files.exists(tempDir.resolve("piplupbot.txt.tmp")));
+    }
+
+    /**
+     * A write that fails must not cost the tasks already saved. A full disk
+     * cannot be arranged in a test, so a folder is put where the temporary file
+     * goes, which makes writing it fail. Writing straight over the save file, as
+     * this class used to, would never touch that folder -- the save would
+     * succeed, and this case would fail.
+     */
+    @Test
+    public void save_writeFails_leavesTheOldFileIntact() throws Exception {
+        writeSaveFile("T | 0 | read book\n");
+        Files.createDirectory(tempDir.resolve("piplupbot.txt.tmp"));
+
+        assertThrows(PiplupBotException.class, () ->
+                new Storage(saveFile()).save(listOf(new Todo("write notes"))));
+        assertEquals("T | 0 | read book\n", Files.readString(saveFile()));
+    }
+
+    /**
+     * When the move into place is what fails -- here because a folder stands
+     * where the save file should be -- the finished temporary file is removed
+     * rather than left beside the save file, and the folder is left alone.
+     */
+    @Test
+    public void save_moveFails_exceptionThrownAndTemporaryFileRemoved() throws Exception {
+        Files.createDirectory(saveFile());
+
+        assertThrows(PiplupBotException.class, () ->
+                new Storage(saveFile()).save(listOf(new Todo("read book"))));
+        assertFalse(Files.exists(tempDir.resolve("piplupbot.txt.tmp")));
+        assertTrue(Files.isDirectory(saveFile()));
+    }
+
     // ---------- Reading a file that is missing or empty ----------
 
     /** A missing file is what the very first run sees, and is not a problem. */
@@ -236,6 +283,60 @@ public class StorageTest {
         Storage.LoadResult loaded = new Storage(saveFile()).load();
 
         assertTrue(loaded.tasks().isEmpty());
+        assertFalse(loaded.hasWarning());
+    }
+
+    // ---------- What a text editor may add ----------
+
+    /**
+     * Blank lines hold no task, so they are passed over without a warning. A
+     * warning would send the user looking for a loss that never happened, and
+     * leave a pointless rescue copy behind.
+     */
+    @Test
+    public void load_blankLines_skippedWithoutWarning() throws Exception {
+        writeSaveFile("\nT | 0 | read book\n   \n\nT | 0 | write notes\n\n");
+
+        Storage.LoadResult loaded = new Storage(saveFile()).load();
+
+        assertArrayEquals(new String[] {"1.[T][ ] read book", "2.[T][ ] write notes"},
+                new TaskList(loaded.tasks()).toNumberedLines());
+        assertFalse(loaded.hasWarning());
+        assertFalse(Files.exists(tempDir.resolve("piplupbot.txt.damaged")));
+    }
+
+    /**
+     * Some editors start a UTF-8 file with an invisible byte order mark. Left
+     * in, it would stick to the first type code, and the first task would be
+     * skipped as damaged.
+     */
+    @Test
+    public void load_fileStartingWithByteOrderMark_readsTheFirstTask() throws Exception {
+        writeSaveFile("\uFEFFT | 1 | read book\nT | 0 | write notes\n");
+
+        Storage.LoadResult loaded = new Storage(saveFile()).load();
+
+        assertArrayEquals(new String[] {"1.[T][X] read book", "2.[T][ ] write notes"},
+                new TaskList(loaded.tasks()).toNumberedLines());
+        assertFalse(loaded.hasWarning());
+    }
+
+    /**
+     * A file saved by a Windows editor ends each line with a carriage return and
+     * a line feed. The pair must be read as one line break; splitting on the
+     * line feed alone would leave the carriage return at the end of each task's
+     * last field.
+     */
+    @Test
+    public void load_windowsLineEndings_readsEveryTask() throws Exception {
+        writeSaveFile("T | 0 | read book\r\nD | 0 | return book | 2019-10-15T18:00\r\n");
+
+        Storage.LoadResult loaded = new Storage(saveFile()).load();
+
+        assertArrayEquals(new String[] {
+            "1.[T][ ] read book",
+            "2.[D][ ] return book (by: Oct 15 2019 06:00 PM)",
+        }, new TaskList(loaded.tasks()).toNumberedLines());
         assertFalse(loaded.hasWarning());
     }
 
@@ -318,6 +419,60 @@ public class StorageTest {
         assertFalse(Files.exists(tempDir.resolve("piplupbot.txt.damaged")));
     }
 
+    /**
+     * A second damaged start must not replace the copy the first one took,
+     * which may be the only record of tasks the user has not yet typed back in.
+     * The new copy takes the next free name, and the user is told which.
+     */
+    @Test
+    public void load_differentDamageLater_keepsTheEarlierCopy() throws Exception {
+        writeSaveFile("T | 0 | read book\nfirst damage\n");
+        new Storage(saveFile()).load();
+        writeSaveFile("T | 0 | read book\nsecond damage\n");
+
+        String[] warning = new Storage(saveFile()).load().warningLines();
+
+        assertEquals("T | 0 | read book\nfirst damage\n",
+                Files.readString(tempDir.resolve("piplupbot.txt.damaged")));
+        assertEquals("T | 0 | read book\nsecond damage\n",
+                Files.readString(tempDir.resolve("piplupbot.txt.damaged-2")));
+        assertTrue(warning[2].endsWith("piplupbot.txt.damaged-2."),
+                "The user should be told where the new copy is, but was told: " + warning[2]);
+    }
+
+    /**
+     * Starting twice on the same damaged file, with no command in between to
+     * overwrite it, points at the copy already taken instead of making another
+     * identical one.
+     */
+    @Test
+    public void load_sameDamageTwice_reusesTheCopy() throws Exception {
+        writeSaveFile("T | 0 | read book\nnonsense\n");
+        new Storage(saveFile()).load();
+
+        String[] warning = new Storage(saveFile()).load().warningLines();
+
+        assertFalse(Files.exists(tempDir.resolve("piplupbot.txt.damaged-2")));
+        assertTrue(warning[2].endsWith("piplupbot.txt.damaged."),
+                "The user should be pointed at the existing copy, but was told: " + warning[2]);
+    }
+
+    /**
+     * A folder that happens to have the rescue copy's name is stepped over.
+     * Comparing its contents with the save file is not possible, and without
+     * the check that rules folders out first, the attempt would fail and no
+     * copy would be kept at all.
+     */
+    @Test
+    public void load_folderWithTheCopysName_copiesToTheNextName() throws Exception {
+        Files.createDirectory(tempDir.resolve("piplupbot.txt.damaged"));
+        writeSaveFile("nonsense\n");
+
+        new Storage(saveFile()).load();
+
+        assertEquals("nonsense\n", Files.readString(tempDir.resolve("piplupbot.txt.damaged-2")));
+    }
+
     // ---------- The particular ways a line can be wrong ----------
 
     /**
@@ -338,6 +493,7 @@ public class StorageTest {
                 + "E | 0 | only one time | 2019-10-02T14:00\n" // an event needs two
                 + "T | 0 | extra | field\n" // a todo has exactly three
                 + "D | 0 | unreadable date | last Tuesday\n" // the date must be a date
+                + "E | 0 | ends first | 2019-10-02T16:00 | 2019-10-02T14:00\n" // end before start
                 + "T | 0 | stray escape \\x\n" // no such escape is ever written
                 + "T | 0 | read book\n"); // the only good line
 
@@ -345,8 +501,8 @@ public class StorageTest {
 
         assertArrayEquals(new String[] {"1.[T][ ] read book"},
                 new TaskList(loaded.tasks()).toNumberedLines());
-        assertTrue(loaded.warningLines()[0].startsWith("I could not understand 10 lines in "),
-                "Expected all ten bad lines to be skipped, but was: " + loaded.warningLines()[0]);
+        assertTrue(loaded.warningLines()[0].startsWith("I could not understand 11 lines in "),
+                "Expected all eleven bad lines to be skipped, but was: " + loaded.warningLines()[0]);
     }
 
     /**

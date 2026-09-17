@@ -42,12 +42,24 @@ public class MarkCommand extends Command {
      * <p>Serves both {@code mark} and {@code unmark}: {@link #isTaskDone}
      * decides the status stored and the wording of the confirmation alike, which
      * is what lets one method answer for the two commands.</p>
+     *
+     * <p>A task that already has the status asked for is refused rather than
+     * confirmed. Nothing would change, so "I've marked this task as done" would
+     * claim work that was never done -- and seeing which task it was may show
+     * that the wrong number was typed.</p>
      */
     @Override
     public void execute(TaskList tasks, Ui ui, Storage storage) throws PiplupBotException {
         // get() refuses a number that names no task, so the lines below can assume
         // there is one; the refusal reaches the user as a reply, not a crash.
         Task task = tasks.get(taskNumber);
+        if (task.isDone() == isTaskDone) {
+            String refusal = isTaskDone
+                    ? "Pip... This task is already marked as done:"
+                    : "Pip... This task is not marked as done yet:";
+            throw new PiplupBotException(refusal, "  " + task);
+        }
+
         if (isTaskDone) {
             task.markAsDone();
         } else {

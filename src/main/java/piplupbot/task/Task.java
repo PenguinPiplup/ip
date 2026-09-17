@@ -116,9 +116,12 @@ public abstract class Task {
      * would tie {@link SortKey#DONE}'s order to that wording, so that a change
      * to the status box would quietly change the sort.
      *
+     * <p>It is public because {@code mark} and {@code unmark} ask it too, to
+     * notice a task that already has the status they were asked to set.</p>
+     *
      * @return {@code true} if the task is done
      */
-    boolean isDone() {
+    public boolean isDone() {
         return isDone;
     }
 
@@ -140,6 +143,43 @@ public abstract class Task {
      */
     Optional<LocalDateTime> getSortDateTime() {
         return Optional.empty();
+    }
+
+    /**
+     * Returns every date this task carries, in the order it shows them.
+     *
+     * <p>A todo has none, so the answer here is an empty list, which every
+     * {@link Todo} inherits. This is not the question
+     * {@link #getSortDateTime()} answers: an event is sorted by its start alone,
+     * but two events are the same event only if they also end together.</p>
+     *
+     * @return the dates, possibly none
+     */
+    List<LocalDateTime> getDateTimes() {
+        return List.of();
+    }
+
+    /**
+     * Reports whether this task and another stand for the same piece of work:
+     * the same kind of task, the same description and the same dates.
+     *
+     * <p>Two differences are ignored on purpose. Capitals are, as they are by
+     * {@code find} and {@code sort name}, because "Read Book" and "read book"
+     * are one task typed two ways. And so is whether either task is done:
+     * finishing a task does not make it a different one, and {@code unmark} is
+     * the way to take up a finished task again.</p>
+     *
+     * <p>This is a method of its own rather than an override of
+     * {@code equals}, which every list and test uses to compare tasks. There,
+     * "equal, although only one of them is done" would be a surprise.</p>
+     *
+     * @param other the task to compare this one with
+     * @return {@code true} if the two tasks have the same details
+     */
+    boolean isDuplicateOf(Task other) {
+        return getType() == other.getType()
+                && description.equalsIgnoreCase(other.description)
+                && getDateTimes().equals(other.getDateTimes());
     }
 
     /**
