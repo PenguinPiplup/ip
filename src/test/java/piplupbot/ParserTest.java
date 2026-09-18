@@ -267,6 +267,15 @@ public class ParserTest {
         assertThrows(PiplupBotException.class, () -> Parser.parse("deadline"));
     }
 
+    @Test
+    public void parse_deadlineWithoutByPart_messageShowsAnExample() {
+        PiplupBotException exception =
+                assertThrows(PiplupBotException.class, () -> Parser.parse("deadline return book"));
+        assertArrayEquals(new String[] {
+            "Pip... A deadline needs a /by part, e.g. deadline return book /by 2019-10-15 1800.",
+        }, exception.getMessageLines());
+    }
+
     /** Both sides of {@code /by} must have something in them. */
     @Test
     public void parse_deadlineMissingOneSideOfSeparator_exceptionThrown() {
@@ -281,6 +290,16 @@ public class ParserTest {
         assertThrows(PiplupBotException.class, () ->
                 Parser.parse("event meeting /to 2019-10-02 1600"));
         assertThrows(PiplupBotException.class, () -> Parser.parse("event meeting"));
+    }
+
+    @Test
+    public void parse_eventMissingASeparator_messageShowsAnExample() {
+        PiplupBotException exception =
+                assertThrows(PiplupBotException.class, () -> Parser.parse("event project meeting"));
+        assertArrayEquals(new String[] {
+            "Pip... An event needs a /from and a /to part, "
+                    + "e.g. event project meeting /from 2019-10-02 1400 /to 2019-10-02 1600.",
+        }, exception.getMessageLines());
     }
 
     @Test
@@ -488,6 +507,18 @@ public class ParserTest {
     public void parse_sortCommand_rearrangesTheStoredList() throws PiplupBotException {
         assertArrayEquals(new String[] {"1.[T][ ] c", "2.[T][ ] b", "3.[T][ ] a"},
                 listAfter("todo c", "todo a", "todo b", "sort name desc").toNumberedLines());
+    }
+
+    /**
+     * Several spaces between the key and the direction do what one does. The
+     * line is split at a run of spaces rather than at a single one; splitting at
+     * one would leave the other spaces in front of {@code desc}, and the
+     * direction would then be refused.
+     */
+    @Test
+    public void parse_sortWithSeveralSpacesBeforeDirection_readsTheDirection() throws PiplupBotException {
+        assertArrayEquals(new String[] {"1.[T][ ] c", "2.[T][ ] b", "3.[T][ ] a"},
+                listAfter("todo c", "todo a", "todo b", "sort name   desc").toNumberedLines());
     }
 
     // ---------- Lines that name no command at all ----------

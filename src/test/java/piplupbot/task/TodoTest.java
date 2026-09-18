@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Locale;
+
 import org.junit.jupiter.api.Test;
 
 /**
@@ -112,6 +114,27 @@ public class TodoTest {
         assertTrue(new Todo("Read Book").descriptionContains("book"));
         assertTrue(new Todo("read book").descriptionContains("BOOK"));
         assertTrue(new Todo("Read Book").descriptionContains("d b"));
+    }
+
+    /**
+     * Capitals are ignored the same way on every machine. The default language
+     * is set to Turkish here, which lower-cases a capital I to a dotless letter,
+     * so lower-casing in the machine's language rather than in
+     * {@code Locale.ROOT} would stop "FILE TAXES" from containing "file".
+     *
+     * <p>The default language is shared by the whole program, so it is put back
+     * in a {@code finally} block, as {@link DateTimesTest} does.</p>
+     */
+    @Test
+    public void descriptionContains_turkishDefaultLocale_stillIgnoresCapitals() {
+        Locale original = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+            assertTrue(new Todo("FILE TAXES").descriptionContains("file"));
+            assertTrue(new Todo("file taxes").descriptionContains("FILE"));
+        } finally {
+            Locale.setDefault(original);
+        }
     }
 
     // ---------- What the save file holds ----------
