@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -264,6 +265,55 @@ public class StorageTest {
         assertTrue(Files.isDirectory(saveFile()));
     }
 
+    /**
+     * A save that fails says which file it could not write, and what that means
+     * for the user's change. Here a file stands where the save file's folder
+     * should be, so the folder cannot be made.
+     *
+     * <p>The path is shown with forward slashes on every operating system, so
+     * the wording is the same wherever the bot runs. On Windows, which writes a
+     * path with backslashes, this case fails if the path is shown as it is.</p>
+     */
+    @Test
+    public void save_writeFails_messageNamesTheFileAndWhatIsLost() throws Exception {
+        Path notAFolder = tempDir.resolve("data");
+        Files.writeString(notAFolder, "a file where the folder should be");
+        Path unwritable = notAFolder.resolve("piplupbot.txt");
+
+        PiplupBotException exception = assertThrows(PiplupBotException.class, () ->
+                new Storage(unwritable).save(listOf(new Todo("read book"))));
+
+        String[] lines = exception.getMessageLines();
+        assertEquals(2, lines.length);
+        String shownPath = "./" + unwritable.toString().replace('\\', '/');
+        assertTrue(lines[0].startsWith("I could not save your tasks to " + shownPath + " ("),
+                "Expected the file to be named with forward slashes, but was: " + lines[0]);
+        assertEquals("Your change is in this session only, and will be lost when I close.", lines[1]);
+    }
+
+    /**
+     * A failed save that cannot clean up after itself still reports the failed
+     * save. A folder with something in it stands where the temporary file goes:
+     * writing there fails, and so does removing the folder. The second failure
+     * is not the one the user needs to hear about, so it must not stop the first
+     * from being reported -- and the folder is left as it was.
+     */
+    @Test
+    public void save_temporaryFileCannotBeRemoved_stillReportsTheFailedSave() throws Exception {
+        writeSaveFile("T | 0 | read book\n");
+        Path temporaryFile = tempDir.resolve("piplupbot.txt.tmp");
+        Files.createDirectory(temporaryFile);
+        Files.writeString(temporaryFile.resolve("inside.txt"), "something");
+
+        PiplupBotException exception = assertThrows(PiplupBotException.class, () ->
+                new Storage(saveFile()).save(listOf(new Todo("write notes"))));
+
+        assertTrue(exception.getMessageLines()[0].startsWith("I could not save your tasks to "),
+                "Expected the failed save to be reported, but was: " + exception.getMessageLines()[0]);
+        assertEquals("T | 0 | read book\n", Files.readString(saveFile()));
+        assertEquals("something", Files.readString(temporaryFile.resolve("inside.txt")));
+    }
+
     // ---------- Reading a file that is missing or empty ----------
 
     /** A missing file is what the very first run sees, and is not a problem. */
@@ -473,6 +523,65 @@ public class StorageTest {
         assertEquals("nonsense\n", Files.readString(tempDir.resolve("piplupbot.txt.damaged-2")));
     }
 
+    /**
+     * A third different damage takes the name after the second. The number is
+     * added to the first copy's name each time, rather than to the name tried
+     * last, which would give {@code piplupbot.txt.damaged-2-3}.
+     */
+    @Test
+    public void load_thirdDifferentDamage_numbersTheCopyFromTheFirstName() throws Exception {
+        writeSaveFile("first damage\n");
+        new Storage(saveFile()).load();
+        writeSaveFile("second damage\n");
+        new Storage(saveFile()).load();
+        writeSaveFile("third damage\n");
+
+        String[] warning = new Storage(saveFile()).load().warningLines();
+
+        assertEquals("third damage\n", Files.readString(tempDir.resolve("piplupbot.txt.damaged-3")));
+        assertTrue(warning[2].endsWith("piplupbot.txt.damaged-3."),
+                "The user should be told where the newest copy is, but was told: " + warning[2]);
+    }
+
+    /**
+     * A copy that already holds the damaged file is used again whatever its
+     * number, not only when it is the first. Here the file is damaged exactly as
+     * it was when the second copy was taken, so no third copy is made.
+     */
+    @Test
+    public void load_damageMatchingTheSecondCopy_reusesThatCopy() throws Exception {
+        writeSaveFile("first damage\n");
+        new Storage(saveFile()).load();
+        writeSaveFile("second damage\n");
+        new Storage(saveFile()).load();
+
+        String[] warning = new Storage(saveFile()).load().warningLines();
+
+        assertFalse(Files.exists(tempDir.resolve("piplupbot.txt.damaged-3")));
+        assertTrue(warning[2].endsWith("piplupbot.txt.damaged-2."),
+                "The user should be pointed at the existing copy, but was told: " + warning[2]);
+    }
+
+    /**
+     * A copy that cannot be made is admitted, rather than promised. A real
+     * cause, such as a full disk, cannot be arranged in a test, so the save file
+     * is given a name 250 characters long. Most file systems allow at most 255
+     * characters in a name, so the copy's name, eight characters longer, is one
+     * no file can have.
+     */
+    @Test
+    public void load_copyCannotBeMade_saysSoInsteadOfPromisingOne() throws Exception {
+        Path longNamedFile = tempDir.resolve("x".repeat(250));
+        Files.writeString(longNamedFile, "nonsense\n");
+
+        String[] warning = new Storage(longNamedFile).load().warningLines();
+
+        assertTrue(warning[2].startsWith("I could not keep a copy of it ("),
+                "Expected the bot to admit it has no copy, but was: " + warning[2]);
+        assertTrue(warning[2].endsWith("), so please back it up yourself."),
+                "Expected the bot to ask for a backup, but was: " + warning[2]);
+    }
+
     // ---------- The particular ways a line can be wrong ----------
 
     /**
@@ -495,14 +604,15 @@ public class StorageTest {
                 + "D | 0 | unreadable date | last Tuesday\n" // the date must be a date
                 + "E | 0 | ends first | 2019-10-02T16:00 | 2019-10-02T14:00\n" // end before start
                 + "T | 0 | stray escape \\x\n" // no such escape is ever written
+                + "T | 0 | lone escape at the end \\\n" // an escape must escape something
                 + "T | 0 | read book\n"); // the only good line
 
         Storage.LoadResult loaded = new Storage(saveFile()).load();
 
         assertArrayEquals(new String[] {"1.[T][ ] read book"},
                 new TaskList(loaded.tasks()).toNumberedLines());
-        assertTrue(loaded.warningLines()[0].startsWith("I could not understand 11 lines in "),
-                "Expected all eleven bad lines to be skipped, but was: " + loaded.warningLines()[0]);
+        assertTrue(loaded.warningLines()[0].startsWith("I could not understand 12 lines in "),
+                "Expected all twelve bad lines to be skipped, but was: " + loaded.warningLines()[0]);
     }
 
     /**
@@ -544,5 +654,33 @@ public class StorageTest {
                 "Expected a warning about reading the file, but was: " + warning[0]);
         assertTrue(warning[2].endsWith("is not a file."),
                 "Expected the bot to admit it has no copy, but was: " + warning[2]);
+    }
+
+    /**
+     * A file that is not text the bot can read -- here, one saved by an editor
+     * that does not use UTF-8 -- cannot be read at all, so the bot starts with an
+     * empty list. That list would overwrite the file at the next command, so the
+     * file is first copied aside byte for byte, and the user is told all three
+     * things.
+     */
+    @Test
+    public void load_fileThatIsNotUtf8_startsEmptyAndKeepsAnExactCopy() throws Exception {
+        // "cafe" with an accent on the e, saved as Latin-1: the accented e becomes
+        // the single byte 0xE9, which UTF-8 never uses on its own.
+        byte[] contents = ("T | 0 | caf" + (char) 0xE9 + "\n").getBytes(StandardCharsets.ISO_8859_1);
+        Files.write(saveFile(), contents);
+
+        Storage.LoadResult loaded = new Storage(saveFile()).load();
+
+        assertTrue(loaded.tasks().isEmpty());
+        String[] warning = loaded.warningLines();
+        assertEquals(3, warning.length);
+        assertTrue(warning[0].startsWith("I could not read "),
+                "Expected a warning about reading the file, but was: " + warning[0]);
+        assertEquals("I have started with an empty list, so your next command would overwrite it.",
+                warning[1]);
+        assertTrue(warning[2].endsWith("piplupbot.txt.damaged."),
+                "The user should be told where the copy is, but was told: " + warning[2]);
+        assertArrayEquals(contents, Files.readAllBytes(tempDir.resolve("piplupbot.txt.damaged")));
     }
 }

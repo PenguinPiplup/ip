@@ -15,8 +15,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import piplupbot.PiplupBotException;
+import piplupbot.RecordingUi;
 import piplupbot.Storage;
-import piplupbot.Ui;
 import piplupbot.task.Task;
 import piplupbot.task.TaskList;
 import piplupbot.task.Todo;
@@ -80,7 +80,7 @@ public class MarkCommandTest {
 
         assertTrue(tasks.get(1).isDone());
         assertEquals(List.of("Piplup! One more fish in the bucket. I've marked this task as done:\n"
-                + "  [T][X] read book"), ui.replies);
+                + "  [T][X] read book"), ui.getReplies());
         assertEquals("T | 1 | read book\n", Files.readString(saveFile()));
     }
 
@@ -92,7 +92,7 @@ public class MarkCommandTest {
 
         assertFalse(tasks.get(1).isDone());
         assertEquals(List.of("Pip-pip, no rush! I've marked this task as not done yet:\n"
-                + "  [T][ ] read book"), ui.replies);
+                + "  [T][ ] read book"), ui.getReplies());
         assertEquals("T | 0 | read book\n", Files.readString(saveFile()));
     }
 
@@ -114,7 +114,7 @@ public class MarkCommandTest {
             "Pip... This task is already marked as done:",
             "  [T][X] read book",
         }, exception.getMessageLines());
-        assertTrue(ui.replies.isEmpty(), "Nothing should be confirmed, but was: " + ui.replies);
+        assertTrue(ui.getReplies().isEmpty(), "Nothing should be confirmed, but was: " + ui.getReplies());
         assertFalse(Files.exists(saveFile()), "Nothing should be saved");
     }
 
@@ -133,21 +133,7 @@ public class MarkCommandTest {
             "Pip... This task is not marked as done yet:",
             "  [T][ ] read book",
         }, exception.getMessageLines());
-        assertTrue(ui.replies.isEmpty(), "Nothing should be confirmed, but was: " + ui.replies);
+        assertTrue(ui.getReplies().isEmpty(), "Nothing should be confirmed, but was: " + ui.getReplies());
         assertFalse(Files.exists(saveFile()), "Nothing should be saved");
-    }
-
-    /**
-     * A {@link Ui} that keeps each reply instead of showing it, so a test can
-     * check exactly what the command said -- including that it said nothing.
-     */
-    private static class RecordingUi implements Ui {
-        /** Each reply so far, its lines joined by line breaks. */
-        private final List<String> replies = new ArrayList<>();
-
-        @Override
-        public void show(String... lines) {
-            replies.add(String.join("\n", lines));
-        }
     }
 }

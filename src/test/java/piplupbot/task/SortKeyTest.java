@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 
@@ -144,6 +145,27 @@ public class SortKeyTest {
         assertEquals(List.of("cherries", "Bananas", "apples"),
                 descriptionsSorted(SortKey.NAME, SortDirection.DESC,
                         new Todo("cherries"), new Todo("Bananas"), new Todo("apples")));
+    }
+
+    /**
+     * Capitals are ignored the same way on every machine. With Turkish as the
+     * default language, lower-casing in that language would turn "Ibis" into a
+     * word whose dotless first letter sorts after every plain one, so "ice"
+     * would come first.
+     *
+     * <p>The default language is shared by the whole program, so it is put back
+     * in a {@code finally} block, as {@link DateTimesTest} does.</p>
+     */
+    @Test
+    public void getComparator_nameKeyWithTurkishDefaultLocale_stillIgnoresCapitals() {
+        Locale original = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+            assertEquals(List.of("Ibis", "ice"),
+                    descriptionsSorted(SortKey.NAME, SortDirection.ASC, new Todo("ice"), new Todo("Ibis")));
+        } finally {
+            Locale.setDefault(original);
+        }
     }
 
     @Test
