@@ -5,6 +5,7 @@ import java.net.URL;
 
 import javafx.animation.PauseTransition;
 import javafx.application.Application;
+import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -13,6 +14,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -51,6 +53,18 @@ public class GuiUi extends Application implements Ui {
     /** How long the goodbye stays on screen before the window closes. */
     private static final Duration GOODBYE_DELAY = Duration.seconds(1.5);
 
+    /**
+     * The narrowest the window can be made, in pixels: just wide enough for the
+     * input box to show its whole hint beside the Send button.
+     */
+    private static final double MIN_WINDOW_WIDTH = 360;
+
+    /**
+     * The shortest the window can be made, in pixels: tall enough to show the
+     * input bar and a few messages above it.
+     */
+    private static final double MIN_WINDOW_HEIGHT = 320;
+
     /** Where the window's layout file is, among the program's own files. */
     private static final String MAIN_WINDOW_PATH = "/view/MainWindow.fxml";
 
@@ -69,6 +83,9 @@ public class GuiUi extends Application implements Ui {
     /** The picture shown beside the bot's replies. */
     private final Image botImage = new Image(getResourceUrl(IMAGE_PATH_BOT).toExternalForm());
 
+    /** The commands sent so far, for the Up and Down keys to bring back. */
+    private final CommandHistory history = new CommandHistory();
+
     /** The scrolling area around the conversation. */
     @FXML
     private ScrollPane scrollPane;
@@ -81,7 +98,10 @@ public class GuiUi extends Application implements Ui {
     @FXML
     private TextField inputBox;
 
-    /** The button that sends what is in the input box, as pressing Enter does. */
+    /**
+     * The button that sends what is in the input box, as pressing Enter does.
+     * It is greyed out whenever there is nothing to send.
+     */
     @FXML
     private Button sendButton;
 
@@ -106,6 +126,10 @@ public class GuiUi extends Application implements Ui {
         stage.setTitle("PiplupBot");
         // Without an icon, the title bar and taskbar show the default Java one.
         stage.getIcons().add(botImage);
+        // Stop the window being dragged so small that the pictures, bubbles and
+        // input bar are squashed together. It can still be made as large as wanted.
+        stage.setMinWidth(MIN_WINDOW_WIDTH);
+        stage.setMinHeight(MIN_WINDOW_HEIGHT);
         stage.setScene(new Scene(layout));
         stage.show();
         inputBox.requestFocus();
@@ -147,31 +171,82 @@ public class GuiUi extends Application implements Ui {
         // Whenever a new message makes the conversation taller, scroll to the
         // bottom, so the newest message is always the one in view.
         conversation.heightProperty().addListener(observable -> scrollPane.setVvalue(1.0));
+
+        // Grey out the Send button while there is nothing to send: when the box
+        // is empty or holds only spaces, which handleInput() would ignore, or
+        // when the box itself is switched off after "bye". A binding recomputes
+        // this every time either property changes, so no code elsewhere needs to
+        // remember to update the button -- and none may, since JavaFX refuses
+        // to set a value that is bound.
+        sendButton.disableProperty().bind(Bindings.createBooleanBinding(
+                this::hasNothingToSend, inputBox.textProperty(), inputBox.disableProperty()));
+
+        // A filter, unlike an ordinary handler, sees each key press before the
+        // input box does, so the box never gets to act on Up or Down itself.
+        inputBox.addEventFilter(KeyEvent.KEY_PRESSED, this::handleHistoryKey);
+    }
+
+    /**
+     * Returns whether there is nothing to send: the input box is empty, holds
+     * only spaces, or has been switched off.
+     */
+    private boolean hasNothingToSend() {
+        return inputBox.getText().isBlank() || inputBox.isDisable();
+    }
+
+    /**
+     * Brings back an earlier command into the input box when Up is pressed, or
+     * a later one when Down is pressed, as in a terminal. Any other key is left
+     * for the input box to handle as usual.
+     *
+     * @param event The key press, before the input box has seen it.
+     */
+    private void handleHistoryKey(KeyEvent event) {
+        switch (event.getCode()) {
+            case UP -> history.moveToOlder(inputBox.getText());
+            case DOWN -> history.moveToNewer(inputBox.getText());
+            default -> {
+                return;
+            }
+        }
+        inputBox.setText(history.getSelected());
+        // Put the cursor after the command, ready for it to be edited or sent.
+        inputBox.end();
+        // Stop the key press here, so JavaFX does not also use Up or Down to move
+        // the focus to the Send button.
+        event.consume();
     }
 
     /**
      * Sends the line in the input box to the bot, which answers through
      * {@link #show}, then closes the window if the line ended the conversation.
      * The layout file makes both pressing Enter in the box and clicking the
-     * Send button call this.
+     * Send button call this. Either way, the input box is left ready for the
+     * next line to be typed.
      */
     @FXML
     private void handleInput() {
         String input = inputBox.getText();
         inputBox.clear();
+        // Clicking the Send button moves the keyboard focus onto the button, so
+        // without this the user would have to click back into the box to type
+        // again. Pressing Enter never leaves the box, so this changes nothing then.
+        inputBox.requestFocus();
         if (input.isBlank()) {
             // Sending an empty box sends nothing, as a blank line does in the console.
             return;
         }
 
+        history.add(input.trim());
         conversation.getChildren().add(DialogBox.getUserDialog(input.trim(), userImage));
         // Handing over this window as the Ui is what makes the reply appear in it.
         bot.respondTo(input, this);
 
         if (bot.isExit()) {
             // Close after a pause rather than at once, so the goodbye can be read.
+            // Switching off the box switches off the Send button too, through
+            // the binding made in initialize().
             inputBox.setDisable(true);
-            sendButton.setDisable(true);
             PauseTransition pause = new PauseTransition(GOODBYE_DELAY);
             // Hiding a window is how it is closed: Stage.close() does just this.
             pause.setOnFinished(event -> inputBox.getScene().getWindow().hide());

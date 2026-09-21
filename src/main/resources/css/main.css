@@ -21,6 +21,25 @@
     -fx-background-insets: 0;
 }
 
+/*
+ * The part of the vertical scroll bar that you drag is dark grey, instead of
+ * JavaFX's default pale grey, so that it stands out against the white
+ * conversation. It darkens further while the mouse is over it or dragging it.
+ */
+.scroll-pane .scroll-bar:vertical .thumb {
+    -fx-background-color: #7b8794;
+    -fx-background-insets: 0 2 0 2;
+    -fx-background-radius: 4;
+}
+
+.scroll-pane .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #616e7c;
+}
+
+.scroll-pane .scroll-bar:vertical .thumb:pressed {
+    -fx-background-color: #3e4c59;
+}
+
 .conversation {
     -fx-padding: 10 0 10 0;
     -fx-spacing: 6;
@@ -32,10 +51,16 @@
     -fx-spacing: 8;
 }
 
+/*
+ * A bubble grows only as wide as its words need, up to a limit: past it, a
+ * long reply wraps onto more lines instead of stretching across a wide window
+ * in one line that is hard to read.
+ */
 .bubble {
     -fx-padding: 8 12 8 12;
     -fx-background-radius: 12;
     -fx-font-size: 13px;
+    -fx-max-width: 320px;
 }
 
 .dialog-box.user .bubble {
@@ -60,4 +85,38 @@
     -fx-padding: 10 12 10 12;
     -fx-spacing: 8;
     -fx-border-color: #d9dee4 transparent transparent transparent;
+}
+
+/*
+ * The Send button is a flat Piplup blue, like the bot's bubbles but deeper,
+ * with white words. It darkens while the mouse is over it and again while it
+ * is pressed, so it feels clickable. When there is nothing to send, JavaFX
+ * fades it out by itself, as it does for any disabled control.
+ */
+.input-bar .button {
+    -fx-background-color: #1f6fb5;
+    -fx-background-radius: 6;
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+    -fx-padding: 4 14 4 14;
+    -fx-cursor: hand;
+}
+
+/*
+ * A dark ring when the button is reached with the Tab key, so keyboard users
+ * can see where they are. The rule above replaces JavaFX's own ring, so it is
+ * drawn here instead, as a dark layer showing 2 pixels round the blue one.
+ */
+.input-bar .button:focused {
+    -fx-background-color: #0c3c6e, #1f6fb5;
+    -fx-background-insets: 0, 2;
+    -fx-background-radius: 6, 4;
+}
+
+.input-bar .button:hover {
+    -fx-background-color: #185a94;
+}
+
+.input-bar .button:pressed {
+    -fx-background-color: #0c3c6e;
 }
