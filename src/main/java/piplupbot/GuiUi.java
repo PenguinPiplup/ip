@@ -5,6 +5,7 @@ import java.net.URL;
 
 import javafx.animation.PauseTransition;
 import javafx.application.Application;
+import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -81,7 +82,10 @@ public class GuiUi extends Application implements Ui {
     @FXML
     private TextField inputBox;
 
-    /** The button that sends what is in the input box, as pressing Enter does. */
+    /**
+     * The button that sends what is in the input box, as pressing Enter does.
+     * It is greyed out whenever there is nothing to send.
+     */
     @FXML
     private Button sendButton;
 
@@ -147,18 +151,33 @@ public class GuiUi extends Application implements Ui {
         // Whenever a new message makes the conversation taller, scroll to the
         // bottom, so the newest message is always the one in view.
         conversation.heightProperty().addListener(observable -> scrollPane.setVvalue(1.0));
+
+        // Grey out the Send button while there is nothing to send: when the box
+        // is empty or holds only spaces, which handleInput() would ignore, or
+        // when the box itself is switched off after "bye". A binding recomputes
+        // this every time either property changes, so no code elsewhere needs to
+        // remember to update the button -- and none may, since JavaFX refuses
+        // to set a value that is bound.
+        sendButton.disableProperty().bind(Bindings.createBooleanBinding(
+                () -> inputBox.getText().isBlank() || inputBox.isDisable(),
+                inputBox.textProperty(), inputBox.disableProperty()));
     }
 
     /**
      * Sends the line in the input box to the bot, which answers through
      * {@link #show}, then closes the window if the line ended the conversation.
      * The layout file makes both pressing Enter in the box and clicking the
-     * Send button call this.
+     * Send button call this. Either way, the input box is left ready for the
+     * next line to be typed.
      */
     @FXML
     private void handleInput() {
         String input = inputBox.getText();
         inputBox.clear();
+        // Clicking the Send button moves the keyboard focus onto the button, so
+        // without this the user would have to click back into the box to type
+        // again. Pressing Enter never leaves the box, so this changes nothing then.
+        inputBox.requestFocus();
         if (input.isBlank()) {
             // Sending an empty box sends nothing, as a blank line does in the console.
             return;
@@ -170,8 +189,9 @@ public class GuiUi extends Application implements Ui {
 
         if (bot.isExit()) {
             // Close after a pause rather than at once, so the goodbye can be read.
+            // Switching off the box switches off the Send button too, through
+            // the binding made in initialize().
             inputBox.setDisable(true);
-            sendButton.setDisable(true);
             PauseTransition pause = new PauseTransition(GOODBYE_DELAY);
             // Hiding a window is how it is closed: Stage.close() does just this.
             pause.setOnFinished(event -> inputBox.getScene().getWindow().hide());
