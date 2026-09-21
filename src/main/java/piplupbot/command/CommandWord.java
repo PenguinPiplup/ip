@@ -145,7 +145,7 @@ public enum CommandWord {
                 .findFirst()
                 .orElseThrow(() -> new PiplupBotException(
                         "Pip... I don't know what \"" + input + "\" means.",
-                        "Try: " + keywordList() + "."));
+                        "Try: " + buildKeywordList() + "."));
     }
 
     /**
@@ -158,9 +158,9 @@ public enum CommandWord {
      *
      * @return the keywords in declaration order, separated by commas
      */
-    private static String keywordList() {
+    private static String buildKeywordList() {
         CommandWord[] commandWords = values();
-        assert commandWords.length > 1 : "keywordList() assumes at least two commands to list";
+        assert commandWords.length > 1 : "buildKeywordList() assumes at least two commands to list";
 
         // The last keyword is held back and added with its "or", so everything
         // before it is a plain comma-separated join -- which is what

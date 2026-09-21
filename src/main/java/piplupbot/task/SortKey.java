@@ -148,7 +148,7 @@ public enum SortKey {
      * @return the line shown to a user whose key could not be read
      */
     public static String getKeywordHint() {
-        return "Try: " + keywordList() + ".";
+        return "Try: " + buildKeywordList() + ".";
     }
 
     /**
@@ -161,9 +161,9 @@ public enum SortKey {
      *
      * @return the keywords in declaration order, separated by commas
      */
-    private static String keywordList() {
+    private static String buildKeywordList() {
         SortKey[] keys = values();
-        assert keys.length > 1 : "keywordList() assumes at least two keys to list";
+        assert keys.length > 1 : "buildKeywordList() assumes at least two keys to list";
 
         // The last keyword is held back and added with its "or", so everything
         // before it is a plain comma-separated join.
