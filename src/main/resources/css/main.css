@@ -21,6 +21,25 @@
     -fx-background-insets: 0;
 }
 
+/*
+ * The part of the vertical scroll bar that you drag is dark grey, instead of
+ * JavaFX's default pale grey, so that it stands out against the white
+ * conversation. It darkens further while the mouse is over it or dragging it.
+ */
+.scroll-pane .scroll-bar:vertical .thumb {
+    -fx-background-color: #7b8794;
+    -fx-background-insets: 0 2 0 2;
+    -fx-background-radius: 4;
+}
+
+.scroll-pane .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #616e7c;
+}
+
+.scroll-pane .scroll-bar:vertical .thumb:pressed {
+    -fx-background-color: #3e4c59;
+}
+
 .conversation {
     -fx-padding: 10 0 10 0;
     -fx-spacing: 6;
