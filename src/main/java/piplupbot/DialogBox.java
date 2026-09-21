@@ -40,6 +40,12 @@ public class DialogBox extends HBox {
     /** Where the layout file for one message is, among the program's own files. */
     private static final String DIALOG_BOX_PATH = "/view/DialogBox.fxml";
 
+    /**
+     * How wide a bubble may grow, as a fraction of the width of its row in the
+     * conversation, which is as wide as the window. Past it, the words wrap.
+     */
+    private static final double MAX_BUBBLE_WIDTH_FRACTION = 0.8;
+
     /** The speech bubble holding the words. */
     @FXML
     private Label bubble;
@@ -71,6 +77,9 @@ public class DialogBox extends HBox {
         }
 
         bubble.setText(text);
+        // A binding keeps the limit up to date by itself: whenever the row's width
+        // changes, as the window is resized, the bubble's maximum width follows.
+        bubble.maxWidthProperty().bind(widthProperty().multiply(MAX_BUBBLE_WIDTH_FRACTION));
         pictureView.setImage(picture);
         if (!isFromUser) {
             // The layout file puts the words first, as on the user's side; the bot's

@@ -54,13 +54,14 @@
 /*
  * A bubble grows only as wide as its words need, up to a limit: past it, a
  * long reply wraps onto more lines instead of stretching across a wide window
- * in one line that is hard to read.
+ * in one line that is hard to read. The limit is a fraction of the window's
+ * width, so it is set in DialogBox.java rather than here: CSS can only give a
+ * fixed size, and cannot follow the window as it is resized.
  */
 .bubble {
-    -fx-padding: 8 12 8 12;
+    -fx-padding: 10 14 10 14;
     -fx-background-radius: 12;
-    -fx-font-size: 13px;
-    -fx-max-width: 320px;
+    -fx-font-size: 14px;
 }
 
 .dialog-box.user .bubble {
