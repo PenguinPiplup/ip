@@ -44,11 +44,11 @@ public class SortKeyTest {
      * @param tasks     The tasks to sort, in the order they start out in.
      * @return Each task's description, in the sorted order.
      */
-    private static List<String> descriptionsSorted(SortKey key, SortDirection direction,
+    private static List<String> sortDescriptions(SortKey key, SortDirection direction,
             Task... tasks) {
-        List<Task> ordered = new ArrayList<>(List.of(tasks));
-        ordered.sort(key.getComparator(direction));
-        return ordered.stream().map(Task::getDescription).toList();
+        List<Task> orderedTasks = new ArrayList<>(List.of(tasks));
+        orderedTasks.sort(key.getComparator(direction));
+        return orderedTasks.stream().map(Task::getDescription).toList();
     }
 
     // ---------- Sorting by date ----------
@@ -57,7 +57,7 @@ public class SortKeyTest {
     public void getComparator_dateAscending_ordersDatedTasksEarliestFirst()
             throws PiplupBotException {
         assertEquals(List.of("meeting", "return book"),
-                descriptionsSorted(SortKey.DATE, SortDirection.ASC,
+                sortDescriptions(SortKey.DATE, SortDirection.ASC,
                         new Deadline("return book", "2019-10-15 1800"),
                         new Event("meeting", "2019-10-02 1400", "2019-10-02 1600")));
     }
@@ -71,7 +71,7 @@ public class SortKeyTest {
     public void getComparator_dateAscending_putsTodosAfterEveryDatedTask()
             throws PiplupBotException {
         assertEquals(List.of("meeting", "return book", "read book", "write notes"),
-                descriptionsSorted(SortKey.DATE, SortDirection.ASC,
+                sortDescriptions(SortKey.DATE, SortDirection.ASC,
                         new Todo("read book"),
                         new Deadline("return book", "2019-10-15 1800"),
                         new Todo("write notes"),
@@ -88,7 +88,7 @@ public class SortKeyTest {
     public void getComparator_dateDescending_reversesTheDatesButStillPutsTodosLast()
             throws PiplupBotException {
         assertEquals(List.of("return book", "meeting", "read book", "write notes"),
-                descriptionsSorted(SortKey.DATE, SortDirection.DESC,
+                sortDescriptions(SortKey.DATE, SortDirection.DESC,
                         new Todo("read book"),
                         new Deadline("return book", "2019-10-15 1800"),
                         new Todo("write notes"),
@@ -105,7 +105,7 @@ public class SortKeyTest {
     public void getComparator_dateKey_ordersAnEventByItsStartNotItsEnd()
             throws PiplupBotException {
         assertEquals(List.of("conference", "return book"),
-                descriptionsSorted(SortKey.DATE, SortDirection.ASC,
+                sortDescriptions(SortKey.DATE, SortDirection.ASC,
                         new Deadline("return book", "2019-10-15 1800"),
                         new Event("conference", "2019-10-01 0900", "2019-10-30 1700")));
     }
@@ -120,7 +120,7 @@ public class SortKeyTest {
     public void getComparator_datesThatTie_keepsTheOrderTheyWereAlreadyIn()
             throws PiplupBotException {
         assertEquals(List.of("standup", "report"),
-                descriptionsSorted(SortKey.DATE, SortDirection.ASC,
+                sortDescriptions(SortKey.DATE, SortDirection.ASC,
                         new Event("standup", "2019-10-02 1400", "2019-10-02 1600"),
                         new Deadline("report", "2019-10-02 1400")));
     }
@@ -136,14 +136,14 @@ public class SortKeyTest {
     @Test
     public void getComparator_nameKey_ignoresCapitals() {
         assertEquals(List.of("apples", "Bananas", "cherries"),
-                descriptionsSorted(SortKey.NAME, SortDirection.ASC,
+                sortDescriptions(SortKey.NAME, SortDirection.ASC,
                         new Todo("cherries"), new Todo("Bananas"), new Todo("apples")));
     }
 
     @Test
     public void getComparator_nameDescending_reversesTheAlphabet() {
         assertEquals(List.of("cherries", "Bananas", "apples"),
-                descriptionsSorted(SortKey.NAME, SortDirection.DESC,
+                sortDescriptions(SortKey.NAME, SortDirection.DESC,
                         new Todo("cherries"), new Todo("Bananas"), new Todo("apples")));
     }
 
@@ -162,7 +162,7 @@ public class SortKeyTest {
         try {
             Locale.setDefault(Locale.forLanguageTag("tr-TR"));
             assertEquals(List.of("Ibis", "ice"),
-                    descriptionsSorted(SortKey.NAME, SortDirection.ASC, new Todo("ice"), new Todo("Ibis")));
+                    sortDescriptions(SortKey.NAME, SortDirection.ASC, new Todo("ice"), new Todo("Ibis")));
         } finally {
             Locale.setDefault(original);
         }
@@ -172,7 +172,7 @@ public class SortKeyTest {
     public void getComparator_typeKey_ordersTodosThenDeadlinesThenEvents()
             throws PiplupBotException {
         assertEquals(List.of("read book", "return book", "meeting"),
-                descriptionsSorted(SortKey.TYPE, SortDirection.ASC,
+                sortDescriptions(SortKey.TYPE, SortDirection.ASC,
                         new Event("meeting", "2019-10-02 1400", "2019-10-02 1600"),
                         new Deadline("return book", "2019-10-15 1800"),
                         new Todo("read book")));
@@ -184,7 +184,7 @@ public class SortKeyTest {
         finished.markAsDone();
 
         assertEquals(List.of("write notes", "read book"),
-                descriptionsSorted(SortKey.DONE, SortDirection.ASC,
+                sortDescriptions(SortKey.DONE, SortDirection.ASC,
                         finished, new Todo("write notes")));
     }
 
@@ -194,7 +194,7 @@ public class SortKeyTest {
         finished.markAsDone();
 
         assertEquals(List.of("read book", "write notes"),
-                descriptionsSorted(SortKey.DONE, SortDirection.DESC,
+                sortDescriptions(SortKey.DONE, SortDirection.DESC,
                         finished, new Todo("write notes")));
     }
 
@@ -207,7 +207,7 @@ public class SortKeyTest {
     @Test
     public void getComparator_tasksThatAllTie_leavesTheOrderAlone() {
         assertEquals(List.of("c", "a", "b"),
-                descriptionsSorted(SortKey.TYPE, SortDirection.ASC,
+                sortDescriptions(SortKey.TYPE, SortDirection.ASC,
                         new Todo("c"), new Todo("a"), new Todo("b")));
     }
 

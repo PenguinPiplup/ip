@@ -55,19 +55,19 @@ public class GuiUi extends Application implements Ui {
     private static final String MAIN_WINDOW_PATH = "/view/MainWindow.fxml";
 
     /** Where the picture shown beside the user's messages is. */
-    private static final String USER_IMAGE_PATH = "/images/user.png";
+    private static final String IMAGE_PATH_USER = "/images/user.png";
 
     /** Where the picture shown beside the bot's replies is. */
-    private static final String BOT_IMAGE_PATH = "/images/piplupbot.png";
+    private static final String IMAGE_PATH_BOT = "/images/piplupbot.png";
 
     /** The bot, keeping its tasks in the same file the console uses. */
     private final PiplupBot bot = new PiplupBot(PiplupBot.DEFAULT_FILE_PATH);
 
     /** The picture shown beside the user's messages. */
-    private final Image userImage = new Image(getResourceUrl(USER_IMAGE_PATH).toExternalForm());
+    private final Image userImage = new Image(getResourceUrl(IMAGE_PATH_USER).toExternalForm());
 
     /** The picture shown beside the bot's replies. */
-    private final Image botImage = new Image(getResourceUrl(BOT_IMAGE_PATH).toExternalForm());
+    private final Image botImage = new Image(getResourceUrl(IMAGE_PATH_BOT).toExternalForm());
 
     /** The scrolling area around the conversation. */
     @FXML

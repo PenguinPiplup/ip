@@ -119,14 +119,14 @@ public class CommandWordTest {
     // ---------- Reading what follows the keyword ----------
 
     @Test
-    public void argumentOf_keywordWithArgument_returnsRestOfLine() {
-        assertEquals("read book", CommandWord.TODO.argumentOf("todo read book"));
-        assertEquals("2", CommandWord.MARK.argumentOf("mark 2"));
+    public void extractArgument_keywordWithArgument_returnsRestOfLine() {
+        assertEquals("read book", CommandWord.TODO.extractArgument("todo read book"));
+        assertEquals("2", CommandWord.MARK.extractArgument("mark 2"));
     }
 
     @Test
-    public void argumentOf_extraSpacesAroundArgument_returnsTrimmedArgument() {
-        assertEquals("read book", CommandWord.TODO.argumentOf("todo    read book   "));
+    public void extractArgument_extraSpacesAroundArgument_returnsTrimmedArgument() {
+        assertEquals("read book", CommandWord.TODO.extractArgument("todo    read book   "));
     }
 
     /**
@@ -136,9 +136,9 @@ public class CommandWordTest {
      * {@code mark} explains it needs a number.
      */
     @Test
-    public void argumentOf_keywordAlone_returnsEmptyText() {
-        assertEquals("", CommandWord.MARK.argumentOf("mark"));
-        assertEquals("", CommandWord.TODO.argumentOf("todo"));
+    public void extractArgument_keywordAlone_returnsEmptyText() {
+        assertEquals("", CommandWord.MARK.extractArgument("mark"));
+        assertEquals("", CommandWord.TODO.extractArgument("todo"));
     }
 
     /**
@@ -147,8 +147,8 @@ public class CommandWordTest {
      * that happens to contain it.
      */
     @Test
-    public void argumentOf_argumentRepeatingTheKeyword_removesOnlyTheFirst() {
-        assertEquals("todo list", CommandWord.TODO.argumentOf("todo todo list"));
+    public void extractArgument_argumentRepeatingTheKeyword_removesOnlyTheFirst() {
+        assertEquals("todo list", CommandWord.TODO.extractArgument("todo todo list"));
     }
 
     // ---------- The keywords themselves ----------
@@ -161,7 +161,7 @@ public class CommandWordTest {
      */
     @Test
     public void getKeyword_everyCommandWord_isLowerCaseAndUnique() {
-        Set<String> seen = new HashSet<>();
+        Set<String> seenKeywords = new HashSet<>();
         for (CommandWord commandWord : CommandWord.values()) {
             String keyword = commandWord.getKeyword();
             // Locale.ROOT rather than the machine's own language, for the same
@@ -169,7 +169,7 @@ public class CommandWordTest {
             // "I" to a dotless letter, which would fail this test for no real fault.
             assertEquals(keyword.toLowerCase(Locale.ROOT), keyword,
                     "Keywords are matched exactly, so they must be lower case");
-            assertTrue(seen.add(keyword), "Two command words share the keyword " + keyword);
+            assertTrue(seenKeywords.add(keyword), "Two command words share the keyword " + keyword);
         }
     }
 }

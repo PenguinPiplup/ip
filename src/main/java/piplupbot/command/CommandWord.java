@@ -114,9 +114,9 @@ public enum CommandWord {
      * @param input The whole line the user typed.
      * @return The rest of the line, possibly empty.
      */
-    public String argumentOf(String input) {
+    public String extractArgument(String input) {
         assert input.startsWith(keyword)
-                : "argumentOf(" + keyword + ") was given a line not starting with it: \""
+                : "extractArgument(" + keyword + ") was given a line not starting with it: \""
                         + input + "\"";
         return input.substring(keyword.length()).trim();
     }

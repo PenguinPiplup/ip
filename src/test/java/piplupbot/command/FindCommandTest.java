@@ -41,7 +41,7 @@ public class FindCommandTest {
      *
      * @return The path to a save file of this test's own.
      */
-    private Path saveFile() {
+    private Path getSaveFile() {
         return tempDir.resolve("piplupbot.txt");
     }
 
@@ -53,12 +53,12 @@ public class FindCommandTest {
         tasks.add(new Todo("write notes"));
         tasks.add(new Todo("return book"));
 
-        new FindCommand("book").execute(tasks, ui, new Storage(saveFile()));
+        new FindCommand("book").execute(tasks, ui, new Storage(getSaveFile()));
 
         assertEquals(List.of("Here are the matching tasks in your list:\n"
                 + "1.[T][ ] read book\n"
                 + "2.[T][ ] return book"), ui.getReplies());
-        assertFalse(Files.exists(saveFile()), "A search should save nothing");
+        assertFalse(Files.exists(getSaveFile()), "A search should save nothing");
     }
 
     /** A search that finds nothing is still answered, with the heading alone. */
@@ -67,7 +67,7 @@ public class FindCommandTest {
         TaskList tasks = new TaskList();
         tasks.add(new Todo("read book"));
 
-        new FindCommand("homework").execute(tasks, ui, new Storage(saveFile()));
+        new FindCommand("homework").execute(tasks, ui, new Storage(getSaveFile()));
 
         assertEquals(List.of("Here are the matching tasks in your list:"), ui.getReplies());
     }

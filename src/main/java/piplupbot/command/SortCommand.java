@@ -70,7 +70,7 @@ public class SortCommand extends Command {
      * @return The heading naming the key, and the direction when it is reversed.
      */
     private String buildHeading() {
-        String reversed = direction == SortDirection.DESC ? ", in reverse" : "";
-        return "Here are your tasks, sorted by " + key.getKeyword() + reversed + ":";
+        String reversedNote = direction == SortDirection.DESC ? ", in reverse" : "";
+        return "Here are your tasks, sorted by " + key.getKeyword() + reversedNote + ":";
     }
 }

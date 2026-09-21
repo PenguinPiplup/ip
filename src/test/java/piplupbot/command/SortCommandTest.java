@@ -47,7 +47,7 @@ public class SortCommandTest {
      *
      * @return The path to a save file of this test's own.
      */
-    private Path saveFile() {
+    private Path getSaveFile() {
         return tempDir.resolve("piplupbot.txt");
     }
 
@@ -57,12 +57,12 @@ public class SortCommandTest {
         tasks.add(new Todo("write notes"));
         tasks.add(new Todo("read book"));
 
-        new SortCommand(SortKey.NAME, SortDirection.ASC).execute(tasks, ui, new Storage(saveFile()));
+        new SortCommand(SortKey.NAME, SortDirection.ASC).execute(tasks, ui, new Storage(getSaveFile()));
 
         assertEquals(List.of("Here are your tasks, sorted by name:\n"
                 + "1.[T][ ] read book\n"
                 + "2.[T][ ] write notes"), ui.getReplies());
-        assertEquals("T | 0 | read book\nT | 0 | write notes\n", Files.readString(saveFile()));
+        assertEquals("T | 0 | read book\nT | 0 | write notes\n", Files.readString(getSaveFile()));
     }
 
     @Test
@@ -71,7 +71,7 @@ public class SortCommandTest {
         tasks.add(new Deadline("return book", "2019-10-15 1800"));
         tasks.add(new Deadline("pay fees", "2019-12-01 0900"));
 
-        new SortCommand(SortKey.DATE, SortDirection.DESC).execute(tasks, ui, new Storage(saveFile()));
+        new SortCommand(SortKey.DATE, SortDirection.DESC).execute(tasks, ui, new Storage(getSaveFile()));
 
         assertEquals(List.of("Here are your tasks, sorted by date, in reverse:\n"
                 + "1.[D][ ] pay fees (by: Dec 1 2019 09:00 AM)\n"
@@ -84,9 +84,10 @@ public class SortCommandTest {
      */
     @Test
     public void execute_emptyList_showsTheHeadingAloneAndSaves() throws Exception {
-        new SortCommand(SortKey.DONE, SortDirection.ASC).execute(new TaskList(), ui, new Storage(saveFile()));
+        new SortCommand(SortKey.DONE, SortDirection.ASC)
+                .execute(new TaskList(), ui, new Storage(getSaveFile()));
 
         assertEquals(List.of("Here are your tasks, sorted by done:"), ui.getReplies());
-        assertEquals("", Files.readString(saveFile()));
+        assertEquals("", Files.readString(getSaveFile()));
     }
 }
