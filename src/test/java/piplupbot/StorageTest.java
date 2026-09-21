@@ -55,7 +55,7 @@ public class StorageTest {
      *
      * @return The path to a save file of this test's own.
      */
-    private Path saveFile() {
+    private Path getSaveFile() {
         return tempDir.resolve("piplupbot.txt");
     }
 
@@ -67,7 +67,7 @@ public class StorageTest {
      * @throws IOException If the temporary file could not be written.
      */
     private void writeSaveFile(String text) throws IOException {
-        Files.writeString(saveFile(), text);
+        Files.writeString(getSaveFile(), text);
     }
 
     /**
@@ -76,12 +76,12 @@ public class StorageTest {
      * @param tasks The tasks to save, in order.
      * @return The tasks as a list.
      */
-    private static ArrayList<Task> listOf(Task... tasks) {
-        ArrayList<Task> list = new ArrayList<>();
+    private static ArrayList<Task> createList(Task... tasks) {
+        ArrayList<Task> listedTasks = new ArrayList<>();
         for (Task task : tasks) {
-            list.add(task);
+            listedTasks.add(task);
         }
-        return list;
+        return listedTasks;
     }
 
     // ---------- Saving and loading are the reverse of each other ----------
@@ -95,13 +95,13 @@ public class StorageTest {
     public void saveThenLoad_everyKindOfTask_returnsTheSameTasks() throws Exception {
         Todo todo = new Todo("read book");
         todo.markAsDone();
-        ArrayList<Task> original = listOf(
+        ArrayList<Task> originalTasks = createList(
                 todo,
                 new Deadline("return book", "2019-10-15 1800"),
                 new Event("project meeting", "2019-10-02 1400", "2019-10-02 1600"));
 
-        Storage storage = new Storage(saveFile());
-        storage.save(original);
+        Storage storage = new Storage(getSaveFile());
+        storage.save(originalTasks);
         Storage.LoadResult loaded = storage.load();
 
         assertFalse(loaded.hasWarning());
@@ -120,14 +120,14 @@ public class StorageTest {
      */
     @Test
     public void saveThenLoad_descriptionContainingSeparator_returnsTheSameText() throws Exception {
-        ArrayList<Task> original = listOf(
+        ArrayList<Task> originalTasks = createList(
                 new Todo("buy milk | eggs"),
                 new Todo("back \\slash"),
                 new Todo("| leading bar"),
                 new Todo("trailing backslash \\"));
 
-        Storage storage = new Storage(saveFile());
-        storage.save(original);
+        Storage storage = new Storage(getSaveFile());
+        storage.save(originalTasks);
         Storage.LoadResult loaded = storage.load();
 
         assertFalse(loaded.hasWarning());
@@ -151,7 +151,7 @@ public class StorageTest {
         Todo todo = new Todo("read book");
         todo.markAsDone();
 
-        new Storage(saveFile()).save(listOf(
+        new Storage(getSaveFile()).save(createList(
                 todo,
                 new Deadline("return book", "2019-10-15 1800"),
                 new Event("project meeting", "2019-10-02 1400", "2019-10-02 1600")));
@@ -159,7 +159,7 @@ public class StorageTest {
         assertEquals("T | 1 | read book\n"
                         + "D | 0 | return book | 2019-10-15T18:00\n"
                         + "E | 0 | project meeting | 2019-10-02T14:00 | 2019-10-02T16:00\n",
-                Files.readString(saveFile()));
+                Files.readString(getSaveFile()));
     }
 
     /**
@@ -169,11 +169,11 @@ public class StorageTest {
      */
     @Test
     public void save_descriptionContainingSeparator_escapesIt() throws Exception {
-        new Storage(saveFile()).save(listOf(new Todo("buy milk | eggs"), new Todo("back \\slash")));
+        new Storage(getSaveFile()).save(createList(new Todo("buy milk | eggs"), new Todo("back \\slash")));
 
         assertEquals("T | 0 | buy milk \\| eggs\n"
                         + "T | 0 | back \\\\slash\n",
-                Files.readString(saveFile()));
+                Files.readString(getSaveFile()));
     }
 
     /**
@@ -183,28 +183,28 @@ public class StorageTest {
      */
     @Test
     public void save_tasks_writesLineFeedsOnly() throws Exception {
-        new Storage(saveFile()).save(listOf(new Todo("read book"), new Todo("write notes")));
+        new Storage(getSaveFile()).save(createList(new Todo("read book"), new Todo("write notes")));
 
-        assertFalse(Files.readString(saveFile()).contains("\r"),
+        assertFalse(Files.readString(getSaveFile()).contains("\r"),
                 "The save file should not hold carriage returns on any machine");
     }
 
     /** An empty list writes an empty file, not a file holding one blank line. */
     @Test
     public void save_emptyList_writesAnEmptyFile() throws Exception {
-        new Storage(saveFile()).save(new ArrayList<>());
+        new Storage(getSaveFile()).save(new ArrayList<>());
 
-        assertEquals("", Files.readString(saveFile()));
+        assertEquals("", Files.readString(getSaveFile()));
     }
 
     /** The list is replaced rather than added to, so a delete really deletes. */
     @Test
     public void save_calledTwice_replacesTheEarlierContents() throws Exception {
-        Storage storage = new Storage(saveFile());
-        storage.save(listOf(new Todo("first"), new Todo("second")));
-        storage.save(listOf(new Todo("second")));
+        Storage storage = new Storage(getSaveFile());
+        storage.save(createList(new Todo("first"), new Todo("second")));
+        storage.save(createList(new Todo("second")));
 
-        assertEquals("T | 0 | second\n", Files.readString(saveFile()));
+        assertEquals("T | 0 | second\n", Files.readString(getSaveFile()));
     }
 
     /**
@@ -215,7 +215,7 @@ public class StorageTest {
     public void save_missingParentDirectory_createsIt() throws Exception {
         Path nested = tempDir.resolve("data").resolve("piplupbot.txt");
 
-        new Storage(nested).save(listOf(new Todo("read book")));
+        new Storage(nested).save(createList(new Todo("read book")));
 
         assertTrue(Files.exists(nested));
     }
@@ -228,7 +228,7 @@ public class StorageTest {
      */
     @Test
     public void save_successfulSave_leavesNoTemporaryFile() throws Exception {
-        new Storage(saveFile()).save(listOf(new Todo("read book")));
+        new Storage(getSaveFile()).save(createList(new Todo("read book")));
 
         assertFalse(Files.exists(tempDir.resolve("piplupbot.txt.tmp")));
     }
@@ -246,8 +246,8 @@ public class StorageTest {
         Files.createDirectory(tempDir.resolve("piplupbot.txt.tmp"));
 
         assertThrows(PiplupBotException.class, () ->
-                new Storage(saveFile()).save(listOf(new Todo("write notes"))));
-        assertEquals("T | 0 | read book\n", Files.readString(saveFile()));
+                new Storage(getSaveFile()).save(createList(new Todo("write notes"))));
+        assertEquals("T | 0 | read book\n", Files.readString(getSaveFile()));
     }
 
     /**
@@ -257,12 +257,12 @@ public class StorageTest {
      */
     @Test
     public void save_moveFails_exceptionThrownAndTemporaryFileRemoved() throws Exception {
-        Files.createDirectory(saveFile());
+        Files.createDirectory(getSaveFile());
 
         assertThrows(PiplupBotException.class, () ->
-                new Storage(saveFile()).save(listOf(new Todo("read book"))));
+                new Storage(getSaveFile()).save(createList(new Todo("read book"))));
         assertFalse(Files.exists(tempDir.resolve("piplupbot.txt.tmp")));
-        assertTrue(Files.isDirectory(saveFile()));
+        assertTrue(Files.isDirectory(getSaveFile()));
     }
 
     /**
@@ -281,7 +281,7 @@ public class StorageTest {
         Path unwritable = notAFolder.resolve("piplupbot.txt");
 
         PiplupBotException exception = assertThrows(PiplupBotException.class, () ->
-                new Storage(unwritable).save(listOf(new Todo("read book"))));
+                new Storage(unwritable).save(createList(new Todo("read book"))));
 
         String[] lines = exception.getMessageLines();
         assertEquals(2, lines.length);
@@ -306,11 +306,11 @@ public class StorageTest {
         Files.writeString(temporaryFile.resolve("inside.txt"), "something");
 
         PiplupBotException exception = assertThrows(PiplupBotException.class, () ->
-                new Storage(saveFile()).save(listOf(new Todo("write notes"))));
+                new Storage(getSaveFile()).save(createList(new Todo("write notes"))));
 
         assertTrue(exception.getMessageLines()[0].startsWith("I could not save your tasks to "),
                 "Expected the failed save to be reported, but was: " + exception.getMessageLines()[0]);
-        assertEquals("T | 0 | read book\n", Files.readString(saveFile()));
+        assertEquals("T | 0 | read book\n", Files.readString(getSaveFile()));
         assertEquals("something", Files.readString(temporaryFile.resolve("inside.txt")));
     }
 
@@ -319,7 +319,7 @@ public class StorageTest {
     /** A missing file is what the very first run sees, and is not a problem. */
     @Test
     public void load_missingFile_returnsEmptyListWithoutWarning() {
-        Storage.LoadResult loaded = new Storage(saveFile()).load();
+        Storage.LoadResult loaded = new Storage(getSaveFile()).load();
 
         assertTrue(loaded.tasks().isEmpty());
         assertFalse(loaded.hasWarning());
@@ -330,7 +330,7 @@ public class StorageTest {
     public void load_emptyFile_returnsEmptyListWithoutWarning() throws Exception {
         writeSaveFile("");
 
-        Storage.LoadResult loaded = new Storage(saveFile()).load();
+        Storage.LoadResult loaded = new Storage(getSaveFile()).load();
 
         assertTrue(loaded.tasks().isEmpty());
         assertFalse(loaded.hasWarning());
@@ -347,7 +347,7 @@ public class StorageTest {
     public void load_blankLines_skippedWithoutWarning() throws Exception {
         writeSaveFile("\nT | 0 | read book\n   \n\nT | 0 | write notes\n\n");
 
-        Storage.LoadResult loaded = new Storage(saveFile()).load();
+        Storage.LoadResult loaded = new Storage(getSaveFile()).load();
 
         assertArrayEquals(new String[] {"1.[T][ ] read book", "2.[T][ ] write notes"},
                 new TaskList(loaded.tasks()).toNumberedLines());
@@ -364,7 +364,7 @@ public class StorageTest {
     public void load_fileStartingWithByteOrderMark_readsTheFirstTask() throws Exception {
         writeSaveFile("\uFEFFT | 1 | read book\nT | 0 | write notes\n");
 
-        Storage.LoadResult loaded = new Storage(saveFile()).load();
+        Storage.LoadResult loaded = new Storage(getSaveFile()).load();
 
         assertArrayEquals(new String[] {"1.[T][X] read book", "2.[T][ ] write notes"},
                 new TaskList(loaded.tasks()).toNumberedLines());
@@ -381,7 +381,7 @@ public class StorageTest {
     public void load_windowsLineEndings_readsEveryTask() throws Exception {
         writeSaveFile("T | 0 | read book\r\nD | 0 | return book | 2019-10-15T18:00\r\n");
 
-        Storage.LoadResult loaded = new Storage(saveFile()).load();
+        Storage.LoadResult loaded = new Storage(getSaveFile()).load();
 
         assertArrayEquals(new String[] {
             "1.[T][ ] read book",
@@ -403,7 +403,7 @@ public class StorageTest {
                 + "this line is nonsense\n"
                 + "T | 0 | write notes\n");
 
-        Storage.LoadResult loaded = new Storage(saveFile()).load();
+        Storage.LoadResult loaded = new Storage(getSaveFile()).load();
 
         assertArrayEquals(new String[] {"1.[T][ ] read book", "2.[T][ ] write notes"},
                 new TaskList(loaded.tasks()).toNumberedLines());
@@ -418,25 +418,25 @@ public class StorageTest {
     public void load_damagedLine_warnsInSingularForOneLine() throws Exception {
         writeSaveFile("T | 0 | read book\nnonsense\n");
 
-        String[] warning = new Storage(saveFile()).load().warningLines();
+        String[] warningLines = new Storage(getSaveFile()).load().warningLines();
 
-        assertEquals(3, warning.length);
-        assertTrue(warning[0].startsWith("I could not understand 1 line in "),
-                "Expected a singular warning, but was: " + warning[0]);
-        assertTrue(warning[0].endsWith("so I skipped it."),
-                "Expected a singular warning, but was: " + warning[0]);
+        assertEquals(3, warningLines.length);
+        assertTrue(warningLines[0].startsWith("I could not understand 1 line in "),
+                "Expected a singular warning, but was: " + warningLines[0]);
+        assertTrue(warningLines[0].endsWith("so I skipped it."),
+                "Expected a singular warning, but was: " + warningLines[0]);
     }
 
     @Test
     public void load_severalDamagedLines_warnsInPluralAndCountsThem() throws Exception {
         writeSaveFile("nonsense\nT | 0 | read book\nmore nonsense\nstill more\n");
 
-        String[] warning = new Storage(saveFile()).load().warningLines();
+        String[] warningLines = new Storage(getSaveFile()).load().warningLines();
 
-        assertTrue(warning[0].startsWith("I could not understand 3 lines in "),
-                "Expected a plural warning counting 3 lines, but was: " + warning[0]);
-        assertTrue(warning[0].endsWith("so I skipped them."),
-                "Expected a plural warning, but was: " + warning[0]);
+        assertTrue(warningLines[0].startsWith("I could not understand 3 lines in "),
+                "Expected a plural warning counting 3 lines, but was: " + warningLines[0]);
+        assertTrue(warningLines[0].endsWith("so I skipped them."),
+                "Expected a plural warning, but was: " + warningLines[0]);
     }
 
     /**
@@ -449,14 +449,14 @@ public class StorageTest {
         String originalContents = "T | 0 | read book\nnonsense\n";
         writeSaveFile(originalContents);
 
-        String[] warning = new Storage(saveFile()).load().warningLines();
+        String[] warningLines = new Storage(getSaveFile()).load().warningLines();
 
         Path damagedCopy = tempDir.resolve("piplupbot.txt.damaged");
         assertTrue(Files.exists(damagedCopy), "The damaged file should have been copied aside");
         assertEquals(originalContents, Files.readString(damagedCopy),
                 "The copy should hold the file exactly as it was found");
-        assertTrue(warning[2].contains("piplupbot.txt.damaged"),
-                "The user should be told where the copy is, but was told: " + warning[2]);
+        assertTrue(warningLines[2].contains("piplupbot.txt.damaged"),
+                "The user should be told where the copy is, but was told: " + warningLines[2]);
     }
 
     /** A file that reads cleanly leaves no rescue copy behind to confuse anyone. */
@@ -464,7 +464,7 @@ public class StorageTest {
     public void load_undamagedFile_leavesNoCopyBehind() throws Exception {
         writeSaveFile("T | 0 | read book\n");
 
-        new Storage(saveFile()).load();
+        new Storage(getSaveFile()).load();
 
         assertFalse(Files.exists(tempDir.resolve("piplupbot.txt.damaged")));
     }
@@ -477,17 +477,17 @@ public class StorageTest {
     @Test
     public void load_differentDamageLater_keepsTheEarlierCopy() throws Exception {
         writeSaveFile("T | 0 | read book\nfirst damage\n");
-        new Storage(saveFile()).load();
+        new Storage(getSaveFile()).load();
         writeSaveFile("T | 0 | read book\nsecond damage\n");
 
-        String[] warning = new Storage(saveFile()).load().warningLines();
+        String[] warningLines = new Storage(getSaveFile()).load().warningLines();
 
         assertEquals("T | 0 | read book\nfirst damage\n",
                 Files.readString(tempDir.resolve("piplupbot.txt.damaged")));
         assertEquals("T | 0 | read book\nsecond damage\n",
                 Files.readString(tempDir.resolve("piplupbot.txt.damaged-2")));
-        assertTrue(warning[2].endsWith("piplupbot.txt.damaged-2."),
-                "The user should be told where the new copy is, but was told: " + warning[2]);
+        assertTrue(warningLines[2].endsWith("piplupbot.txt.damaged-2."),
+                "The user should be told where the new copy is, but was told: " + warningLines[2]);
     }
 
     /**
@@ -498,13 +498,13 @@ public class StorageTest {
     @Test
     public void load_sameDamageTwice_reusesTheCopy() throws Exception {
         writeSaveFile("T | 0 | read book\nnonsense\n");
-        new Storage(saveFile()).load();
+        new Storage(getSaveFile()).load();
 
-        String[] warning = new Storage(saveFile()).load().warningLines();
+        String[] warningLines = new Storage(getSaveFile()).load().warningLines();
 
         assertFalse(Files.exists(tempDir.resolve("piplupbot.txt.damaged-2")));
-        assertTrue(warning[2].endsWith("piplupbot.txt.damaged."),
-                "The user should be pointed at the existing copy, but was told: " + warning[2]);
+        assertTrue(warningLines[2].endsWith("piplupbot.txt.damaged."),
+                "The user should be pointed at the existing copy, but was told: " + warningLines[2]);
     }
 
     /**
@@ -518,7 +518,7 @@ public class StorageTest {
         Files.createDirectory(tempDir.resolve("piplupbot.txt.damaged"));
         writeSaveFile("nonsense\n");
 
-        new Storage(saveFile()).load();
+        new Storage(getSaveFile()).load();
 
         assertEquals("nonsense\n", Files.readString(tempDir.resolve("piplupbot.txt.damaged-2")));
     }
@@ -531,16 +531,16 @@ public class StorageTest {
     @Test
     public void load_thirdDifferentDamage_numbersTheCopyFromTheFirstName() throws Exception {
         writeSaveFile("first damage\n");
-        new Storage(saveFile()).load();
+        new Storage(getSaveFile()).load();
         writeSaveFile("second damage\n");
-        new Storage(saveFile()).load();
+        new Storage(getSaveFile()).load();
         writeSaveFile("third damage\n");
 
-        String[] warning = new Storage(saveFile()).load().warningLines();
+        String[] warningLines = new Storage(getSaveFile()).load().warningLines();
 
         assertEquals("third damage\n", Files.readString(tempDir.resolve("piplupbot.txt.damaged-3")));
-        assertTrue(warning[2].endsWith("piplupbot.txt.damaged-3."),
-                "The user should be told where the newest copy is, but was told: " + warning[2]);
+        assertTrue(warningLines[2].endsWith("piplupbot.txt.damaged-3."),
+                "The user should be told where the newest copy is, but was told: " + warningLines[2]);
     }
 
     /**
@@ -551,15 +551,15 @@ public class StorageTest {
     @Test
     public void load_damageMatchingTheSecondCopy_reusesThatCopy() throws Exception {
         writeSaveFile("first damage\n");
-        new Storage(saveFile()).load();
+        new Storage(getSaveFile()).load();
         writeSaveFile("second damage\n");
-        new Storage(saveFile()).load();
+        new Storage(getSaveFile()).load();
 
-        String[] warning = new Storage(saveFile()).load().warningLines();
+        String[] warningLines = new Storage(getSaveFile()).load().warningLines();
 
         assertFalse(Files.exists(tempDir.resolve("piplupbot.txt.damaged-3")));
-        assertTrue(warning[2].endsWith("piplupbot.txt.damaged-2."),
-                "The user should be pointed at the existing copy, but was told: " + warning[2]);
+        assertTrue(warningLines[2].endsWith("piplupbot.txt.damaged-2."),
+                "The user should be pointed at the existing copy, but was told: " + warningLines[2]);
     }
 
     /**
@@ -574,12 +574,12 @@ public class StorageTest {
         Path longNamedFile = tempDir.resolve("x".repeat(250));
         Files.writeString(longNamedFile, "nonsense\n");
 
-        String[] warning = new Storage(longNamedFile).load().warningLines();
+        String[] warningLines = new Storage(longNamedFile).load().warningLines();
 
-        assertTrue(warning[2].startsWith("I could not keep a copy of it ("),
-                "Expected the bot to admit it has no copy, but was: " + warning[2]);
-        assertTrue(warning[2].endsWith("), so please back it up yourself."),
-                "Expected the bot to ask for a backup, but was: " + warning[2]);
+        assertTrue(warningLines[2].startsWith("I could not keep a copy of it ("),
+                "Expected the bot to admit it has no copy, but was: " + warningLines[2]);
+        assertTrue(warningLines[2].endsWith("), so please back it up yourself."),
+                "Expected the bot to ask for a backup, but was: " + warningLines[2]);
     }
 
     // ---------- The particular ways a line can be wrong ----------
@@ -607,7 +607,7 @@ public class StorageTest {
                 + "T | 0 | lone escape at the end \\\n" // an escape must escape something
                 + "T | 0 | read book\n"); // the only good line
 
-        Storage.LoadResult loaded = new Storage(saveFile()).load();
+        Storage.LoadResult loaded = new Storage(getSaveFile()).load();
 
         assertArrayEquals(new String[] {"1.[T][ ] read book"},
                 new TaskList(loaded.tasks()).toNumberedLines());
@@ -625,7 +625,7 @@ public class StorageTest {
         writeSaveFile("D | 0 | return book | Sunday\n"
                 + "E | 0 | project meeting | Mon 2pm | 4pm\n");
 
-        Storage.LoadResult loaded = new Storage(saveFile()).load();
+        Storage.LoadResult loaded = new Storage(getSaveFile()).load();
 
         assertTrue(loaded.tasks().isEmpty());
         assertTrue(loaded.hasWarning());
@@ -642,18 +642,18 @@ public class StorageTest {
      */
     @Test
     public void load_directoryInPlaceOfSaveFile_startsEmptyAndPromisesNoCopy() throws Exception {
-        Files.createDirectory(saveFile());
+        Files.createDirectory(getSaveFile());
 
-        Storage.LoadResult loaded = new Storage(saveFile()).load();
+        Storage.LoadResult loaded = new Storage(getSaveFile()).load();
 
         assertTrue(loaded.tasks().isEmpty());
         assertTrue(loaded.hasWarning());
 
-        String[] warning = loaded.warningLines();
-        assertTrue(warning[0].startsWith("I could not read "),
-                "Expected a warning about reading the file, but was: " + warning[0]);
-        assertTrue(warning[2].endsWith("is not a file."),
-                "Expected the bot to admit it has no copy, but was: " + warning[2]);
+        String[] warningLines = loaded.warningLines();
+        assertTrue(warningLines[0].startsWith("I could not read "),
+                "Expected a warning about reading the file, but was: " + warningLines[0]);
+        assertTrue(warningLines[2].endsWith("is not a file."),
+                "Expected the bot to admit it has no copy, but was: " + warningLines[2]);
     }
 
     /**
@@ -668,19 +668,19 @@ public class StorageTest {
         // "cafe" with an accent on the e, saved as Latin-1: the accented e becomes
         // the single byte 0xE9, which UTF-8 never uses on its own.
         byte[] contents = ("T | 0 | caf" + (char) 0xE9 + "\n").getBytes(StandardCharsets.ISO_8859_1);
-        Files.write(saveFile(), contents);
+        Files.write(getSaveFile(), contents);
 
-        Storage.LoadResult loaded = new Storage(saveFile()).load();
+        Storage.LoadResult loaded = new Storage(getSaveFile()).load();
 
         assertTrue(loaded.tasks().isEmpty());
-        String[] warning = loaded.warningLines();
-        assertEquals(3, warning.length);
-        assertTrue(warning[0].startsWith("I could not read "),
-                "Expected a warning about reading the file, but was: " + warning[0]);
+        String[] warningLines = loaded.warningLines();
+        assertEquals(3, warningLines.length);
+        assertTrue(warningLines[0].startsWith("I could not read "),
+                "Expected a warning about reading the file, but was: " + warningLines[0]);
         assertEquals("I have started with an empty list, so your next command would overwrite it.",
-                warning[1]);
-        assertTrue(warning[2].endsWith("piplupbot.txt.damaged."),
-                "The user should be told where the copy is, but was told: " + warning[2]);
+                warningLines[1]);
+        assertTrue(warningLines[2].endsWith("piplupbot.txt.damaged."),
+                "The user should be told where the copy is, but was told: " + warningLines[2]);
         assertArrayEquals(contents, Files.readAllBytes(tempDir.resolve("piplupbot.txt.damaged")));
     }
 }

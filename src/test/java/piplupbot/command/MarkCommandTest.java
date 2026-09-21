@@ -50,7 +50,7 @@ public class MarkCommandTest {
      *
      * @return The path to a save file of this test's own.
      */
-    private Path saveFile() {
+    private Path getSaveFile() {
         return tempDir.resolve("piplupbot.txt");
     }
 
@@ -60,7 +60,7 @@ public class MarkCommandTest {
      * @param isDone Whether the todo starts out done.
      * @return A list holding just that todo, as task 1.
      */
-    private static TaskList listWithOneTodo(boolean isDone) {
+    private static TaskList createListWithOneTodo(boolean isDone) {
         Todo todo = new Todo("read book");
         if (isDone) {
             todo.markAsDone();
@@ -74,26 +74,26 @@ public class MarkCommandTest {
 
     @Test
     public void execute_markTaskNotDone_marksConfirmsAndSaves() throws Exception {
-        TaskList tasks = listWithOneTodo(false);
+        TaskList tasks = createListWithOneTodo(false);
 
-        new MarkCommand(1, true).execute(tasks, ui, new Storage(saveFile()));
+        new MarkCommand(1, true).execute(tasks, ui, new Storage(getSaveFile()));
 
         assertTrue(tasks.get(1).isDone());
         assertEquals(List.of("Piplup! One more fish in the bucket. I've marked this task as done:\n"
                 + "  [T][X] read book"), ui.getReplies());
-        assertEquals("T | 1 | read book\n", Files.readString(saveFile()));
+        assertEquals("T | 1 | read book\n", Files.readString(getSaveFile()));
     }
 
     @Test
     public void execute_unmarkDoneTask_unmarksConfirmsAndSaves() throws Exception {
-        TaskList tasks = listWithOneTodo(true);
+        TaskList tasks = createListWithOneTodo(true);
 
-        new MarkCommand(1, false).execute(tasks, ui, new Storage(saveFile()));
+        new MarkCommand(1, false).execute(tasks, ui, new Storage(getSaveFile()));
 
         assertFalse(tasks.get(1).isDone());
         assertEquals(List.of("Pip-pip, no rush! I've marked this task as not done yet:\n"
                 + "  [T][ ] read book"), ui.getReplies());
-        assertEquals("T | 0 | read book\n", Files.readString(saveFile()));
+        assertEquals("T | 0 | read book\n", Files.readString(getSaveFile()));
     }
 
     // ---------- A task that already has that status ----------
@@ -105,17 +105,17 @@ public class MarkCommandTest {
      */
     @Test
     public void execute_markDoneTask_exceptionThrownAndNothingSaved() {
-        TaskList tasks = listWithOneTodo(true);
+        TaskList tasks = createListWithOneTodo(true);
 
         PiplupBotException exception = assertThrows(PiplupBotException.class, () ->
-                new MarkCommand(1, true).execute(tasks, ui, new Storage(saveFile())));
+                new MarkCommand(1, true).execute(tasks, ui, new Storage(getSaveFile())));
 
         assertArrayEquals(new String[] {
             "Pip... This task is already marked as done:",
             "  [T][X] read book",
         }, exception.getMessageLines());
         assertTrue(ui.getReplies().isEmpty(), "Nothing should be confirmed, but was: " + ui.getReplies());
-        assertFalse(Files.exists(saveFile()), "Nothing should be saved");
+        assertFalse(Files.exists(getSaveFile()), "Nothing should be saved");
     }
 
     /**
@@ -124,16 +124,16 @@ public class MarkCommandTest {
      */
     @Test
     public void execute_unmarkTaskNotDone_exceptionThrownAndNothingSaved() {
-        TaskList tasks = listWithOneTodo(false);
+        TaskList tasks = createListWithOneTodo(false);
 
         PiplupBotException exception = assertThrows(PiplupBotException.class, () ->
-                new MarkCommand(1, false).execute(tasks, ui, new Storage(saveFile())));
+                new MarkCommand(1, false).execute(tasks, ui, new Storage(getSaveFile())));
 
         assertArrayEquals(new String[] {
             "Pip... This task is not marked as done yet:",
             "  [T][ ] read book",
         }, exception.getMessageLines());
         assertTrue(ui.getReplies().isEmpty(), "Nothing should be confirmed, but was: " + ui.getReplies());
-        assertFalse(Files.exists(saveFile()), "Nothing should be saved");
+        assertFalse(Files.exists(getSaveFile()), "Nothing should be saved");
     }
 }

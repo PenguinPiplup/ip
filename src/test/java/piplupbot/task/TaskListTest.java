@@ -45,7 +45,7 @@ public class TaskListTest {
      * @param descriptions What each task is, in the order they are stored.
      * @return A list holding one todo per description.
      */
-    private static TaskList listOfTodos(String... descriptions) {
+    private static TaskList createTodoList(String... descriptions) {
         ArrayList<Task> todos = new ArrayList<>();
         for (String description : descriptions) {
             todos.add(new Todo(description));
@@ -61,7 +61,7 @@ public class TaskListTest {
      * @param tasks The list to read.
      * @return The descriptions, in the order the user sees them.
      */
-    private static List<String> descriptionsOf(TaskList tasks) {
+    private static List<String> getDescriptions(TaskList tasks) {
         return tasks.asList().stream().map(Task::getDescription).toList();
     }
 
@@ -104,7 +104,7 @@ public class TaskListTest {
      */
     @Test
     public void add_sameTaskTwice_messageShowsStoredTaskWithItsNumber() {
-        TaskList tasks = listOfTodos("write notes", "read book");
+        TaskList tasks = createTodoList("write notes", "read book");
 
         PiplupBotException exception = assertThrows(PiplupBotException.class, () ->
                 tasks.add(new Todo("read book")));
@@ -121,7 +121,7 @@ public class TaskListTest {
      */
     @Test
     public void add_sameTaskInOtherCapitals_exceptionThrown() {
-        TaskList tasks = listOfTodos("read book");
+        TaskList tasks = createTodoList("read book");
         assertThrows(PiplupBotException.class, () -> tasks.add(new Todo("Read Book")));
     }
 
@@ -132,7 +132,7 @@ public class TaskListTest {
      */
     @Test
     public void add_sameTaskAsADoneOne_exceptionThrown() throws PiplupBotException {
-        TaskList tasks = listOfTodos("read book");
+        TaskList tasks = createTodoList("read book");
         tasks.get(1).markAsDone();
         assertThrows(PiplupBotException.class, () -> tasks.add(new Todo("read book")));
     }
@@ -161,7 +161,7 @@ public class TaskListTest {
      */
     @Test
     public void constructor_givenRepeatedTasks_keepsThemAll() {
-        assertEquals(2, listOfTodos("read book", "read book").size());
+        assertEquals(2, createTodoList("read book", "read book").size());
     }
 
     // ---------- Reading a task by the number the user sees ----------
@@ -169,14 +169,14 @@ public class TaskListTest {
     /** Task 1 is the first one added, not the second. */
     @Test
     public void get_firstTaskNumber_returnsFirstTaskAdded() throws PiplupBotException {
-        TaskList tasks = listOfTodos("first", "second", "third");
+        TaskList tasks = createTodoList("first", "second", "third");
         assertEquals("[T][ ] first", tasks.get(1).toString());
     }
 
     /** The last valid number is the size itself, not one less. */
     @Test
     public void get_lastTaskNumber_returnsLastTaskAdded() throws PiplupBotException {
-        TaskList tasks = listOfTodos("first", "second", "third");
+        TaskList tasks = createTodoList("first", "second", "third");
         assertEquals("[T][ ] third", tasks.get(3).toString());
     }
 
@@ -195,19 +195,19 @@ public class TaskListTest {
     /** 0 is the index the list uses internally, and is never a task number. */
     @Test
     public void get_zero_exceptionThrown() {
-        TaskList tasks = listOfTodos("only task");
+        TaskList tasks = createTodoList("only task");
         assertThrows(PiplupBotException.class, () -> tasks.get(0));
     }
 
     @Test
     public void get_numberJustPastTheEnd_exceptionThrown() {
-        TaskList tasks = listOfTodos("first", "second");
+        TaskList tasks = createTodoList("first", "second");
         assertThrows(PiplupBotException.class, () -> tasks.get(3));
     }
 
     @Test
     public void get_negativeNumber_exceptionThrown() {
-        TaskList tasks = listOfTodos("only task");
+        TaskList tasks = createTodoList("only task");
         assertThrows(PiplupBotException.class, () -> tasks.get(-1));
     }
 
@@ -224,7 +224,7 @@ public class TaskListTest {
      */
     @Test
     public void get_numberNamingNoTask_messageNamesThatNumber() {
-        TaskList tasks = listOfTodos("only task");
+        TaskList tasks = createTodoList("only task");
         PiplupBotException exception = assertThrows(PiplupBotException.class, () -> tasks.get(5));
         assertArrayEquals(new String[] {"Pip... There is no task numbered 5."},
                 exception.getMessageLines());
@@ -234,7 +234,7 @@ public class TaskListTest {
 
     @Test
     public void remove_taskNumber_returnsRemovedTask() throws PiplupBotException {
-        TaskList tasks = listOfTodos("first", "second", "third");
+        TaskList tasks = createTodoList("first", "second", "third");
         assertEquals("[T][ ] second", tasks.remove(2).toString());
     }
 
@@ -245,7 +245,7 @@ public class TaskListTest {
      */
     @Test
     public void remove_middleTask_renumbersTheTasksAfterIt() throws PiplupBotException {
-        TaskList tasks = listOfTodos("first", "second", "third");
+        TaskList tasks = createTodoList("first", "second", "third");
         tasks.remove(2);
 
         assertEquals(2, tasks.size());
@@ -255,7 +255,7 @@ public class TaskListTest {
 
     @Test
     public void remove_numberNamingNoTask_exceptionThrown() {
-        TaskList tasks = listOfTodos("first", "second");
+        TaskList tasks = createTodoList("first", "second");
         assertThrows(PiplupBotException.class, () -> tasks.remove(0));
         assertThrows(PiplupBotException.class, () -> tasks.remove(3));
     }
@@ -267,7 +267,7 @@ public class TaskListTest {
      */
     @Test
     public void remove_numberNamingNoTask_leavesListUnchanged() {
-        TaskList tasks = listOfTodos("first", "second");
+        TaskList tasks = createTodoList("first", "second");
         assertThrows(PiplupBotException.class, () -> tasks.remove(3));
 
         assertArrayEquals(new String[] {"1.[T][ ] first", "2.[T][ ] second"},
@@ -291,7 +291,7 @@ public class TaskListTest {
     public void toNumberedLines_severalTasks_numbersFromOne() {
         assertArrayEquals(
                 new String[] {"1.[T][ ] first", "2.[T][ ] second", "3.[T][ ] third"},
-                listOfTodos("first", "second", "third").toNumberedLines());
+                createTodoList("first", "second", "third").toNumberedLines());
     }
 
     /** Each task prints itself, so the three kinds appear in their own shapes. */
@@ -321,20 +321,20 @@ public class TaskListTest {
      */
     @Test
     public void find_keywordInSomeDescriptions_returnsOnlyThoseNumberedFromOne() {
-        TaskList tasks = listOfTodos("read book", "write notes", "return book");
+        TaskList tasks = createTodoList("read book", "write notes", "return book");
         assertArrayEquals(new String[] {"1.[T][ ] read book", "2.[T][ ] return book"},
                 tasks.find("book").toNumberedLines());
     }
 
     @Test
     public void find_keywordMatchingNothing_returnsEmptyList() {
-        assertEquals(0, listOfTodos("read book", "write notes").find("homework").size());
+        assertEquals(0, createTodoList("read book", "write notes").find("homework").size());
     }
 
     /** The matches keep the order they were added in. */
     @Test
     public void find_keywordMatchingEveryTask_returnsThemInTheStoredOrder() {
-        TaskList tasks = listOfTodos("book one", "book two", "book three");
+        TaskList tasks = createTodoList("book one", "book two", "book three");
         assertArrayEquals(
                 new String[] {"1.[T][ ] book one", "2.[T][ ] book two", "3.[T][ ] book three"},
                 tasks.find("book").toNumberedLines());
@@ -350,13 +350,13 @@ public class TaskListTest {
     @Test
     public void find_keywordInADifferentCase_stillMatches() {
         assertArrayEquals(new String[] {"1.[T][ ] Read Book"},
-                listOfTodos("Read Book", "write notes").find("bOOk").toNumberedLines());
+                createTodoList("Read Book", "write notes").find("bOOk").toNumberedLines());
     }
 
     /** Searching reads the list; it must not change what is stored. */
     @Test
     public void find_anyKeyword_leavesTheStoredTasksUnchanged() {
-        TaskList tasks = listOfTodos("read book", "write notes");
+        TaskList tasks = createTodoList("read book", "write notes");
         tasks.find("book");
         tasks.find("nothing matches this");
 
@@ -384,7 +384,7 @@ public class TaskListTest {
      */
     @Test
     public void find_returnedListChanged_storedTasksUnchanged() throws PiplupBotException {
-        TaskList tasks = listOfTodos("read book");
+        TaskList tasks = createTodoList("read book");
 
         TaskList matches = tasks.find("book");
         matches.add(new Todo("added to the search result"));
@@ -408,7 +408,7 @@ public class TaskListTest {
 
         tasks.sort(SortKey.DATE, SortDirection.ASC);
 
-        assertEquals(List.of("meeting", "return book", "read book"), descriptionsOf(tasks));
+        assertEquals(List.of("meeting", "return book", "read book"), getDescriptions(tasks));
     }
 
     /**
@@ -420,7 +420,7 @@ public class TaskListTest {
      */
     @Test
     public void sort_thenGet_findsTheTaskShownAtThatNumber() throws PiplupBotException {
-        TaskList tasks = listOfTodos("c", "a", "b");
+        TaskList tasks = createTodoList("c", "a", "b");
 
         tasks.sort(SortKey.NAME, SortDirection.ASC);
 
@@ -431,12 +431,12 @@ public class TaskListTest {
     /** Sorting moves tasks about; it must not lose or duplicate one. */
     @Test
     public void sort_anyKey_keepsEveryTaskExactlyOnce() {
-        TaskList tasks = listOfTodos("c", "a", "b");
+        TaskList tasks = createTodoList("c", "a", "b");
 
         tasks.sort(SortKey.NAME, SortDirection.DESC);
 
         assertEquals(3, tasks.size());
-        assertEquals(List.of("c", "b", "a"), descriptionsOf(tasks));
+        assertEquals(List.of("c", "b", "a"), getDescriptions(tasks));
     }
 
     @Test
@@ -477,7 +477,7 @@ public class TaskListTest {
         tasks.sort(SortKey.DONE, SortDirection.ASC);
 
         // The unfinished task first, then the finished two still in date order.
-        assertEquals(List.of("pending", "zulu", "alpha"), descriptionsOf(tasks));
+        assertEquals(List.of("pending", "zulu", "alpha"), getDescriptions(tasks));
     }
 
     // ---------- The copies that keep the list this class's own ----------
@@ -489,11 +489,11 @@ public class TaskListTest {
      */
     @Test
     public void asList_returnedListChanged_storedTasksUnchanged() {
-        TaskList tasks = listOfTodos("first");
+        TaskList tasks = createTodoList("first");
 
-        ArrayList<Task> copy = tasks.asList();
-        copy.add(new Todo("added behind the list's back"));
-        copy.remove(0);
+        ArrayList<Task> copiedTasks = tasks.asList();
+        copiedTasks.add(new Todo("added behind the list's back"));
+        copiedTasks.remove(0);
 
         assertEquals(1, tasks.size());
         assertArrayEquals(new String[] {"1.[T][ ] first"}, tasks.toNumberedLines());

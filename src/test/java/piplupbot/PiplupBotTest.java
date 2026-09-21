@@ -51,7 +51,7 @@ public class PiplupBotTest {
      *
      * @return The path to a save file of this test's own.
      */
-    private Path saveFile() {
+    private Path getSaveFile() {
         return tempDir.resolve("piplupbot.txt");
     }
 
@@ -89,9 +89,9 @@ public class PiplupBotTest {
     /** A save file that reads cleanly is not worth a word, so the greeting is all the user sees. */
     @Test
     public void greet_readableSaveFile_greetsOnly() throws Exception {
-        Files.writeString(saveFile(), "T | 0 | read book\n");
+        Files.writeString(getSaveFile(), "T | 0 | read book\n");
 
-        new PiplupBot(saveFile()).greet(ui);
+        new PiplupBot(getSaveFile()).greet(ui);
 
         assertEquals(List.of("Hello! I'm PiplupBot. Pip-pip!\nWhat can I do for you?"), ui.getReplies());
     }
@@ -103,9 +103,9 @@ public class PiplupBotTest {
      */
     @Test
     public void greet_damagedSaveFile_greetsThenWarns() throws Exception {
-        Files.writeString(saveFile(), "T | 0 | read book\nnonsense\n");
+        Files.writeString(getSaveFile(), "T | 0 | read book\nnonsense\n");
 
-        new PiplupBot(saveFile()).greet(ui);
+        new PiplupBot(getSaveFile()).greet(ui);
 
         List<String> replies = ui.getReplies();
         assertEquals(2, replies.size());
@@ -118,7 +118,7 @@ public class PiplupBotTest {
 
     @Test
     public void respondTo_taskCommand_answersAndSavesTheTask() throws Exception {
-        PiplupBot bot = new PiplupBot(saveFile());
+        PiplupBot bot = new PiplupBot(getSaveFile());
 
         bot.respondTo("todo read book", ui);
 
@@ -127,13 +127,13 @@ public class PiplupBotTest {
                         + "  [T][ ] read book\n"
                         + "Now you have 1 task in the list."),
                 ui.getReplies());
-        assertEquals("T | 0 | read book\n", Files.readString(saveFile()));
+        assertEquals("T | 0 | read book\n", Files.readString(getSaveFile()));
     }
 
     /** Lines typed one after another act on the same list, as they do in the console. */
     @Test
     public void respondTo_severalLines_actOnTheSameList() {
-        PiplupBot bot = new PiplupBot(saveFile());
+        PiplupBot bot = new PiplupBot(getSaveFile());
         bot.respondTo("todo read book", ui);
         bot.respondTo("mark 1", ui);
         ui.clearReplies();
@@ -159,7 +159,7 @@ public class PiplupBotTest {
     @Test
     public void respondTo_sortCommand_answersWithTheSortedListAndSavesTheNewOrder()
             throws Exception {
-        PiplupBot bot = new PiplupBot(saveFile());
+        PiplupBot bot = new PiplupBot(getSaveFile());
         bot.respondTo("todo read book", ui);
         bot.respondTo("deadline return book /by 2019-10-15 1800", ui);
         ui.clearReplies();
@@ -173,13 +173,13 @@ public class PiplupBotTest {
                         + "2.[T][ ] read book"),
                 ui.getReplies());
         assertEquals("D | 0 | return book | 2019-10-15T18:00\nT | 0 | read book\n",
-                Files.readString(saveFile()));
+                Files.readString(getSaveFile()));
     }
 
     /** {@code bye} ends the conversation, and still says goodbye first. */
     @Test
     public void respondTo_bye_saysGoodbyeAndEndsConversation() {
-        PiplupBot bot = new PiplupBot(saveFile());
+        PiplupBot bot = new PiplupBot(getSaveFile());
         bot.respondTo("bye", ui);
 
         assertTrue(bot.isExit());
@@ -193,7 +193,7 @@ public class PiplupBotTest {
      */
     @Test
     public void respondTo_unknownCommand_explainsAndCarriesOn() {
-        PiplupBot bot = new PiplupBot(saveFile());
+        PiplupBot bot = new PiplupBot(getSaveFile());
         bot.respondTo("blah", ui);
 
         assertFalse(bot.isExit());
@@ -204,7 +204,7 @@ public class PiplupBotTest {
     /** A blank line names no command, so it gets no reply, not even an error. */
     @Test
     public void respondTo_blankLine_saysNothingAndCarriesOn() {
-        PiplupBot bot = new PiplupBot(saveFile());
+        PiplupBot bot = new PiplupBot(getSaveFile());
         bot.respondTo("   ", ui);
 
         assertFalse(bot.isExit());
@@ -219,7 +219,7 @@ public class PiplupBotTest {
      */
     @Test
     public void respondTo_surroundingSpaces_areIgnored() {
-        PiplupBot bot = new PiplupBot(saveFile());
+        PiplupBot bot = new PiplupBot(getSaveFile());
         bot.respondTo("  bye  ", ui);
 
         assertTrue(bot.isExit());
@@ -233,7 +233,7 @@ public class PiplupBotTest {
      */
     @Test
     public void isExit_blankLineAfterBye_staysTrue() {
-        PiplupBot bot = new PiplupBot(saveFile());
+        PiplupBot bot = new PiplupBot(getSaveFile());
         bot.respondTo("bye", ui);
 
         bot.respondTo("   ", ui);
@@ -251,12 +251,12 @@ public class PiplupBotTest {
      */
     @Test
     public void run_lineAfterBye_isNeverRead() throws Exception {
-        String printed = runInConsole(new PiplupBot(saveFile()),
+        String printed = runInConsole(new PiplupBot(getSaveFile()),
                 "todo read book\nbye\ntodo write notes\n");
 
         assertTrue(printed.contains("Pip-pip! Off for a swim."),
                 "Expected a goodbye, but the console printed:\n" + printed);
-        assertEquals("T | 0 | read book\n", Files.readString(saveFile()));
+        assertEquals("T | 0 | read book\n", Files.readString(getSaveFile()));
     }
 
     /**
@@ -266,10 +266,10 @@ public class PiplupBotTest {
      */
     @Test
     public void run_inputEndsWithoutBye_stopsWithoutGoodbye() throws Exception {
-        String printed = runInConsole(new PiplupBot(saveFile()), "todo read book\n");
+        String printed = runInConsole(new PiplupBot(getSaveFile()), "todo read book\n");
 
         assertFalse(printed.contains("Pip-pip! Off for a swim."),
                 "Expected no goodbye, but the console printed:\n" + printed);
-        assertEquals("T | 0 | read book\n", Files.readString(saveFile()));
+        assertEquals("T | 0 | read book\n", Files.readString(getSaveFile()));
     }
 }

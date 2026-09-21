@@ -243,7 +243,7 @@ public abstract class Task {
      * @return The type code, the done status and the description.
      */
     public String[] toFileFields() {
-        return withExtraFields();
+        return buildFileFields();
     }
 
     /**
@@ -254,7 +254,7 @@ public abstract class Task {
      * @param extras The subclass's own fields, in the order they are written.
      * @return The shared fields followed by {@code extras}.
      */
-    protected String[] withExtraFields(String... extras) {
+    protected String[] buildFileFields(String... extras) {
         // The parts are added in order rather than assigned to numbered slots,
         // so this method says which shared fields there are and which comes
         // first without also having to state how many -- a count only the

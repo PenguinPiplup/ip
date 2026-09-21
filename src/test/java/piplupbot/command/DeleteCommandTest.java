@@ -49,7 +49,7 @@ public class DeleteCommandTest {
      *
      * @return The path to a save file of this test's own.
      */
-    private Path saveFile() {
+    private Path getSaveFile() {
         return tempDir.resolve("piplupbot.txt");
     }
 
@@ -59,13 +59,13 @@ public class DeleteCommandTest {
         tasks.add(new Todo("read book"));
         tasks.add(new Todo("write notes"));
 
-        new DeleteCommand(1).execute(tasks, ui, new Storage(saveFile()));
+        new DeleteCommand(1).execute(tasks, ui, new Storage(getSaveFile()));
 
         assertArrayEquals(new String[] {"1.[T][ ] write notes"}, tasks.toNumberedLines());
         assertEquals(List.of("Splash! I've washed this task away:\n"
                 + "  [T][ ] read book\n"
                 + "Now you have 1 task in the list."), ui.getReplies());
-        assertEquals("T | 0 | write notes\n", Files.readString(saveFile()));
+        assertEquals("T | 0 | write notes\n", Files.readString(getSaveFile()));
     }
 
     /** A number that names no task changes nothing, says nothing, and saves nothing. */
@@ -75,10 +75,10 @@ public class DeleteCommandTest {
         tasks.add(new Todo("read book"));
 
         assertThrows(PiplupBotException.class, () ->
-                new DeleteCommand(2).execute(tasks, ui, new Storage(saveFile())));
+                new DeleteCommand(2).execute(tasks, ui, new Storage(getSaveFile())));
 
         assertArrayEquals(new String[] {"1.[T][ ] read book"}, tasks.toNumberedLines());
         assertTrue(ui.getReplies().isEmpty(), "Nothing should be confirmed, but was: " + ui.getReplies());
-        assertFalse(Files.exists(saveFile()), "Nothing should be saved");
+        assertFalse(Files.exists(getSaveFile()), "Nothing should be saved");
     }
 }

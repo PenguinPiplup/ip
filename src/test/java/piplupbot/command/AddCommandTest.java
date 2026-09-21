@@ -50,7 +50,7 @@ public class AddCommandTest {
      *
      * @return The path to a save file of this test's own.
      */
-    private Path saveFile() {
+    private Path getSaveFile() {
         return tempDir.resolve("piplupbot.txt");
     }
 
@@ -64,13 +64,13 @@ public class AddCommandTest {
         tasks.add(new Todo("read book"));
 
         new AddCommand(new Deadline("return book", "2019-10-15 1800"))
-                .execute(tasks, ui, new Storage(saveFile()));
+                .execute(tasks, ui, new Storage(getSaveFile()));
 
         assertEquals(List.of("Piplup! I've tucked this task under my wing:\n"
                 + "  [D][ ] return book (by: Oct 15 2019 06:00 PM)\n"
                 + "Now you have 2 tasks in the list."), ui.getReplies());
         assertEquals("T | 0 | read book\nD | 0 | return book | 2019-10-15T18:00\n",
-                Files.readString(saveFile()));
+                Files.readString(getSaveFile()));
     }
 
     /**
@@ -84,11 +84,11 @@ public class AddCommandTest {
         tasks.add(new Todo("read book"));
 
         assertThrows(PiplupBotException.class, () ->
-                new AddCommand(new Todo("read book")).execute(tasks, ui, new Storage(saveFile())));
+                new AddCommand(new Todo("read book")).execute(tasks, ui, new Storage(getSaveFile())));
 
         assertEquals(1, tasks.size());
         assertTrue(ui.getReplies().isEmpty(), "Nothing should be confirmed, but was: " + ui.getReplies());
-        assertFalse(Files.exists(saveFile()), "Nothing should be saved");
+        assertFalse(Files.exists(getSaveFile()), "Nothing should be saved");
     }
 
     /**

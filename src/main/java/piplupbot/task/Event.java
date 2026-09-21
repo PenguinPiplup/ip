@@ -114,6 +114,6 @@ public class Event extends Task {
      */
     @Override
     public String[] toFileFields() {
-        return withExtraFields(DateTimes.toFileString(from), DateTimes.toFileString(to));
+        return buildFileFields(DateTimes.toFileString(from), DateTimes.toFileString(to));
     }
 }

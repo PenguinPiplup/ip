@@ -40,7 +40,7 @@ public class ListCommandTest {
      *
      * @return The path to a save file of this test's own.
      */
-    private Path saveFile() {
+    private Path getSaveFile() {
         return tempDir.resolve("piplupbot.txt");
     }
 
@@ -50,18 +50,18 @@ public class ListCommandTest {
         tasks.add(new Todo("read book"));
         tasks.add(new Deadline("return book", "2019-10-15 1800"));
 
-        new ListCommand().execute(tasks, ui, new Storage(saveFile()));
+        new ListCommand().execute(tasks, ui, new Storage(getSaveFile()));
 
         assertEquals(List.of("Here are the tasks in your list:\n"
                 + "1.[T][ ] read book\n"
                 + "2.[D][ ] return book (by: Oct 15 2019 06:00 PM)"), ui.getReplies());
-        assertFalse(Files.exists(saveFile()), "Showing the list should save nothing");
+        assertFalse(Files.exists(getSaveFile()), "Showing the list should save nothing");
     }
 
     /** An empty list is answered with the heading alone, rather than with no reply at all. */
     @Test
     public void execute_emptyList_showsTheHeadingAlone() {
-        new ListCommand().execute(new TaskList(), ui, new Storage(saveFile()));
+        new ListCommand().execute(new TaskList(), ui, new Storage(getSaveFile()));
 
         assertEquals(List.of("Here are the tasks in your list:"), ui.getReplies());
     }

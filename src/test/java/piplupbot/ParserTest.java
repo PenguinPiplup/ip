@@ -61,7 +61,7 @@ public class ParserTest {
      * @return The task list after all of them have run.
      * @throws PiplupBotException If any line is refused.
      */
-    private TaskList listAfter(String... inputs) throws PiplupBotException {
+    private TaskList runCommands(String... inputs) throws PiplupBotException {
         TaskList tasks = new TaskList();
         Ui ui = new TextUi();
         Storage storage = new Storage(tempDir.resolve("piplupbot.txt"));
@@ -114,13 +114,13 @@ public class ParserTest {
     @Test
     public void parse_todoCommand_storesTheDescription() throws PiplupBotException {
         assertArrayEquals(new String[] {"1.[T][ ] read book"},
-                listAfter("todo read book").toNumberedLines());
+                runCommands("todo read book").toNumberedLines());
     }
 
     @Test
     public void parse_deadlineCommand_storesDescriptionAndDate() throws PiplupBotException {
         assertArrayEquals(new String[] {"1.[D][ ] return book (by: Oct 15 2019 06:00 PM)"},
-                listAfter("deadline return book /by 2019-10-15 1800").toNumberedLines());
+                runCommands("deadline return book /by 2019-10-15 1800").toNumberedLines());
     }
 
     @Test
@@ -129,7 +129,7 @@ public class ParserTest {
                 new String[] {
                     "1.[E][ ] project meeting (from: Oct 2 2019 02:00 PM to: Oct 2 2019 04:00 PM)",
                 },
-                listAfter("event project meeting /from 2019-10-02 1400 /to 2019-10-02 1600")
+                runCommands("event project meeting /from 2019-10-02 1400 /to 2019-10-02 1600")
                         .toNumberedLines());
     }
 
@@ -137,22 +137,22 @@ public class ParserTest {
     @Test
     public void parse_extraSpacesAroundParts_storesThemTrimmed() throws PiplupBotException {
         assertArrayEquals(new String[] {"1.[D][ ] return book (by: Oct 15 2019 06:00 PM)"},
-                listAfter("deadline    return book    /by    2019-10-15 1800   ").toNumberedLines());
+                runCommands("deadline    return book    /by    2019-10-15 1800   ").toNumberedLines());
     }
 
     @Test
     public void parse_markAndUnmarkCommands_changeTheNamedTask() throws PiplupBotException {
         assertArrayEquals(new String[] {"1.[T][X] read book", "2.[T][ ] write notes"},
-                listAfter("todo read book", "todo write notes", "mark 1").toNumberedLines());
+                runCommands("todo read book", "todo write notes", "mark 1").toNumberedLines());
 
         assertArrayEquals(new String[] {"1.[T][ ] read book"},
-                listAfter("todo read book", "mark 1", "unmark 1").toNumberedLines());
+                runCommands("todo read book", "mark 1", "unmark 1").toNumberedLines());
     }
 
     @Test
     public void parse_deleteCommand_removesTheNamedTask() throws PiplupBotException {
         assertArrayEquals(new String[] {"1.[T][ ] write notes"},
-                listAfter("todo read book", "todo write notes", "delete 1").toNumberedLines());
+                runCommands("todo read book", "todo write notes", "delete 1").toNumberedLines());
     }
 
     // ---------- Where a separator is looked for ----------
@@ -166,7 +166,7 @@ public class ParserTest {
     public void parse_descriptionContainingBySeparator_keepsItInTheDescription()
             throws PiplupBotException {
         assertArrayEquals(new String[] {"1.[D][ ] submit A/by B (by: Oct 15 2019 06:00 PM)"},
-                listAfter("deadline submit A/by B /by 2019-10-15 1800").toNumberedLines());
+                runCommands("deadline submit A/by B /by 2019-10-15 1800").toNumberedLines());
     }
 
     /**
@@ -180,7 +180,7 @@ public class ParserTest {
                 new String[] {
                     "1.[E][ ] lunch /to dinner (from: Oct 2 2019 01:00 PM to: Oct 2 2019 02:00 PM)",
                 },
-                listAfter("event lunch /to dinner /from 2019-10-02 1300 /to 2019-10-02 1400")
+                runCommands("event lunch /to dinner /from 2019-10-02 1300 /to 2019-10-02 1400")
                         .toNumberedLines());
     }
 
@@ -359,7 +359,7 @@ public class ParserTest {
     @Test
     public void parse_taskNumberWithLeadingZero_accepted() throws PiplupBotException {
         assertArrayEquals(new String[] {"1.[T][X] read book"},
-                listAfter("todo read book", "mark 01").toNumberedLines());
+                runCommands("todo read book", "mark 01").toNumberedLines());
     }
 
     /**
@@ -397,7 +397,7 @@ public class ParserTest {
     public void parse_taskNumberNamingNoTask_returnsCommandThatFailsWhenRun()
             throws PiplupBotException {
         assertInstanceOf(MarkCommand.class, Parser.parse("mark 99"));
-        assertThrows(PiplupBotException.class, () -> listAfter("mark 99"));
+        assertThrows(PiplupBotException.class, () -> runCommands("mark 99"));
     }
 
     // ---------- Lines that should name something to look for ----------
@@ -431,7 +431,7 @@ public class ParserTest {
      */
     @Test
     public void parse_findWithSeveralWords_looksForThemAsOnePhrase() throws PiplupBotException {
-        TaskList tasks = listAfter("todo read book", "todo return book");
+        TaskList tasks = runCommands("todo read book", "todo return book");
 
         assertArrayEquals(new String[] {"1.[T][ ] read book"},
                 tasks.find("read book").toNumberedLines());
@@ -445,7 +445,7 @@ public class ParserTest {
     @Test
     public void parse_findCommand_leavesTheListUnchanged() throws PiplupBotException {
         assertArrayEquals(new String[] {"1.[T][ ] read book", "2.[T][ ] write notes"},
-                listAfter("todo read book", "todo write notes", "find book", "find notes")
+                runCommands("todo read book", "todo write notes", "find book", "find notes")
                         .toNumberedLines());
     }
 
@@ -495,7 +495,7 @@ public class ParserTest {
     @Test
     public void parse_sortWithNoDirection_sortsAscending() throws PiplupBotException {
         assertArrayEquals(new String[] {"1.[T][ ] a", "2.[T][ ] b", "3.[T][ ] c"},
-                listAfter("todo c", "todo a", "todo b", "sort name").toNumberedLines());
+                runCommands("todo c", "todo a", "todo b", "sort name").toNumberedLines());
     }
 
     /**
@@ -506,7 +506,7 @@ public class ParserTest {
     @Test
     public void parse_sortCommand_rearrangesTheStoredList() throws PiplupBotException {
         assertArrayEquals(new String[] {"1.[T][ ] c", "2.[T][ ] b", "3.[T][ ] a"},
-                listAfter("todo c", "todo a", "todo b", "sort name desc").toNumberedLines());
+                runCommands("todo c", "todo a", "todo b", "sort name desc").toNumberedLines());
     }
 
     /**
@@ -518,7 +518,7 @@ public class ParserTest {
     @Test
     public void parse_sortWithSeveralSpacesBeforeDirection_readsTheDirection() throws PiplupBotException {
         assertArrayEquals(new String[] {"1.[T][ ] c", "2.[T][ ] b", "3.[T][ ] a"},
-                listAfter("todo c", "todo a", "todo b", "sort name   desc").toNumberedLines());
+                runCommands("todo c", "todo a", "todo b", "sort name   desc").toNumberedLines());
     }
 
     // ---------- Lines that name no command at all ----------

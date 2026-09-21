@@ -86,16 +86,16 @@ public class Storage {
     private static final int SHARED_FIELD_COUNT = 3;
 
     /** Where the type code sits in a saved line. */
-    private static final int TYPE_CODE_INDEX = 0;
+    private static final int INDEX_TYPE_CODE = 0;
 
     /** Where the done flag sits in a saved line. */
-    private static final int DONE_FLAG_INDEX = 1;
+    private static final int INDEX_DONE_FLAG = 1;
 
     /** Where the description sits in a saved line. */
-    private static final int DESCRIPTION_INDEX = 2;
+    private static final int INDEX_DESCRIPTION = 2;
 
     /** Where a task's own fields begin, after the shared three. */
-    private static final int EXTRA_FIELDS_INDEX = SHARED_FIELD_COUNT;
+    private static final int INDEX_EXTRA_FIELDS = SHARED_FIELD_COUNT;
 
     /**
      * The invisible character that some editors, such as older versions of
@@ -217,7 +217,7 @@ public class Storage {
         } catch (IOException e) {
             deleteIfPossible(tempPath);
             throw new PiplupBotException(
-                    "I could not save your tasks to " + displayPath(filePath) + " (" + e + ").",
+                    "I could not save your tasks to " + formatPath(filePath) + " (" + e + ").",
                     "Your change is in this session only, and will be lost when I close.");
         }
     }
@@ -275,7 +275,7 @@ public class Storage {
             // The file is there but cannot be read at all: the wrong permissions,
             // a directory in its place, or bytes that are not text.
             return new LoadResult(tasks,
-                    "I could not read " + displayPath(filePath) + " (" + e + ").",
+                    "I could not read " + formatPath(filePath) + " (" + e + ").",
                     "I have started with an empty list, so your next command would overwrite it.",
                     preserveDamagedFile());
         }
@@ -301,7 +301,7 @@ public class Storage {
         }
         return new LoadResult(tasks,
                 "I could not understand " + skipped + (skipped == 1 ? " line" : " lines")
-                        + " in " + displayPath(filePath) + ", so I skipped "
+                        + " in " + formatPath(filePath) + ", so I skipped "
                         + (skipped == 1 ? "it" : "them") + ".",
                 "Those tasks are not in the list, and your next command would overwrite them.",
                 preserveDamagedFile());
@@ -321,7 +321,7 @@ public class Storage {
         // that holds nothing at all -- the very kind of false reassurance the
         // rest of this method exists to avoid. Only a real file can be rescued.
         if (!Files.isRegularFile(filePath)) {
-            return "There is nothing there for me to copy: " + displayPath(filePath)
+            return "There is nothing there for me to copy: " + formatPath(filePath)
                     + " is not a file.";
         }
 
@@ -332,7 +332,7 @@ public class Storage {
             if (!Files.exists(rescuePath)) {
                 Files.copy(filePath, rescuePath);
             }
-            return "I have kept the file as it was in " + displayPath(rescuePath) + ".";
+            return "I have kept the file as it was in " + formatPath(rescuePath) + ".";
         } catch (IOException e) {
             // Even the copy failed. Say so plainly rather than implying a safety
             // net that is not there.
@@ -400,7 +400,7 @@ public class Storage {
      * @param path The path to describe.
      * @return The path with forward slashes, e.g. {@code ./data/piplupbot.txt}.
      */
-    private static String displayPath(Path path) {
+    private static String formatPath(Path path) {
         return "./" + path.toString().replace('\\', '/');
     }
 
@@ -539,23 +539,23 @@ public class Storage {
         // Each kind of task writes a known number of fields, so the kind is read
         // first and the length checked against it -- once, rather than once per
         // branch -- before any field a shorter line would not have.
-        TaskType type = TaskType.fromCode(fields[TYPE_CODE_INDEX]);
+        TaskType type = TaskType.fromCode(fields[INDEX_TYPE_CODE]);
         requireFieldCount(fields, SHARED_FIELD_COUNT + type.getExtraFieldCount(), line);
 
-        String description = requireText(decodeField(fields[DESCRIPTION_INDEX]), "description", line);
+        String description = requireText(decodeField(fields[INDEX_DESCRIPTION]), "description", line);
         Task task = switch (type) {
             case TODO -> new Todo(description);
             case DEADLINE -> new Deadline(description,
-                    requireText(decodeField(fields[EXTRA_FIELDS_INDEX]), "date", line));
+                    requireText(decodeField(fields[INDEX_EXTRA_FIELDS]), "date", line));
             case EVENT -> new Event(description,
-                    requireText(decodeField(fields[EXTRA_FIELDS_INDEX]), "start time", line),
-                    requireText(decodeField(fields[EXTRA_FIELDS_INDEX + 1]), "end time", line));
+                    requireText(decodeField(fields[INDEX_EXTRA_FIELDS]), "start time", line),
+                    requireText(decodeField(fields[INDEX_EXTRA_FIELDS + 1]), "end time", line));
         };
 
         // A new task starts off not done, so only "1" needs acting on -- but
         // anything other than the two flags the file is meant to hold means the
         // line was not written by this program, so it is rejected.
-        String doneFlag = fields[DONE_FLAG_INDEX];
+        String doneFlag = fields[INDEX_DONE_FLAG];
         if (doneFlag.equals("1")) {
             task.markAsDone();
         } else if (!doneFlag.equals("0")) {

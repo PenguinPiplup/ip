@@ -94,6 +94,6 @@ public class Deadline extends Task {
      */
     @Override
     public String[] toFileFields() {
-        return withExtraFields(DateTimes.toFileString(by));
+        return buildFileFields(DateTimes.toFileString(by));
     }
 }

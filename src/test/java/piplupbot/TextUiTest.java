@@ -38,7 +38,7 @@ public class TextUiTest {
      * @param action What to run.
      * @return Everything the action printed.
      */
-    private static String printedBy(Runnable action) {
+    private static String capturePrintedOutput(Runnable action) {
         PrintStream originalOut = System.out;
         ByteArrayOutputStream printed = new ByteArrayOutputStream();
         System.setOut(new PrintStream(printed, true, StandardCharsets.UTF_8));
@@ -58,7 +58,7 @@ public class TextUiTest {
      * @param typed Everything the user types, with a line break after each line.
      * @return A console that reads that text.
      */
-    private static TextUi consoleReading(String typed) {
+    private static TextUi createConsoleReading(String typed) {
         InputStream originalIn = System.in;
         System.setIn(new ByteArrayInputStream(typed.getBytes(StandardCharsets.UTF_8)));
         try {
@@ -78,7 +78,7 @@ public class TextUiTest {
     public void show_twoLines_printsThemIndentedBetweenDividers() {
         TextUi console = new TextUi();
 
-        String printed = printedBy(() -> console.show("first line", "second line"));
+        String printed = capturePrintedOutput(() -> console.show("first line", "second line"));
 
         assertEquals(DIVIDER + "\n"
                 + "     first line\n"
@@ -96,10 +96,10 @@ public class TextUiTest {
     @Test
     public void showWelcome_console_drawsBannerThenGreets() {
         TextUi console = new TextUi();
-        String greeting = printedBy(() ->
+        String greeting = capturePrintedOutput(() ->
                 console.show("Hello! I'm PiplupBot. Pip-pip!", "What can I do for you?"));
 
-        String printed = printedBy(console::showWelcome);
+        String printed = capturePrintedOutput(console::showWelcome);
 
         assertTrue(printed.endsWith(greeting),
                 "Expected the greeting last, but the console printed:\n" + printed);
@@ -116,7 +116,7 @@ public class TextUiTest {
      */
     @Test
     public void readCommand_linesWithSurroundingSpaces_returnsThemTrimmedInOrder() {
-        TextUi console = consoleReading("  todo read book  \n\nbye\n");
+        TextUi console = createConsoleReading("  todo read book  \n\nbye\n");
 
         assertEquals("todo read book", console.readCommand());
         assertEquals("", console.readCommand());
@@ -130,7 +130,7 @@ public class TextUiTest {
      */
     @Test
     public void hasNextCommand_everyLineRead_false() {
-        TextUi console = consoleReading("list\nbye");
+        TextUi console = createConsoleReading("list\nbye");
 
         assertTrue(console.hasNextCommand());
         assertEquals("list", console.readCommand());

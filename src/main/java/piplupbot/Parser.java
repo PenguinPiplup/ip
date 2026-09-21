@@ -58,20 +58,20 @@ public class Parser {
      * The spaces are part of the constant, so a description containing the
      * characters "/by" is not mistaken for the separator.
      */
-    private static final String BY_SEPARATOR = " /by ";
+    private static final String SEPARATOR_BY = " /by ";
 
     /**
      * Separates an event's description from its start time.
-     * Surrounded by spaces for the same reason as {@link #BY_SEPARATOR}, which
+     * Surrounded by spaces for the same reason as {@link #SEPARATOR_BY}, which
      * is why a description mentioning "from" is safe.
      */
-    private static final String FROM_SEPARATOR = " /from ";
+    private static final String SEPARATOR_FROM = " /from ";
 
     /**
      * Separates an event's start time from its end time.
-     * Surrounded by spaces for the same reason as {@link #BY_SEPARATOR}.
+     * Surrounded by spaces for the same reason as {@link #SEPARATOR_BY}.
      */
-    private static final String TO_SEPARATOR = " /to ";
+    private static final String SEPARATOR_TO = " /to ";
 
     /**
      * What a task number looks like: one or more of the digits 0 to 9, and
@@ -163,7 +163,7 @@ public class Parser {
      * @throws PiplupBotException If no description follows the command word.
      */
     private static Todo parseTodo(String input) throws PiplupBotException {
-        String description = CommandWord.TODO.argumentOf(input);
+        String description = CommandWord.TODO.extractArgument(input);
         if (description.isEmpty()) {
             throw new PiplupBotException("Pip... A todo needs a description, e.g. todo borrow book.");
         }
@@ -187,10 +187,10 @@ public class Parser {
      *                            the date cannot be understood.
      */
     private static Deadline parseDeadline(String input) throws PiplupBotException {
-        String[] parts = splitIntoParts(CommandWord.DEADLINE.argumentOf(input),
+        String[] parts = splitIntoParts(CommandWord.DEADLINE.extractArgument(input),
                 "Pip... A deadline needs a /by part, "
                         + "e.g. deadline return book /by 2019-10-15 1800.",
-                BY_SEPARATOR);
+                SEPARATOR_BY);
         return new Deadline(parts[0], parts[1]);
     }
 
@@ -207,10 +207,10 @@ public class Parser {
      *                            understood, or the event ends before it starts.
      */
     private static Event parseEvent(String input) throws PiplupBotException {
-        String[] parts = splitIntoParts(CommandWord.EVENT.argumentOf(input),
+        String[] parts = splitIntoParts(CommandWord.EVENT.extractArgument(input),
                 "Pip... An event needs a /from and a /to part, "
                         + "e.g. event project meeting /from 2019-10-02 1400 /to 2019-10-02 1600.",
-                FROM_SEPARATOR, TO_SEPARATOR);
+                SEPARATOR_FROM, SEPARATOR_TO);
         return new Event(parts[0], parts[1], parts[2]);
     }
 
@@ -247,13 +247,13 @@ public class Parser {
             // what puts the separators in order: each is found only after the
             // part it ends, so "event lunch /to dinner /from ... /to ..." keeps
             // the first "/to" as ordinary text.
-            int separator = details.indexOf(separators[i], partStart);
-            if (separator < 0) {
+            int separatorIndex = details.indexOf(separators[i], partStart);
+            if (separatorIndex < 0) {
                 throw new PiplupBotException(hint);
             }
-            requireNoRepeat(details, separators[i], separator);
-            parts[i] = details.substring(partStart, separator).trim();
-            partStart = separator + separators[i].length();
+            requireNoRepeat(details, separators[i], separatorIndex);
+            parts[i] = details.substring(partStart, separatorIndex).trim();
+            partStart = separatorIndex + separators[i].length();
         }
         // Whatever follows the last separator is the last part.
         parts[parts.length - 1] = details.substring(partStart).trim();
@@ -307,7 +307,7 @@ public class Parser {
      * @throws PiplupBotException If nothing follows the command word.
      */
     private static String parseKeyword(String input) throws PiplupBotException {
-        String keyword = CommandWord.FIND.argumentOf(input);
+        String keyword = CommandWord.FIND.extractArgument(input);
         // A bare "find" would otherwise match every task, since every string
         // contains the empty string -- a confusing way to answer a line that
         // never said what to look for.
@@ -338,7 +338,7 @@ public class Parser {
      *                            is not one this bot knows.
      */
     private static SortCommand parseSort(String input) throws PiplupBotException {
-        String argument = CommandWord.SORT.argumentOf(input);
+        String argument = CommandWord.SORT.extractArgument(input);
         if (argument.isEmpty()) {
             throw new PiplupBotException("Pip... Please tell me what to sort by, e.g. sort date.",
                     SortKey.getKeywordHint());
@@ -370,10 +370,10 @@ public class Parser {
     private static int parseTaskNumber(String input, CommandWord commandWord)
             throws PiplupBotException {
         // Everything after the command word should be the task number.
-        // argumentOf() copes with the word on its own, e.g. a bare "mark", which
+        // extractArgument() copes with the word on its own, e.g. a bare "mark", which
         // leaves an empty argument that the check below rejects like any other
         // non-number.
-        String argument = commandWord.argumentOf(input);
+        String argument = commandWord.extractArgument(input);
         String hint = "Pip... Please give me a task number, e.g. " + commandWord.getKeyword() + " 2.";
 
         // parseInt on its own is too forgiving: it accepts "+1", "-1", and digits
