@@ -4,6 +4,24 @@
 
 PiplupBot is a cheerful penguin chatbot that keeps track of your todos, deadlines and events. You type short commands to add, find and tick off tasks, and PiplupBot remembers them for you, even after you close it. Piplup!
 
+## Contents
+
+- [Quick start](#quick-start)
+- [Command summary](#command-summary)
+- [Features](#features)
+  - [Adding a todo: `todo`](#adding-a-todo-todo)
+  - [Adding a deadline: `deadline`](#adding-a-deadline-deadline)
+  - [Adding an event: `event`](#adding-an-event-event)
+  - [Writing dates and times](#writing-dates-and-times)
+  - [Listing all tasks: `list`](#listing-all-tasks-list)
+  - [Marking a task as done: `mark`, `unmark`](#marking-a-task-as-done-mark-unmark)
+  - [Deleting a task: `delete`](#deleting-a-task-delete)
+  - [Finding tasks: `find`](#finding-tasks-find)
+  - [Sorting tasks: `sort`](#sorting-tasks-sort)
+  - [Reusing earlier commands: Up and Down keys](#reusing-earlier-commands-up-and-down-keys)
+  - [Exiting PiplupBot: `bye`](#exiting-piplupbot-bye)
+  - [Saving the data](#saving-the-data)
+
 ## Quick start
 
 1. Make sure you have **Java 25** or above installed.<br>
