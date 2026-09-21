@@ -49,15 +49,15 @@ public class PiplupBotTest {
     /**
      * Returns the save file this test should use, inside the temporary folder.
      *
-     * @return the path to a save file of this test's own
+     * @return The path to a save file of this test's own.
      */
     private Path saveFile() {
         return tempDir.resolve("piplupbot.txt");
     }
 
     /**
-     * Holds a console conversation with the given bot, as though the user had
-     * typed the given text, and returns everything the bot printed.
+     * Returns everything the given bot prints in a console conversation, as
+     * though the user had typed the given text.
      *
      * <p>The console reads through {@code System.in} and prints through
      * {@code System.out}. Both are swapped for streams this test controls while
@@ -65,9 +65,9 @@ public class PiplupBotTest {
      * shares them, so leaving either one swapped would quietly change the tests
      * that come after.</p>
      *
-     * @param bot   the bot to talk to.
-     * @param typed everything the user types, with a line break after each line.
-     * @return everything the bot printed.
+     * @param bot   The bot to talk to.
+     * @param typed Everything the user types, with a line break after each line.
+     * @return Everything the bot printed.
      */
     private static String runInConsole(PiplupBot bot, String typed) {
         InputStream originalIn = System.in;

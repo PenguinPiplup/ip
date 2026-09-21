@@ -35,14 +35,14 @@ import piplupbot.PiplupBotException;
 public class SortKeyTest {
 
     /**
-     * Sorts the given tasks by the given key and returns their descriptions in
-     * the order they ended up in, so a case can say what it expects to see
+     * Returns the descriptions of the given tasks in the order that sorting them
+     * by the given key leaves them in, so a case can say what it expects to see
      * rather than how to look for it.
      *
-     * @param key       what to order by
-     * @param direction whether that order runs forwards or backwards
-     * @param tasks     the tasks to sort, in the order they start out in
-     * @return each task's description, in the sorted order
+     * @param key       What to order by.
+     * @param direction Whether that order runs forwards or backwards.
+     * @param tasks     The tasks to sort, in the order they start out in.
+     * @return Each task's description, in the sorted order.
      */
     private static List<String> descriptionsSorted(SortKey key, SortDirection direction,
             Task... tasks) {
@@ -129,7 +129,7 @@ public class SortKeyTest {
 
     /**
      * Alphabetical order ignores capitals, as {@code find} does, so a
-     * capitalised description sorts among the others rather than ahead of all of
+     * capitalized description sorts among the others rather than ahead of all of
      * them -- which is what plain {@code String} comparison would do, since every
      * capital letter has a lower character code than every small one.
      */
@@ -221,7 +221,7 @@ public class SortKeyTest {
     }
 
     /**
-     * The match is exact, so a capitalised key is refused rather than guessed
+     * The match is exact, so a capitalized key is refused rather than guessed
      * at -- the same rule the command words themselves follow.
      */
     @Test

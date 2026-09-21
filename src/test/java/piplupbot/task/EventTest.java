@@ -21,7 +21,7 @@ import piplupbot.PiplupBotException;
  * must come after the start, and two events are the same event only if both
  * of their times match.</p>
  *
- * <p>The behaviour every task shares is checked in {@link TodoTest} rather than
+ * <p>The behavior every task shares is checked in {@link TodoTest} rather than
  * repeated here.</p>
  */
 public class EventTest {

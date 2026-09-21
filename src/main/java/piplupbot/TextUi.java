@@ -5,8 +5,8 @@ import java.util.Scanner;
 // ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
- * The bot's console face: it prints each reply between dividers, and reads what
- * the user types from the keyboard.
+ * Represents the bot's console face: it prints each reply between dividers, and
+ * reads what the user types from the keyboard.
  *
  * <p>Everything here used to be {@link Ui} itself. It moved into this class
  * unchanged when the bot gained a window and {@code Ui} became the interface
@@ -49,7 +49,7 @@ public class TextUi implements Ui {
      * Prints one or more lines wrapped between horizontal lines.
      * Each line is indented so the bot's replies stand out from what the user typed.
      *
-     * @param lines the lines of text to display
+     * @param lines The lines of text to display.
      */
     @Override
     public void show(String... lines) {
@@ -79,16 +79,16 @@ public class TextUi implements Ui {
      * This is {@code false} once the input runs out, e.g. on Ctrl-D or at the
      * end of a piped file, which lets the main loop stop rather than block.
      *
-     * @return {@code true} if {@link #readCommand()} has a line to return
+     * @return {@code true} if {@link #readCommand()} has a line to return.
      */
     public boolean hasNextCommand() {
         return scanner.hasNextLine();
     }
 
     /**
-     * Reads the next line the user typed, with the spaces around it removed.
+     * Returns the next line the user typed, with the spaces around it removed.
      *
-     * @return the trimmed line, which may be empty if the user pressed Enter alone
+     * @return The trimmed line, which may be empty if the user pressed Enter alone.
      */
     public String readCommand() {
         return scanner.nextLine().trim();

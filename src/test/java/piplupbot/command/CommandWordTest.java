@@ -46,7 +46,7 @@ public class CommandWordTest {
     }
 
     /**
-     * A command that expects an argument is still recognised without one, which
+     * A command that expects an argument is still recognized without one, which
      * is what lets the parser answer a bare {@code mark} with a hint about the
      * missing number instead of the far less helpful "I don't know what that
      * means".
@@ -85,7 +85,7 @@ public class CommandWordTest {
         assertThrows(PiplupBotException.class, () -> CommandWord.fromInput("marked 2"));
     }
 
-    /** Keywords are matched exactly, so capitals are not recognised. */
+    /** Keywords are matched exactly, so capitals are not recognized. */
     @Test
     public void fromInput_keywordInCapitals_exceptionThrown() {
         assertThrows(PiplupBotException.class, () -> CommandWord.fromInput("List"));

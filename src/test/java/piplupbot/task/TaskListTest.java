@@ -34,7 +34,7 @@ import piplupbot.PiplupBotException;
 public class TaskListTest {
 
     /**
-     * Builds a list holding the given descriptions as todos, so each test can
+     * Returns a list holding the given descriptions as todos, so each test can
      * say what it is about rather than how to set itself up.
      *
      * <p>The todos go to the constructor rather than through
@@ -42,8 +42,8 @@ public class TaskListTest {
      * that only read from one need not declare the exception {@code add} may
      * throw. The cases about adding call {@code add} themselves.</p>
      *
-     * @param descriptions what each task is, in the order they are stored
-     * @return a list holding one todo per description
+     * @param descriptions What each task is, in the order they are stored.
+     * @return A list holding one todo per description.
      */
     private static TaskList listOfTodos(String... descriptions) {
         ArrayList<Task> todos = new ArrayList<>();
@@ -58,8 +58,8 @@ public class TaskListTest {
      * case about ordering can say what it expects without spelling out every
      * rendered row.
      *
-     * @param tasks the list to read
-     * @return the descriptions, in the order the user sees them
+     * @param tasks The list to read.
+     * @return The descriptions, in the order the user sees them.
      */
     private static List<String> descriptionsOf(TaskList tasks) {
         return tasks.asList().stream().map(Task::getDescription).toList();

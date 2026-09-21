@@ -31,12 +31,12 @@ public class TextUiTest {
     private static final String DIVIDER = "    " + "_".repeat(60);
 
     /**
-     * Runs an action while catching what it prints, and returns that text.
+     * Returns what the given action prints while it runs.
      * Line breaks come back as {@code \n} on every operating system, so that
      * the expected text can be written the same way everywhere.
      *
-     * @param action what to run.
-     * @return everything the action printed.
+     * @param action What to run.
+     * @return Everything the action printed.
      */
     private static String printedBy(Runnable action) {
         PrintStream originalOut = System.out;
@@ -55,8 +55,8 @@ public class TextUiTest {
      * it. A {@link TextUi} takes hold of {@code System.in} when it is created,
      * so the stream only needs to be swapped while the console is being made.
      *
-     * @param typed everything the user types, with a line break after each line.
-     * @return a console that reads that text.
+     * @param typed Everything the user types, with a line break after each line.
+     * @return A console that reads that text.
      */
     private static TextUi consoleReading(String typed) {
         InputStream originalIn = System.in;

@@ -34,8 +34,8 @@ public class SortCommand extends Command {
     /**
      * Creates a command that will put the tasks into the given order.
      *
-     * @param key       what to order the tasks by
-     * @param direction whether that order runs forwards or backwards
+     * @param key       What to order the tasks by.
+     * @param direction Whether that order runs forwards or backwards.
      */
     public SortCommand(SortKey key, SortDirection direction) {
         this.key = key;
@@ -67,7 +67,7 @@ public class SortCommand extends Command {
      * reply to {@code sort date} and to {@code sort date desc} would read
      * identically.</p>
      *
-     * @return the heading naming the key, and the direction when it is reversed
+     * @return The heading naming the key, and the direction when it is reversed.
      */
     private String buildHeading() {
         String reversed = direction == SortDirection.DESC ? ", in reverse" : "";

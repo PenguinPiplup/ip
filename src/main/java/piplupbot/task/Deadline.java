@@ -10,16 +10,15 @@ import piplupbot.Storage;
 // ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
- * A task that must be done before a given point in time,
+ * Represents a task that must be done before a given point in time,
  * e.g. {@code submit report by 2019-10-11 1700}.
  */
 public class Deadline extends Task {
     /**
      * When the task is due, as a real point in time rather than as the text the
      * user typed. Storing it this way means the date is checked once, when the
-     * task is created, so every later use of it -- showing it, saving it, and in
-     * a later version comparing or sorting by it -- can rely on it being a date
-     * at all.
+     * task is created, so every later use of it -- showing it, saving it, and
+     * sorting by it -- can rely on it being a date at all.
      *
      * <p>{@code private final} for the reason {@link Task}'s own fields are:
      * this class has no subclasses to share it with, and a date accepted once by
@@ -30,10 +29,10 @@ public class Deadline extends Task {
     /**
      * Creates a deadline that is not done yet.
      *
-     * @param description what the task is
-     * @param by          when it is due, in any of the layouts {@link DateTimes}
-     *                    accepts
-     * @throws PiplupBotException if {@code by} is not a date this bot understands
+     * @param description What the task is.
+     * @param by          When it is due, in any of the layouts {@link DateTimes}
+     *                    accepts.
+     * @throws PiplupBotException If {@code by} is not a date this bot understands.
      */
     public Deadline(String description, String by) throws PiplupBotException {
         super(description);
@@ -43,7 +42,7 @@ public class Deadline extends Task {
     /**
      * {@inheritDoc}
      *
-     * @return {@link TaskType#DEADLINE}
+     * @return {@link TaskType#DEADLINE}.
      */
     @Override
     protected TaskType getType() {
@@ -53,7 +52,7 @@ public class Deadline extends Task {
     /**
      * {@inheritDoc}
      *
-     * @return when the task is due, which is what a deadline is sorted by
+     * @return When the task is due, which is what a deadline is sorted by.
      */
     @Override
     Optional<LocalDateTime> getSortDateTime() {
@@ -63,7 +62,7 @@ public class Deadline extends Task {
     /**
      * {@inheritDoc}
      *
-     * @return the due date, on its own
+     * @return The due date, on its own.
      */
     @Override
     List<LocalDateTime> getDateTimes() {
@@ -71,10 +70,11 @@ public class Deadline extends Task {
     }
 
     /**
-     * Renders the deadline as {@code [D][ ] return book (by: Oct 15 2019 06:00 PM)}.
+     * Returns the deadline the way the task list shows it,
+     * e.g. {@code [D][ ] return book (by: Oct 15 2019 06:00 PM)}.
      *
-     * @return the shared task text, which already carries the {@code [D]}
-     *         label, followed by the due date
+     * @return The shared task text, which already carries the {@code [D]}
+     *         label, followed by the due date.
      */
     @Override
     public String toString() {
@@ -90,7 +90,7 @@ public class Deadline extends Task {
      * so that {@link Storage} can read it back exactly and so that changing the
      * display wording later cannot make saved files unreadable.</p>
      *
-     * @return the shared task fields followed by the due date
+     * @return The shared task fields followed by the due date.
      */
     @Override
     public String[] toFileFields() {

@@ -8,8 +8,8 @@ import piplupbot.PiplupBotException;
 // ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
- * The words PiplupBot recognises at the start of a line, one for each command
- * it understands.
+ * Represents the words PiplupBot recognizes at the start of a line, one for
+ * each command it understands.
  *
  * <p>The enum is named for the word rather than for the command because the
  * word is all it decides: which one was typed, whether anything may follow it,
@@ -73,7 +73,7 @@ public enum CommandWord {
      *
      * <p>This decides how strictly a line is matched. A command that takes an
      * argument also matches when the keyword is followed by a space, so a bare
-     * {@code mark} is still recognised and can be answered with a hint about
+     * {@code mark} is still recognized and can be answered with a hint about
      * the missing number. A command that takes none matches the keyword alone,
      * which is why {@code list now} and {@code bye now} are reported as
      * unknown commands rather than quietly ignoring the extra word.</p>
@@ -85,8 +85,8 @@ public enum CommandWord {
      * An enum's constructor is implicitly private, so the constants declared
      * above are the only instances there will ever be.
      *
-     * @param keyword       the word the user types, e.g. {@code "mark"}
-     * @param hasArgument   whether anything may follow the keyword on the same line
+     * @param keyword     The word the user types, e.g. {@code "mark"}.
+     * @param hasArgument Whether anything may follow the keyword on the same line.
      */
     CommandWord(String keyword, boolean hasArgument) {
         this.keyword = keyword;
@@ -97,7 +97,7 @@ public enum CommandWord {
      * Returns the word the user types for this command, for use in hints such
      * as {@code "Pip... Please give me a task number, e.g. mark 2."}.
      *
-     * @return the keyword, e.g. {@code "mark"}
+     * @return The keyword, e.g. {@code "mark"}.
      */
     public String getKeyword() {
         return keyword;
@@ -111,8 +111,8 @@ public enum CommandWord {
      * length is exactly how much to skip -- there is no second copy of the word
      * that could disagree with the one that matched.</p>
      *
-     * @param input the whole line the user typed
-     * @return the rest of the line, possibly empty
+     * @param input The whole line the user typed.
+     * @return The rest of the line, possibly empty.
      */
     public String argumentOf(String input) {
         assert input.startsWith(keyword)
@@ -124,8 +124,8 @@ public enum CommandWord {
     /**
      * Reports whether this command is the one the given line names.
      *
-     * @param input the whole line the user typed, already trimmed
-     * @return {@code true} if the line starts with this command's keyword
+     * @param input The whole line the user typed, already trimmed.
+     * @return {@code true} if the line starts with this command's keyword.
      */
     private boolean hasMatch(String input) {
         return input.equals(keyword)
@@ -135,9 +135,9 @@ public enum CommandWord {
     /**
      * Returns the command the given line names.
      *
-     * @param input the whole line the user typed, already trimmed and not empty
-     * @return the matching command
-     * @throws PiplupBotException if the line names no command
+     * @param input The whole line the user typed, already trimmed and not empty.
+     * @return The matching command.
+     * @throws PiplupBotException If the line names no command.
      */
     public static CommandWord fromInput(String input) throws PiplupBotException {
         return Arrays.stream(values())
@@ -149,14 +149,14 @@ public enum CommandWord {
     }
 
     /**
-     * Lists every keyword the way the hint reads them, e.g.
-     * {@code "todo, deadline, event, list, find, mark, unmark, delete, or bye"}.
+     * Returns every keyword, listed the way the hint reads them, e.g.
+     * {@code "todo, deadline, event, list, find, sort, mark, unmark, delete, or bye"}.
      *
      * <p>Building the list from {@link #values()} rather than writing it out
      * means a newly added command appears in the hint by itself, so the hint
      * cannot fall out of step with the commands it advertises.</p>
      *
-     * @return the keywords in declaration order, separated by commas
+     * @return The keywords in declaration order, separated by commas.
      */
     private static String buildKeywordList() {
         CommandWord[] commandWords = values();

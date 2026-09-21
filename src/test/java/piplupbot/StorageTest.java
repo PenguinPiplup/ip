@@ -53,7 +53,7 @@ public class StorageTest {
     /**
      * Returns the save file this test should use, inside the temporary folder.
      *
-     * @return the path to a save file of this test's own
+     * @return The path to a save file of this test's own.
      */
     private Path saveFile() {
         return tempDir.resolve("piplupbot.txt");
@@ -63,18 +63,18 @@ public class StorageTest {
      * Puts the given text in the save file, as though an earlier run -- or a
      * person with a text editor -- had left it there.
      *
-     * @param text exactly what the file should hold
-     * @throws IOException if the temporary file could not be written
+     * @param text Exactly what the file should hold.
+     * @throws IOException If the temporary file could not be written.
      */
     private void writeSaveFile(String text) throws IOException {
         Files.writeString(saveFile(), text);
     }
 
     /**
-     * Collects tasks into the list {@link Storage#save} expects.
+     * Returns the given tasks as the list {@link Storage#save} expects.
      *
-     * @param tasks the tasks to save, in order
-     * @return the tasks as a list
+     * @param tasks The tasks to save, in order.
+     * @return The tasks as a list.
      */
     private static ArrayList<Task> listOf(Task... tasks) {
         ArrayList<Task> list = new ArrayList<>();

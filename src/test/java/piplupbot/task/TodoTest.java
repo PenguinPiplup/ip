@@ -10,13 +10,13 @@ import java.util.Locale;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests {@link Todo}, and with it the behaviour every task inherits from
+ * Tests {@link Todo}, and with it the behavior every task inherits from
  * {@link Task}.
  *
  * <p>{@code Task} is abstract, so its methods can only be reached through one of
  * the three kinds of task. {@code Todo} is used for that here because it adds
  * nothing of its own beyond its letter: whatever these cases show is therefore
- * the shared behaviour rather than anything peculiar to todos, and
+ * the shared behavior rather than anything peculiar to todos, and
  * {@link DeadlineTest} and {@link EventTest} are left to cover only the parts
  * that differ.</p>
  *

@@ -33,7 +33,7 @@ public class ExitCommand extends Command {
      * {@inheritDoc}
      *
      * @return {@code true} always -- this is the one command that ends the
-     *         conversation
+     *         conversation.
      */
     @Override
     public boolean isExit() {

@@ -47,7 +47,7 @@ public class DeleteCommandTest {
     /**
      * Returns the save file this test should use, inside the temporary folder.
      *
-     * @return the path to a save file of this test's own.
+     * @return The path to a save file of this test's own.
      */
     private Path saveFile() {
         return tempDir.resolve("piplupbot.txt");

@@ -125,7 +125,7 @@ public class DateTimesTest {
 
     /**
      * The spaces are squeezed only to read the date; a date that still cannot
-     * be read is quoted back as it was typed, so the user recognises it.
+     * be read is quoted back as it was typed, so the user recognizes it.
      */
     @Test
     public void parse_severalSpacesInUnreadableDate_messageQuotesTheTypedText() {

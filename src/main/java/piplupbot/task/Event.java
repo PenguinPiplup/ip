@@ -9,7 +9,7 @@ import piplupbot.PiplupBotException;
 // ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
- * A task that runs from one point in time to another,
+ * Represents a task that runs from one point in time to another,
  * e.g. {@code team project meeting 2019-10-02 1400 to 1600}.
  */
 public class Event extends Task {
@@ -33,13 +33,13 @@ public class Event extends Task {
      * very moment it starts is refused too -- an event that takes no time at all
      * is far more likely to be a mistyped time than a plan.</p>
      *
-     * @param description what the task is
-     * @param from        when it starts, in any of the layouts {@link DateTimes}
-     *                    accepts
-     * @param to          when it ends, in the same layouts; later than {@code from}
-     * @throws PiplupBotException if either time is not a date this bot
+     * @param description What the task is.
+     * @param from        When it starts, in any of the layouts {@link DateTimes}
+     *                    accepts.
+     * @param to          When it ends, in the same layouts; later than {@code from}.
+     * @throws PiplupBotException If either time is not a date this bot
      *                            understands, or the event does not end after it
-     *                            starts
+     *                            starts.
      */
     public Event(String description, String from, String to) throws PiplupBotException {
         super(description);
@@ -57,7 +57,7 @@ public class Event extends Task {
     /**
      * {@inheritDoc}
      *
-     * @return {@link TaskType#EVENT}
+     * @return {@link TaskType#EVENT}.
      */
     @Override
     protected TaskType getType() {
@@ -71,7 +71,7 @@ public class Event extends Task {
      * because what someone reading down a list wants to know is what is
      * happening next. The end time is shown, but never ordered by.</p>
      *
-     * @return when the event starts
+     * @return When the event starts.
      */
     @Override
     Optional<LocalDateTime> getSortDateTime() {
@@ -81,7 +81,7 @@ public class Event extends Task {
     /**
      * {@inheritDoc}
      *
-     * @return the start, then the end
+     * @return The start, then the end.
      */
     @Override
     List<LocalDateTime> getDateTimes() {
@@ -89,11 +89,11 @@ public class Event extends Task {
     }
 
     /**
-     * Renders the event as
+     * Returns the event the way the task list shows it, e.g.
      * {@code [E][ ] project meeting (from: Oct 2 2019 02:00 PM to: Oct 2 2019 04:00 PM)}.
      *
-     * @return the shared task text, which already carries the {@code [E]}
-     *         label, followed by the start and end times
+     * @return The shared task text, which already carries the {@code [E]}
+     *         label, followed by the start and end times.
      */
     @Override
     public String toString() {
@@ -110,7 +110,7 @@ public class Event extends Task {
      * not have to split a combined "2-4pm" apart again, and both are written in
      * ISO form for the reasons given in {@link Deadline#toFileFields()}.</p>
      *
-     * @return the shared task fields followed by the start and the end
+     * @return The shared task fields followed by the start and the end.
      */
     @Override
     public String[] toFileFields() {

@@ -11,7 +11,8 @@ import piplupbot.Storage;
 // ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
- * A single task in the user's list: what the task is, and whether it is done.
+ * Represents a single task in the user's list: what the task is, and whether
+ * it is done.
  * Keeping the two together means they can no longer fall out of step,
  * which was a risk while they lived in two separate arrays.
  *
@@ -53,7 +54,7 @@ public abstract class Task {
     /**
      * Creates a task that is not done yet.
      *
-     * @param description what the task is
+     * @param description What the task is.
      */
     public Task(String description) {
         assert description != null && !description.isBlank()
@@ -86,8 +87,8 @@ public abstract class Task {
      * lower-cases "I" to a dotless letter, which would make a keyword stop
      * matching a description that plainly contains it.</p>
      *
-     * @param text what to look for, as the user typed it
-     * @return {@code true} if the description contains it
+     * @param text What to look for, as the user typed it.
+     * @return {@code true} if the description contains it.
      */
     public boolean descriptionContains(String text) {
         return description.toLowerCase(Locale.ROOT).contains(text.toLowerCase(Locale.ROOT));
@@ -103,7 +104,7 @@ public abstract class Task {
      * for saving through {@link #toFileFields()}, which is how everything
      * outside this package gets at it.</p>
      *
-     * @return the description, never blank
+     * @return The description, never blank.
      */
     String getDescription() {
         return description;
@@ -119,7 +120,7 @@ public abstract class Task {
      * <p>It is public because {@code mark} and {@code unmark} ask it too, to
      * notice a task that already has the status they were asked to set.</p>
      *
-     * @return {@code true} if the task is done
+     * @return {@code true} if the task is done.
      */
     public boolean isDone() {
         return isDone;
@@ -139,7 +140,7 @@ public abstract class Task {
      * date" is something the type says out loud and a caller cannot forget to
      * check for.</p>
      *
-     * @return the date to sort by, or empty for a task that has none
+     * @return The date to sort by, or empty for a task that has none.
      */
     Optional<LocalDateTime> getSortDateTime() {
         return Optional.empty();
@@ -153,7 +154,7 @@ public abstract class Task {
      * {@link #getSortDateTime()} answers: an event is sorted by its start alone,
      * but two events are the same event only if they also end together.</p>
      *
-     * @return the dates, possibly none
+     * @return The dates, possibly none.
      */
     List<LocalDateTime> getDateTimes() {
         return List.of();
@@ -173,8 +174,8 @@ public abstract class Task {
      * {@code equals}, which every list and test uses to compare tasks. There,
      * "equal, although only one of them is done" would be a surprise.</p>
      *
-     * @param other the task to compare this one with
-     * @return {@code true} if the two tasks have the same details
+     * @param other The task to compare this one with.
+     * @return {@code true} if the two tasks have the same details.
      */
     boolean isDuplicateOf(Task other) {
         return getType() == other.getType()
@@ -185,7 +186,7 @@ public abstract class Task {
     /**
      * Returns the character shown inside the status box in the task list.
      *
-     * @return {@code "X"} if the task is done, or a single space if it is not
+     * @return {@code "X"} if the task is done, or a single space if it is not.
      */
     public String getStatusIcon() {
         return (isDone ? "X" : " "); // mark done task with X
@@ -212,7 +213,7 @@ public abstract class Task {
      * file are built from it. Keeping one source for the two means they cannot
      * drift apart.</p>
      *
-     * @return the kind of task, e.g. {@link TaskType#TODO}
+     * @return The kind of task, e.g. {@link TaskType#TODO}.
      */
     protected abstract TaskType getType();
 
@@ -220,7 +221,7 @@ public abstract class Task {
      * Returns the label that says which kind of task this is, as the task list
      * displays it.
      *
-     * @return the type code in square brackets, e.g. {@code "[T]"}
+     * @return The type code in square brackets, e.g. {@code "[T]"}.
      */
     protected String getTypeLabel() {
         return "[" + getType().getCode() + "]";
@@ -239,19 +240,19 @@ public abstract class Task {
      * <p>The done status is given as {@code 1} or {@code 0} rather than
      * {@code true}/{@code false}, following the format in the requirements.</p>
      *
-     * @return the type code, the done status and the description
+     * @return The type code, the done status and the description.
      */
     public String[] toFileFields() {
         return withExtraFields();
     }
 
     /**
-     * Builds the field list every task begins with, followed by whatever the
+     * Returns the fields every task begins with, followed by whatever the
      * subclass adds. Having the shared three in one place means a subclass
      * cannot accidentally write them in a different order.
      *
-     * @param extras the subclass's own fields, in the order they are written
-     * @return the shared fields followed by {@code extras}
+     * @param extras The subclass's own fields, in the order they are written.
+     * @return The shared fields followed by {@code extras}.
      */
     protected String[] withExtraFields(String... extras) {
         // The parts are added in order rather than assigned to numbered slots,
@@ -267,7 +268,7 @@ public abstract class Task {
     }
 
     /**
-     * Renders the task the way the task list displays it, e.g. {@code [T][X] read book}.
+     * Returns the task the way the task list displays it, e.g. {@code [T][X] read book}.
      * Java calls this automatically whenever a Task is used where text is expected,
      * such as in string concatenation.
      *
@@ -276,7 +277,7 @@ public abstract class Task {
      * three different shapes; a subclass supplies only its own label, plus
      * anything peculiar to it such as a deadline's due date.</p>
      *
-     * @return the type label, the status box and the description
+     * @return The type label, the status box and the description.
      */
     @Override
     public String toString() {

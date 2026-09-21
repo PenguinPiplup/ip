@@ -30,7 +30,7 @@ public class AddCommand extends Command {
     /**
      * Creates a command that will store the given task.
      *
-     * @param task the task to remember
+     * @param task The task to remember.
      */
     public AddCommand(Task task) {
         this.task = task;

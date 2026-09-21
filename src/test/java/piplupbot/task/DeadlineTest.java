@@ -20,7 +20,7 @@ import piplupbot.PiplupBotException;
  * read back exactly. Were the file ever to hold the displayed form, changing
  * the wording on screen would silently make every saved file unreadable.</p>
  *
- * <p>The behaviour todos and deadlines share is checked in {@link TodoTest}
+ * <p>The behavior todos and deadlines share is checked in {@link TodoTest}
  * rather than repeated here.</p>
  */
 public class DeadlineTest {

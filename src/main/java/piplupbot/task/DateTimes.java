@@ -12,9 +12,9 @@ import piplupbot.PiplupBotException;
 // ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
- * The one place that knows how a date and time is written, in each of the three
- * places the program writes one: typed by the user, shown on screen, and stored
- * in the save file.
+ * Handles how a date and time is written, in each of the three places the
+ * program writes one: typed by the user, shown on screen, and stored in the
+ * save file.
  *
  * <p>Those three are deliberately different formats. The typed form has to be
  * forgiving, because a person should not have to remember one exact layout; the
@@ -77,7 +77,7 @@ public final class DateTimes {
     }
 
     /**
-     * Builds a formatter that rejects a date that does not exist, such as
+     * Returns a formatter that rejects a date that does not exist, such as
      * {@code 31/2/2019}.
      *
      * <p>By default a formatter is lenient enough to turn that into 28 February,
@@ -87,8 +87,8 @@ public final class DateTimes {
      * which is ambiguous without an era (AD or BC) to go with it, so a strict
      * formatter would reject every date given with it.</p>
      *
-     * @param pattern the layout, in {@code DateTimeFormatter} pattern letters
-     * @return a formatter for that layout that accepts only real dates
+     * @param pattern The layout, in {@code DateTimeFormatter} pattern letters.
+     * @return A formatter for that layout that accepts only real dates.
      */
     private static DateTimeFormatter strictPattern(String pattern) {
         return DateTimeFormatter.ofPattern(pattern, Locale.ENGLISH)
@@ -96,8 +96,8 @@ public final class DateTimes {
     }
 
     /**
-     * Turns what the user typed -- or what the save file holds -- into a real
-     * date and time.
+     * Returns the date and time named by what the user typed -- or by what the
+     * save file holds.
      *
      * <p>Each accepted layout is tried in turn, because a
      * {@code DateTimeFormatter} can only answer "does this text match me?" by
@@ -108,13 +108,13 @@ public final class DateTimes {
      * a person may well type two. So each run of spaces is turned into a single
      * one before the layouts are tried, and {@code 2019-10-15  1800} is read
      * like {@code 2019-10-15 1800}. What the user typed is still what an error
-     * quotes back, so that they can recognise it.</p>
+     * quotes back, so that they can recognize it.</p>
      *
-     * @param text the date as written, with or without surrounding spaces
-     * @return the date and time it names
-     * @throws PiplupBotException if no accepted layout matches, so that the
+     * @param text The date as written, with or without surrounding spaces.
+     * @return The date and time it names.
+     * @throws PiplupBotException If no accepted layout matches, so that the
      *                            caller can show the user the hint rather than
-     *                            ending the conversation with a stack trace
+     *                            ending the conversation with a stack trace.
      */
     public static LocalDateTime parse(String text) throws PiplupBotException {
         String trimmed = text.trim();
@@ -141,17 +141,19 @@ public final class DateTimes {
     }
 
     /**
-     * Renders a date the way the task list shows it, e.g. {@code Oct 15 2019 06:00 PM}.
+     * Returns a date written the way the task list shows it,
+     * e.g. {@code Oct 15 2019 06:00 PM}.
      *
-     * @param dateTime the date to show
-     * @return the date written for a person to read
+     * @param dateTime The date to show.
+     * @return The date written for a person to read.
      */
     public static String format(LocalDateTime dateTime) {
         return dateTime.format(DISPLAY_FORMAT);
     }
 
     /**
-     * Renders a date the way the save file holds it, e.g. {@code 2019-10-15T18:00}.
+     * Returns a date written the way the save file holds it,
+     * e.g. {@code 2019-10-15T18:00}.
      * {@link #parse} accepts this form -- it is the first layout it tries --
      * which is what makes saving and loading the exact reverse of each other.
      *
@@ -159,8 +161,8 @@ public final class DateTimes {
      * in preference to formatting with {@code ISO_LOCAL_DATE_TIME} because it
      * leaves out seconds that are zero, which every date this bot stores has.</p>
      *
-     * @param dateTime the date to store
-     * @return the date in ISO form
+     * @param dateTime The date to store.
+     * @return The date in ISO form.
      */
     public static String toFileString(LocalDateTime dateTime) {
         return dateTime.toString();

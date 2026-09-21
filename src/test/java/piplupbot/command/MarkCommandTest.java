@@ -48,17 +48,17 @@ public class MarkCommandTest {
     /**
      * Returns the save file this test should use, inside the temporary folder.
      *
-     * @return the path to a save file of this test's own
+     * @return The path to a save file of this test's own.
      */
     private Path saveFile() {
         return tempDir.resolve("piplupbot.txt");
     }
 
     /**
-     * Builds a list holding one todo, done or not.
+     * Returns a list holding one todo, done or not.
      *
-     * @param isDone whether the todo starts out done
-     * @return a list holding just that todo, as task 1
+     * @param isDone Whether the todo starts out done.
+     * @return A list holding just that todo, as task 1.
      */
     private static TaskList listWithOneTodo(boolean isDone) {
         Todo todo = new Todo("read book");

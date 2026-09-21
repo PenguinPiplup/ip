@@ -5,10 +5,10 @@ import javafx.application.Application;
 // ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
- * The program's front door: the main class named in {@code build.gradle}, and
- * so the one that {@code ./gradlew run} and the JAR file start. It decides
- * which face the user gets -- the window, or the console when given
- * {@code --cli} -- and starts that one.
+ * Starts the program in the face the user asked for: the window, or the
+ * console when given {@code --cli}. This is the program's front door: the main
+ * class named in {@code build.gradle}, and so the one that
+ * {@code ./gradlew run} and the JAR file start.
  *
  * <p>Why not start the window, {@link GuiUi}, directly? Because it extends
  * JavaFX's {@code Application}. When the class Java is asked to start is an
@@ -37,7 +37,7 @@ public class Launcher {
      * so the console starts as quickly as it always did, and without JavaFX's
      * warnings.</p>
      *
-     * @param args {@code --cli} for the console; nothing, for the window
+     * @param args {@code --cli} for the console; nothing, for the window.
      */
     public static void main(String[] args) {
         boolean isCli = args.length > 0 && args[0].equals(CLI_FLAG);

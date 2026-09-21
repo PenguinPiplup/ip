@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A {@link Ui} for tests. It keeps each reply instead of showing it, so a test
+ * Represents a {@link Ui} for tests. It keeps each reply instead of showing it, so a test
  * can check exactly what was said, in what order, and how many times --
  * including that nothing was said at all.
  *
@@ -28,7 +28,7 @@ public class RecordingUi implements Ui {
     /**
      * Returns every reply so far, oldest first.
      *
-     * @return a copy of the replies, each with its lines joined by line breaks.
+     * @return A copy of the replies, each with its lines joined by line breaks.
      */
     public List<String> getReplies() {
         return List.copyOf(replies);

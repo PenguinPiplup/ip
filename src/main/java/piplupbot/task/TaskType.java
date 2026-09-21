@@ -8,7 +8,7 @@ import piplupbot.Storage;
 // ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
- * The kinds of task the bot stores, one constant for each.
+ * Represents the kinds of task the bot stores, one constant for each.
  *
  * <p>Two facts about each kind used to be written down twice. The letter that
  * names it in the save file was returned by the subclass and spelled out again
@@ -50,8 +50,8 @@ public enum TaskType {
      * An enum's constructor is implicitly private, so the constants declared
      * above are the only instances there will ever be.
      *
-     * @param code            the letter, e.g. {@code "D"}
-     * @param extraFieldCount how many fields this kind adds to the shared three
+     * @param code            The letter, e.g. {@code "D"}.
+     * @param extraFieldCount How many fields this kind adds to the shared three.
      */
     TaskType(String code, int extraFieldCount) {
         this.code = code;
@@ -61,7 +61,7 @@ public enum TaskType {
     /**
      * Returns the letter that names this kind of task in the save file.
      *
-     * @return the letter, e.g. {@code "D"}
+     * @return The letter, e.g. {@code "D"}.
      */
     public String getCode() {
         return code;
@@ -73,7 +73,7 @@ public enum TaskType {
      * a line of this kind should be, so the count lives beside the letter it
      * belongs to rather than being spelled out again at the reading end.
      *
-     * @return the number of extra fields, e.g. 2 for an event
+     * @return The number of extra fields, e.g. 2 for an event.
      */
     public int getExtraFieldCount() {
         return extraFieldCount;
@@ -85,10 +85,10 @@ public enum TaskType {
      * taken for a todo: everything this program writes is upper case, and
      * guessing at anything else risks rebuilding a task the user never had.
      *
-     * @param code the letter read from a saved line
-     * @return the kind of task it names
-     * @throws PiplupBotException if no kind of task uses that letter, so that
-     *                            the line is skipped rather than guessed at
+     * @param code The letter read from a saved line.
+     * @return The kind of task it names.
+     * @throws PiplupBotException If no kind of task uses that letter, so that
+     *                            the line is skipped rather than guessed at.
      */
     public static TaskType fromCode(String code) throws PiplupBotException {
         return Arrays.stream(values())

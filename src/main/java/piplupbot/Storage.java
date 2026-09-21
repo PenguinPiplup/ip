@@ -123,8 +123,8 @@ public class Storage {
     private final Path tempPath;
 
     /**
-     * What a load produced: the tasks, and anything the user should be told
-     * about the file they came from.
+     * Represents what a load produced: the tasks, and anything the user should
+     * be told about the file they came from.
      *
      * <p>A record is used because this is what a record is for -- a value that
      * carries a few related fields and no behaviour of its own. It exists
@@ -137,14 +137,14 @@ public class Storage {
      * and a load with nothing to report simply leaves them out. A record's last
      * component may be varargs just as a method's last parameter may.</p>
      *
-     * @param tasks        the tasks that were read, in the order the file held them
-     * @param warningLines what to tell the user, or nothing at all if all is well
+     * @param tasks        The tasks that were read, in the order the file held them.
+     * @param warningLines What to tell the user, or nothing at all if all is well.
      */
     public record LoadResult(ArrayList<Task> tasks, String... warningLines) {
         /**
          * Reports whether anything went wrong while reading the file.
          *
-         * @return {@code true} if there is something the user should be told
+         * @return {@code true} if there is something the user should be told.
          */
         public boolean hasWarning() {
             return warningLines.length > 0;
@@ -156,8 +156,8 @@ public class Storage {
      * The file itself is not touched until {@link #load} or {@link #save} is
      * called, so creating this object cannot fail.
      *
-     * @param filePath where to keep the tasks, e.g.
-     *                 {@code Path.of("data", "piplupbot.txt")}
+     * @param filePath Where to keep the tasks, e.g.
+     *                 {@code Path.of("data", "piplupbot.txt")}.
      */
     public Storage(Path filePath) {
         this.filePath = filePath;
@@ -175,10 +175,10 @@ public class Storage {
      * The enclosing directory is created first if it does not exist yet, so a
      * fresh clone of the project needs no manual setup.
      *
-     * @param tasks the tasks to write, in the order the user sees them
-     * @throws PiplupBotException if the file could not be written, so that the
+     * @param tasks The tasks to write, in the order the user sees them.
+     * @throws PiplupBotException If the file could not be written, so that the
      *                            caller can tell the user their change is only
-     *                            in this session
+     *                            in this session.
      */
     public void save(ArrayList<Task> tasks) throws PiplupBotException {
         // Each task hands over its own fields: the list does not need to know
@@ -227,7 +227,7 @@ public class Storage {
      * A failure to remove it is not reported: what the user needs to hear is
      * that the save failed, and the next save overwrites the file anyway.
      *
-     * @param path the file to remove, which may not exist
+     * @param path The file to remove, which may not exist.
      */
     private static void deleteIfPossible(Path path) {
         try {
@@ -241,7 +241,7 @@ public class Storage {
      * Reads the saved tasks back, so a run of the bot starts where the last one
      * left off.
      *
-     * <p>Four things can go wrong, and none of them may stop the bot starting:
+     * <p>Three things can go wrong, and none of them may stop the bot starting:
      * the file may be absent (a first run -- not an error at all), it may be
      * unreadable, or it may hold lines that cannot be parsed. In the last two
      * cases the bot is about to overwrite what it could not understand, so the
@@ -252,8 +252,8 @@ public class Storage {
      * lost by dropping them: a byte order mark at the start of the file, and
      * blank lines. Both are passed over without a word.</p>
      *
-     * @return the tasks that were read, together with anything the user should
-     *         be told about the file
+     * @return The tasks that were read, together with anything the user should
+     *         be told about the file.
      */
     public LoadResult load() {
         ArrayList<Task> tasks = new ArrayList<>();
@@ -313,7 +313,7 @@ public class Storage {
      * exactly when saving over it would destroy something the user cannot get
      * back by any other means.
      *
-     * @return a line telling the user where the copy is, or why there is none
+     * @return A line telling the user where the copy is, or why there is none.
      */
     private String preserveDamagedFile() {
         // Files.copy() of a directory succeeds by quietly creating an empty
@@ -353,8 +353,8 @@ public class Storage {
      * cost is one file per different damaged version, left for the user to tidy
      * away.</p>
      *
-     * @return a path that is free, or that already holds a copy of the save file
-     * @throws IOException if an existing copy cannot be compared with the save file
+     * @return A path that is free, or that already holds a copy of the save file.
+     * @throws IOException If an existing copy cannot be compared with the save file.
      */
     private Path chooseRescuePath() throws IOException {
         Path candidate = damagedPath;
@@ -369,9 +369,9 @@ public class Storage {
     /**
      * Reports whether a file holds exactly the same bytes as the save file.
      *
-     * @param path the file to compare with the save file
-     * @return {@code true} if it is an ordinary file whose bytes all match
-     * @throws IOException if either file cannot be read
+     * @param path The file to compare with the save file.
+     * @return {@code true} if it is an ordinary file whose bytes all match.
+     * @throws IOException If either file cannot be read.
      */
     private boolean holdsSameContents(Path path) throws IOException {
         // Files.mismatch() gives the position of the first difference, or -1 if
@@ -384,29 +384,29 @@ public class Storage {
      * Returns the text without the byte order mark some editors put at its
      * start, or unchanged if it has none.
      *
-     * @param text the whole save file, as read
-     * @return the same text, minus a byte order mark at the start
+     * @param text The whole save file, as read.
+     * @return The same text, minus a byte order mark at the start.
      */
     private static String stripByteOrderMark(String text) {
         return text.startsWith(BYTE_ORDER_MARK) ? text.substring(BYTE_ORDER_MARK.length()) : text;
     }
 
     /**
-     * Returns a path written the same way on every operating system.
+     * Returns a path as text written the same way on every operating system.
      * {@code Path.toString()} uses backslashes on Windows and forward slashes
      * elsewhere, so quoting it directly would make the bot's wording -- and every
      * test case that records that wording -- differ from machine to machine.
      *
-     * @param path the path to describe
-     * @return the path with forward slashes, e.g. {@code ./data/piplupbot.txt}
+     * @param path The path to describe.
+     * @return The path with forward slashes, e.g. {@code ./data/piplupbot.txt}.
      */
     private static String displayPath(Path path) {
         return "./" + path.toString().replace('\\', '/');
     }
 
     /**
-     * Joins one task's fields into the line that represents it in the file,
-     * e.g. {@code T | 1 | read book}.
+     * Returns the line that represents one task in the file, made by joining
+     * the task's fields, e.g. {@code T | 1 | read book}.
      *
      * <p>This is deliberately a different rendering from {@link Task#toString()}:
      * the screen format is written for a person to read, while this one is
@@ -415,8 +415,8 @@ public class Storage {
      * merged, a change to the wording on screen would silently invalidate every
      * saved file.</p>
      *
-     * @param fields the task's fields, in the order they are written
-     * @return the line to write to the file
+     * @param fields The task's fields, in the order they are written.
+     * @return The line to write to the file.
      */
     private static String encodeLine(String[] fields) {
         return Arrays.stream(fields)
@@ -425,7 +425,8 @@ public class Storage {
     }
 
     /**
-     * Protects the characters that would otherwise change how a line is read.
+     * Returns the field with every bar and backslash escaped, so that neither
+     * can change how the line is read back.
      * A description such as {@code buy milk | eggs} would be split into an extra
      * field when read back, and the task dropped as damaged -- so a bar is
      * written as {@code \|}, and a real backslash as {@code \\}.
@@ -435,8 +436,8 @@ public class Storage {
      * That is what lets {@link #parseTask} go on splitting a line on the plain
      * separator instead of needing a character-by-character parser of its own.</p>
      *
-     * @param field one field's text, exactly as the user typed it
-     * @return the text with its escapes added
+     * @param field One field's text, exactly as the user typed it.
+     * @return The text with its escapes added.
      */
     private static String encodeField(String field) {
         StringBuilder encoded = new StringBuilder();
@@ -458,15 +459,16 @@ public class Storage {
     }
 
     /**
-     * Undoes {@link #encodeField}, turning {@code \|} back into {@code |}.
+     * Returns the field with the escapes of {@link #encodeField} removed,
+     * turning {@code \|} back into {@code |}.
      * A backslash followed by anything else, or one at the very end of a field,
      * was never written by this program, so the line is rejected rather than
      * guessed at.
      *
-     * @param field one field as it appears in the file
-     * @return the text the user originally typed
-     * @throws PiplupBotException if the field holds an escape this program would
-     *                            never have written
+     * @param field One field as it appears in the file.
+     * @return The text the user originally typed.
+     * @throws PiplupBotException If the field holds an escape this program would
+     *                            never have written.
      */
     private static String decodeField(String field) throws PiplupBotException {
         StringBuilder decoded = new StringBuilder();
@@ -494,7 +496,7 @@ public class Storage {
     }
 
     /**
-     * Turns one line of the save file back into the task it was written from.
+     * Returns the task that one line of the save file was written from.
      * This is the exact reverse of {@link #encodeLine}: the fields are read in
      * the order that method writes them, and the type code chooses which kind of
      * task to rebuild -- the one place in the program that has to decide a task's
@@ -519,9 +521,9 @@ public class Storage {
      * checks here throw, so a damaged date is skipped along with every other
      * kind of damaged line.</p>
      *
-     * @param line one line of the save file
-     * @return the task the line describes
-     * @throws PiplupBotException if the line is not in the saved format
+     * @param line One line of the save file.
+     * @return The task the line describes.
+     * @throws PiplupBotException If the line is not in the saved format.
      */
     private static Task parseTask(String line) throws PiplupBotException {
         // split() takes a regular expression, and "|" means "or" in one, so the
@@ -569,11 +571,11 @@ public class Storage {
      * is just as impossible to have typed: every command trims its argument
      * before the task is created.
      *
-     * @param text the decoded field
-     * @param name what the field is, for the error message
-     * @param line the whole line, for the error message
-     * @return the same text, when it has something in it
-     * @throws PiplupBotException if the field is empty or holds only spaces
+     * @param text The decoded field.
+     * @param name What the field is, for the error message.
+     * @param line The whole line, for the error message.
+     * @return The same text, when it has something in it.
+     * @throws PiplupBotException If the field is empty or holds only spaces.
      */
     private static String requireText(String text, String name, String line)
             throws PiplupBotException {
@@ -586,10 +588,10 @@ public class Storage {
     /**
      * Checks that a saved line has exactly the number of fields its type needs.
      *
-     * @param fields   the fields the line was split into
-     * @param expected how many fields this kind of task is written with
-     * @param line     the whole line, for the error message
-     * @throws PiplupBotException if the line has any other number of fields
+     * @param fields   The fields the line was split into.
+     * @param expected How many fields this kind of task is written with.
+     * @param line     The whole line, for the error message.
+     * @throws PiplupBotException If the line has any other number of fields.
      */
     private static void requireFieldCount(String[] fields, int expected, String line)
             throws PiplupBotException {

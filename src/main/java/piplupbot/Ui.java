@@ -3,7 +3,8 @@ package piplupbot;
 // ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
- * Everything the bot says to the user, wherever the user is reading it.
+ * Represents everything the bot says to the user, wherever the user is reading
+ * it.
  *
  * <p>Every command reports what it did through this interface rather than
  * through {@code System.out}, so the classes that decide <em>what</em> to say
@@ -34,7 +35,7 @@ public interface Ui {
      * Shows one reply, made of one or more lines.
      * How the lines are laid out is up to each face.
      *
-     * @param lines the lines of text to display
+     * @param lines The lines of text to display.
      */
     void show(String... lines);
 
@@ -54,8 +55,8 @@ public interface Ui {
      * while one with a couple of lines in mind writes them out instead of
      * wrapping them in an array first.</p>
      *
-     * @param heading the line that introduces the items
-     * @param items   the lines to show beneath it, possibly none
+     * @param heading The line that introduces the items.
+     * @param items   The lines to show beneath it, possibly none.
      */
     default void showList(String heading, String... items) {
         String[] lines = new String[items.length + 1];
@@ -79,12 +80,12 @@ public interface Ui {
     }
 
     /**
-     * Explains an error the bot recognised.
+     * Explains an error the bot recognized.
      *
      * <p>Taking the exception itself, rather than the lines inside it, keeps the
      * caller from having to know that the message is stored as separate lines.</p>
      *
-     * @param e the error to explain
+     * @param e The error to explain.
      */
     default void showError(PiplupBotException e) {
         show(e.getMessageLines());

@@ -11,8 +11,8 @@ import piplupbot.PiplupBotException;
 // ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
- * The orders the task list can be put into, one constant for each word the user
- * may type after {@code sort}.
+ * Represents the orders the task list can be put into, one constant for each
+ * word the user may type after {@code sort}.
  *
  * <p>Each constant carries the word to match and the order it stands for, in the
  * way {@link TaskType} carries a letter and a field count: keeping the two
@@ -77,8 +77,8 @@ public enum SortKey {
      * An enum's constructor is implicitly private, so the constants declared
      * above are the only instances there will ever be.
      *
-     * @param keyword        the word, e.g. {@code "date"}
-     * @param ascendingOrder the order it stands for, smallest first
+     * @param keyword        The word, e.g. {@code "date"}.
+     * @param ascendingOrder The order it stands for, smallest first.
      */
     SortKey(String keyword, Comparator<Task> ascendingOrder) {
         this.keyword = keyword;
@@ -89,7 +89,7 @@ public enum SortKey {
      * Returns the word the user types for this key, for use in a reply such as
      * {@code "Here are your tasks, sorted by date:"}.
      *
-     * @return the keyword, e.g. {@code "date"}
+     * @return The keyword, e.g. {@code "date"}.
      */
     public String getKeyword() {
         return keyword;
@@ -109,8 +109,8 @@ public enum SortKey {
      * they were already in, because {@code List.sort} is stable, and that is
      * what lets one sort refine another.</p>
      *
-     * @param direction whether this key's order runs forwards or backwards
-     * @return the comparator that puts the tasks in that order
+     * @param direction Whether this key's order runs forwards or backwards.
+     * @return The comparator that puts the tasks in that order.
      */
     public Comparator<Task> getComparator(SortDirection direction) {
         Comparator<Task> ordered = direction.applyTo(ascendingOrder);
@@ -125,9 +125,9 @@ public enum SortKey {
      * The match is exact and lower case, as it is for every command word, so
      * {@code Date} is refused rather than taken for {@code date}.
      *
-     * @param keyword the word typed after {@code sort}
-     * @return the key it names
-     * @throws PiplupBotException if no key is spelled that way
+     * @param keyword The word typed after {@code sort}.
+     * @return The key it names.
+     * @throws PiplupBotException If no key is spelled that way.
      */
     public static SortKey fromKeyword(String keyword) throws PiplupBotException {
         return Arrays.stream(values())
@@ -145,21 +145,21 @@ public enum SortKey {
      * bare {@code sort} -- are answered with the same hint, so it is built here
      * rather than in either of the two places that show it.
      *
-     * @return the line shown to a user whose key could not be read
+     * @return The line shown to a user whose key could not be read.
      */
     public static String getKeywordHint() {
         return "Try: " + buildKeywordList() + ".";
     }
 
     /**
-     * Lists every keyword the way the hint reads them, e.g.
+     * Returns every keyword, listed the way the hint reads them, e.g.
      * {@code "date, name, type, or done"}.
      * Built from {@link #values()} for the reason
      * {@link piplupbot.command.CommandWord CommandWord} builds its own that way:
      * a newly added key appears in the hint by itself, so the hint cannot fall
      * out of step with the keys it advertises.
      *
-     * @return the keywords in declaration order, separated by commas
+     * @return The keywords in declaration order, separated by commas.
      */
     private static String buildKeywordList() {
         SortKey[] keys = values();

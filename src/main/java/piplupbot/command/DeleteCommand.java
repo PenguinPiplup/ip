@@ -23,7 +23,7 @@ public class DeleteCommand extends Command {
     /**
      * Creates a command that will remove the task at the given position.
      *
-     * @param taskNumber the task's position as shown by {@code list}, counting from 1
+     * @param taskNumber The task's position as shown by {@code list}, counting from 1.
      */
     public DeleteCommand(int taskNumber) {
         this.taskNumber = taskNumber;

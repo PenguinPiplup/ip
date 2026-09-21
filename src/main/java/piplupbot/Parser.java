@@ -46,7 +46,7 @@ import piplupbot.task.Todo;
  * calls. Reading one line tells it nothing it would want to know while reading
  * the next, so there is no state for an object to hold and no reason to make one.</p>
  *
- * <p>Recognising the word itself is still {@link CommandWord#fromInput}'s
+ * <p>Recognizing the word itself is still {@link CommandWord#fromInput}'s
  * question, not this class's: the enum holds the keywords, so matching them
  * belongs with them. This class asks that question and then does what the enum
  * cannot -- build the command object, filled in with whatever the rest of the
@@ -80,7 +80,7 @@ public class Parser {
     private static final String TASK_NUMBER_PATTERN = "[0-9]+";
 
     /**
-     * Reads a whole line and returns the command it asks for, ready to run.
+     * Returns the command a whole line asks for, ready to run.
      *
      * <p>The command is built but not carried out, so a line that cannot be
      * understood is refused before anything has happened: no task is stored, no
@@ -97,11 +97,11 @@ public class Parser {
      * which kind of {@link Task} was built for it -- the same polymorphism that
      * lets one list hold all three.</p>
      *
-     * @param input the whole line the user typed, already trimmed and not empty
-     * @return the command the line asks for
-     * @throws PiplupBotException if the line holds a control character, names no
+     * @param input The whole line the user typed, already trimmed and not empty.
+     * @return The command the line asks for.
+     * @throws PiplupBotException If the line holds a control character, names no
      *                            command, or names one but is missing or
-     *                            mistaking what should follow it
+     *                            mistaking what should follow it.
      */
     public static Command parse(String input) throws PiplupBotException {
         assert !input.isBlank() : "parse() was given a blank line: \"" + input + "\"";
@@ -143,8 +143,8 @@ public class Parser {
      * a time, and the window's text box strips control characters as they are
      * typed or pasted.</p>
      *
-     * @param input the whole line the user typed
-     * @throws PiplupBotException if the line holds a control character
+     * @param input The whole line the user typed.
+     * @throws PiplupBotException If the line holds a control character.
      */
     private static void requirePlainText(String input) throws PiplupBotException {
         if (input.chars().anyMatch(Character::isISOControl)) {
@@ -155,11 +155,12 @@ public class Parser {
     }
 
     /**
-     * Reads {@code todo <description>}.
+     * Returns the todo that a line of the form {@code todo <description>}
+     * describes.
      *
-     * @param input the whole line the user typed
-     * @return the task the line describes
-     * @throws PiplupBotException if no description follows the command word
+     * @param input The whole line the user typed.
+     * @return The task the line describes.
+     * @throws PiplupBotException If no description follows the command word.
      */
     private static Todo parseTodo(String input) throws PiplupBotException {
         String description = CommandWord.TODO.argumentOf(input);
@@ -170,7 +171,8 @@ public class Parser {
     }
 
     /**
-     * Reads {@code deadline <description> /by <when>}.
+     * Returns the deadline that a line of the form
+     * {@code deadline <description> /by <when>} describes.
      *
      * <p>This method only splits the line apart; whether the {@code /by} part is
      * a date at all is {@link DateTimes}'s question, asked by the
@@ -178,11 +180,11 @@ public class Parser {
      * same way, as a {@link PiplupBotException} the main loop turns into a
      * reply.</p>
      *
-     * @param input the whole line the user typed
-     * @return the task the line describes
-     * @throws PiplupBotException if the description or the {@code /by} part is
+     * @param input The whole line the user typed.
+     * @return The task the line describes.
+     * @throws PiplupBotException If the description or the {@code /by} part is
      *                            missing, the {@code /by} part is given twice, or
-     *                            the date cannot be understood
+     *                            the date cannot be understood.
      */
     private static Deadline parseDeadline(String input) throws PiplupBotException {
         String[] parts = splitIntoParts(CommandWord.DEADLINE.argumentOf(input),
@@ -193,15 +195,16 @@ public class Parser {
     }
 
     /**
-     * Reads {@code event <description> /from <start> /to <end>}.
+     * Returns the event that a line of the form
+     * {@code event <description> /from <start> /to <end>} describes.
      * The two times are read the same way a deadline's date is.
      *
-     * @param input the whole line the user typed
-     * @return the task the line describes
-     * @throws PiplupBotException if the description, the {@code /from} part
+     * @param input The whole line the user typed.
+     * @return The task the line describes.
+     * @throws PiplupBotException If the description, the {@code /from} part
      *                            or the {@code /to} part is missing, either part
      *                            is given twice, either time cannot be
-     *                            understood, or the event ends before it starts
+     *                            understood, or the event ends before it starts.
      */
     private static Event parseEvent(String input) throws PiplupBotException {
         String[] parts = splitIntoParts(CommandWord.EVENT.argumentOf(input),
@@ -212,8 +215,8 @@ public class Parser {
     }
 
     /**
-     * Splits what the user typed after a command word on the separators that
-     * command uses, and returns the trimmed parts between and around them.
+     * Returns the trimmed parts of what the user typed after a command word,
+     * split on the separators that command uses.
      *
      * <p>{@code deadline} and {@code event} differ only in how many separators
      * they use, so the rule for cutting a line apart is written once here rather
@@ -225,13 +228,13 @@ public class Parser {
      * <p>Every part must have something in it, so a half-typed line reports the
      * hint instead of storing a task with no description or no date.</p>
      *
-     * @param details    everything the user typed after the command word
-     * @param hint       what to tell the user when the line cannot be read
-     * @param separators the separators this command uses, in the order they are
-     *                   expected to appear
-     * @return one more part than there are separators, each trimmed and not empty
-     * @throws PiplupBotException if a separator is missing or repeated, or a part
-     *                            is empty
+     * @param details    Everything the user typed after the command word.
+     * @param hint       What to tell the user when the line cannot be read.
+     * @param separators The separators this command uses, in the order they are
+     *                   expected to appear.
+     * @return One more part than there are separators, each trimmed and not empty.
+     * @throws PiplupBotException If a separator is missing or repeated, or a part
+     *                            is empty.
      */
     private static String[] splitIntoParts(String details, String hint, String... separators)
             throws PiplupBotException {
@@ -275,10 +278,10 @@ public class Parser {
      * end, so two copies sharing the space between them, as in
      * {@code " /by /by "}, still count as two.</p>
      *
-     * @param details   everything the user typed after the command word
-     * @param separator the separator that was found, e.g. {@code " /by "}
-     * @param position  where in {@code details} it was found
-     * @throws PiplupBotException if the separator appears again further on
+     * @param details   Everything the user typed after the command word.
+     * @param separator The separator that was found, e.g. {@code " /by "}.
+     * @param position  Where in {@code details} it was found.
+     * @throws PiplupBotException If the separator appears again further on.
      */
     private static void requireNoRepeat(String details, String separator, int position)
             throws PiplupBotException {
@@ -289,7 +292,8 @@ public class Parser {
     }
 
     /**
-     * Reads {@code find <keyword>}.
+     * Returns the text to look for in a line of the form
+     * {@code find <keyword>}.
      *
      * <p>What follows the command word is taken whole, spaces and all, rather
      * than being split into words: {@code find read book} looks for the phrase
@@ -298,9 +302,9 @@ public class Parser {
      * for several words at once would need a way to say whether all of them or
      * any of them must match, which nothing in the requirements asks for.</p>
      *
-     * @param input the whole line the user typed
-     * @return the text to look for
-     * @throws PiplupBotException if nothing follows the command word
+     * @param input The whole line the user typed.
+     * @return The text to look for.
+     * @throws PiplupBotException If nothing follows the command word.
      */
     private static String parseKeyword(String input) throws PiplupBotException {
         String keyword = CommandWord.FIND.argumentOf(input);
@@ -314,7 +318,8 @@ public class Parser {
     }
 
     /**
-     * Reads {@code sort <key>} or {@code sort <key> <direction>}.
+     * Returns the command that a line of the form {@code sort <key>} or
+     * {@code sort <key> <direction>} asks for.
      *
      * <p>The key has to be given, for the reason a bare {@code find} is refused:
      * a line that never said what to sort by would otherwise be answered by
@@ -327,10 +332,10 @@ public class Parser {
      * {@code sort date desc now} report a direction it could not understand
      * instead of quietly ignoring the word it had no room for.</p>
      *
-     * @param input the whole line the user typed
-     * @return the command the line asks for
-     * @throws PiplupBotException if no key is given, or the key or the direction
-     *                            is not one this bot knows
+     * @param input The whole line the user typed.
+     * @return The command the line asks for.
+     * @throws PiplupBotException If no key is given, or the key or the direction
+     *                            is not one this bot knows.
      */
     private static SortCommand parseSort(String input) throws PiplupBotException {
         String argument = CommandWord.SORT.argumentOf(input);
@@ -350,17 +355,17 @@ public class Parser {
     }
 
     /**
-     * Reads the task number that follows a command such as {@code mark},
+     * Returns the task number that follows a command such as {@code mark},
      * {@code unmark} or {@code delete}.
      * It only reads the number; whether any task has that number is
      * {@link TaskList}'s question, and what happens to the task is the caller's,
      * which is why all three commands can share this one method.
      *
-     * @param input       the whole line the user typed
-     * @param commandWord the command the line names
-     * @return the number typed after the command word
-     * @throws PiplupBotException if what follows the command word is not a whole
-     *                            number written with the digits 0 to 9 alone
+     * @param input       The whole line the user typed.
+     * @param commandWord The command the line names.
+     * @return The number typed after the command word.
+     * @throws PiplupBotException If what follows the command word is not a whole
+     *                            number written with the digits 0 to 9 alone.
      */
     private static int parseTaskNumber(String input, CommandWord commandWord)
             throws PiplupBotException {

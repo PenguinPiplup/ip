@@ -55,11 +55,11 @@ public class ParserTest {
     Path tempDir;
 
     /**
-     * Parses each line and carries it out, returning the list it left behind.
+     * Returns the list left behind by parsing each line and carrying it out.
      *
-     * @param inputs the lines to type, in order
-     * @return the task list after all of them have run
-     * @throws PiplupBotException if any line is refused
+     * @param inputs The lines to type, in order.
+     * @return The task list after all of them have run.
+     * @throws PiplupBotException If any line is refused.
      */
     private TaskList listAfter(String... inputs) throws PiplupBotException {
         TaskList tasks = new TaskList();
@@ -95,7 +95,7 @@ public class ParserTest {
 
     /**
      * Only {@code bye} ends the conversation. The loop asks the command rather
-     * than recognising the word, so this is the property it actually relies on.
+     * than recognizing the word, so this is the property it actually relies on.
      */
     @Test
     public void parse_byeCommand_isTheOnlyExitCommand() throws PiplupBotException {

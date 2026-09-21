@@ -20,8 +20,8 @@ import javafx.util.Duration;
 // ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
- * The bot's face in a window: the conversation so far, as a column of speech
- * bubbles, above a box to type in and a button to send what is typed.
+ * Represents the bot's face in a window: the conversation so far, as a column
+ * of speech bubbles, above a box to type in and a button to send what is typed.
  *
  * <p>It plays two parts at once. As a JavaFX {@link Application}, it builds the
  * window and hands each line typed in the box to {@link PiplupBot#respondTo} --
@@ -88,8 +88,8 @@ public class GuiUi extends Application implements Ui {
     /**
      * Loads the window's layout, greets the user, and shows the window.
      *
-     * @param stage the window JavaFX has created for this application
-     * @throws IOException if the layout file cannot be read
+     * @param stage The window JavaFX has created for this application.
+     * @throws IOException If the layout file cannot be read.
      */
     @Override
     public void start(Stage stage) throws IOException {
@@ -188,10 +188,10 @@ public class GuiUi extends Application implements Ui {
      * JAR file. Inside the JAR file, though, the lookup is case-sensitive even on
      * Windows: {@code /images/User.png} would not find {@code user.png}.</p>
      *
-     * @param path where the file is, starting with {@code /},
-     *             e.g. {@code "/images/user.png"}
-     * @return the file's address
-     * @throws IllegalStateException if the program has no such file
+     * @param path Where the file is, starting with {@code /},
+     *             e.g. {@code "/images/user.png"}.
+     * @return The file's address.
+     * @throws IllegalStateException If the program has no such file.
      */
     static URL getResourceUrl(String path) {
         URL url = GuiUi.class.getResource(path);

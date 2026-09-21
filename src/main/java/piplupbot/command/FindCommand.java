@@ -34,7 +34,7 @@ public class FindCommand extends Command {
     /**
      * Creates a command that will show the tasks matching the given text.
      *
-     * @param keyword the text to look for in each task's description
+     * @param keyword The text to look for in each task's description.
      */
     public FindCommand(String keyword) {
         this.keyword = keyword;

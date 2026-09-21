@@ -11,7 +11,7 @@ import piplupbot.task.TaskList;
 // ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
- * One thing the user asked the bot to do, ready to be carried out.
+ * Represents one thing the user asked the bot to do, ready to be carried out.
  *
  * <p>A command is created by {@link Parser#parse} once the line has been read
  * and found to make sense, and carried out later by {@link #execute}. Splitting
@@ -28,7 +28,7 @@ import piplupbot.task.TaskList;
  * polymorphism doing the dispatching the {@code switch} used to do by hand.</p>
  *
  * <p>This is an abstract class rather than an interface because it carries
- * shared behaviour as well as a shape: {@link #isExit()} answers {@code false}
+ * shared behavior as well as a shape: {@link #isExit()} answers {@code false}
  * for every command but one, {@link #save} is the same three lines in every
  * command that changes the list, and {@link #describeTaskCount} is the same
  * closing sentence for every add and delete. Subclasses inherit all three
@@ -45,11 +45,11 @@ public abstract class Command {
      * -- would put the {@code switch} back, since the caller would have to know
      * which command it had in order to know what to pass it.</p>
      *
-     * @param tasks   the task list to read or change
-     * @param ui      what the command says to the user about what it did
-     * @param storage where the list is kept between runs
-     * @throws PiplupBotException if the command cannot be carried out, e.g. it
-     *                            names a task number that does not exist
+     * @param tasks   The task list to read or change.
+     * @param ui      What the command says to the user about what it did.
+     * @param storage Where the list is kept between runs.
+     * @throws PiplupBotException If the command cannot be carried out, e.g. it
+     *                            names a task number that does not exist.
      */
     public abstract void execute(TaskList tasks, Ui ui, Storage storage) throws PiplupBotException;
 
@@ -60,7 +60,7 @@ public abstract class Command {
      * anything on the subject, and a newly written command ends the conversation
      * only if it deliberately says so.</p>
      *
-     * @return {@code true} if the bot should stop reading commands
+     * @return {@code true} if the bot should stop reading commands.
      */
     public boolean isExit() {
         return false;
@@ -81,9 +81,9 @@ public abstract class Command {
      * carrying out a command, not something the rest of the program should be
      * able to ask for.</p>
      *
-     * @param tasks   the list to write
-     * @param ui      how a failure is reported
-     * @param storage where the list is written to
+     * @param tasks   The list to write.
+     * @param ui      How a failure is reported.
+     * @param storage Where the list is written to.
      */
     protected void save(TaskList tasks, Ui ui, Storage storage) {
         try {
@@ -105,8 +105,8 @@ public abstract class Command {
      * singular/plural rule could fall out of step. It is {@code static} because
      * the answer depends only on the number, not on which command asks.</p>
      *
-     * @param taskCount how many tasks the list holds
-     * @return the sentence reporting that number
+     * @param taskCount How many tasks the list holds.
+     * @return The sentence reporting that number.
      */
     protected static String describeTaskCount(int taskCount) {
         String noun = (taskCount == 1) ? "task" : "tasks";

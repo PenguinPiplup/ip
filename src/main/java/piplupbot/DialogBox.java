@@ -13,8 +13,8 @@ import javafx.scene.layout.HBox;
 // ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
- * One message in the window's conversation: the words in a speech bubble,
- * beside a round picture of whoever said them.
+ * Represents one message in the window's conversation: the words in a speech
+ * bubble, beside a round picture of whoever said them.
  *
  * <p>The user's messages sit on the right with the picture last, as in most chat
  * apps, and the bot's sit on the left with the picture first. That is the only
@@ -52,9 +52,9 @@ public class DialogBox extends HBox {
      * Creates a message with the given words and picture, on the user's side of
      * the conversation or on the bot's.
      *
-     * @param text       the words of the message
-     * @param picture    a picture of whoever said them
-     * @param isFromUser whether the user said them, rather than the bot
+     * @param text       The words of the message.
+     * @param picture    A picture of whoever said them.
+     * @param isFromUser Whether the user said them, rather than the bot.
      */
     private DialogBox(String text, Image picture, boolean isFromUser) {
         FXMLLoader loader = new FXMLLoader(GuiUi.getResourceUrl(DIALOG_BOX_PATH));
@@ -84,9 +84,9 @@ public class DialogBox extends HBox {
      * Returns a message from the user, for the right-hand side of the
      * conversation.
      *
-     * @param text    what the user typed
-     * @param picture the user's picture
-     * @return the message, ready to add to the conversation
+     * @param text    What the user typed.
+     * @param picture The user's picture.
+     * @return The message, ready to add to the conversation.
      */
     public static DialogBox getUserDialog(String text, Image picture) {
         DialogBox box = new DialogBox(text, picture, true);
@@ -97,9 +97,9 @@ public class DialogBox extends HBox {
     /**
      * Returns a reply from the bot, for the left-hand side of the conversation.
      *
-     * @param text    the reply, with a line break between its lines
-     * @param picture the bot's picture
-     * @return the reply, ready to add to the conversation
+     * @param text    The reply, with a line break between its lines.
+     * @param picture The bot's picture.
+     * @return The reply, ready to add to the conversation.
      */
     public static DialogBox getBotDialog(String text, Image picture) {
         DialogBox box = new DialogBox(text, picture, false);
@@ -112,9 +112,9 @@ public class DialogBox extends HBox {
      * replies do, but the stylesheet gives it a color of its own, so that a
      * mistake stands out from an ordinary reply.
      *
-     * @param text    the explanation, with a line break between its lines
-     * @param picture the bot's picture
-     * @return the explanation, ready to add to the conversation
+     * @param text    The explanation, with a line break between its lines.
+     * @param picture The bot's picture.
+     * @return The explanation, ready to add to the conversation.
      */
     public static DialogBox getErrorDialog(String text, Image picture) {
         DialogBox box = new DialogBox(text, picture, false);

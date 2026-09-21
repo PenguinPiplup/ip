@@ -29,8 +29,8 @@ public class MarkCommand extends Command {
     /**
      * Creates a command that will set a task's done status.
      *
-     * @param taskNumber the task's position as shown by {@code list}, counting from 1
-     * @param isTaskDone {@code true} to mark the task done, {@code false} to reverse it
+     * @param taskNumber The task's position as shown by {@code list}, counting from 1.
+     * @param isTaskDone {@code true} to mark the task done, {@code false} to reverse it.
      */
     public MarkCommand(int taskNumber, boolean isTaskDone) {
         this.taskNumber = taskNumber;

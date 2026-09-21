@@ -8,7 +8,8 @@ import piplupbot.task.TaskList;
 // ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
- * A simple chatbot that keeps a list of tasks, in the console or in a window.
+ * Represents a simple chatbot that keeps a list of tasks, in the console or in
+ * a window.
  * It greets the user, stores three kinds of task -- {@code todo},
  * {@code deadline} and {@code event} -- lists the stored tasks on the
  * {@code list} command, marks a task as done on the {@code mark <number>}
@@ -100,8 +101,8 @@ public class PiplupBot {
      * throw: a file that is missing, unreadable or damaged still yields a list
      * -- an empty one if need be -- along with something to tell the user.</p>
      *
-     * @param filePath where to keep the tasks, e.g.
-     *                 {@code Path.of("data", "piplupbot.txt")}
+     * @param filePath Where to keep the tasks, e.g.
+     *                 {@code Path.of("data", "piplupbot.txt")}.
      */
     public PiplupBot(Path filePath) {
         this.storage = new Storage(filePath);
@@ -116,7 +117,7 @@ public class PiplupBot {
     /**
      * Greets the user, then tells them about any trouble reading the save file.
      *
-     * @param ui where to say it
+     * @param ui Where to say it.
      */
     public void greet(Ui ui) {
         ui.showWelcome();
@@ -139,8 +140,8 @@ public class PiplupBot {
      * gone already: the console's reader trims every line, but the window's
      * text box does not.</p>
      *
-     * @param input the line the user typed
-     * @param ui    where to say what happened
+     * @param input The line the user typed.
+     * @param ui    Where to say what happened.
      */
     public void respondTo(String input, Ui ui) {
         String line = input.trim();
@@ -176,7 +177,7 @@ public class PiplupBot {
      * conversation. A blank line or one the bot could not carry out leaves the
      * answer as it was.
      *
-     * @return {@code true} once the conversation is over
+     * @return {@code true} once the conversation is over.
      */
     public boolean isExit() {
         return isExit;
@@ -206,7 +207,7 @@ public class PiplupBot {
      * button beside this method -- still gives the console it always gave.
      * {@link Launcher} is the way in that opens the window.</p>
      *
-     * @param args ignored; the bot takes its instructions from the conversation
+     * @param args Ignored; the bot takes its instructions from the conversation.
      */
     public static void main(String[] args) {
         new PiplupBot(DEFAULT_FILE_PATH).run();

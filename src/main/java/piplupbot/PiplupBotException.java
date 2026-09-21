@@ -3,9 +3,9 @@ package piplupbot;
 // ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
- * An error that PiplupBot itself recognises and can explain to the user,
- * such as a command with its details missing or a task number that names
- * no task.
+ * Represents an error that PiplupBot itself recognizes and can explain to the
+ * user, such as a command with its details missing or a task number that
+ * names no task.
  *
  * <p>It extends {@code Exception}, which makes it a <em>checked</em> exception.</p>
  *
@@ -20,7 +20,7 @@ public class PiplupBotException extends Exception {
     /**
      * Creates an error carrying the explanation to show the user.
      *
-     * @param messageLines one or more lines of explanation, printed in order
+     * @param messageLines One or more lines of explanation, printed in order.
      */
     public PiplupBotException(String... messageLines) {
         // Join the lines for getMessage(), which is what a stack trace or a
@@ -32,7 +32,7 @@ public class PiplupBotException extends Exception {
     /**
      * Returns the explanation as the separate lines it should be printed on.
      *
-     * @return the lines of the message
+     * @return The lines of the message.
      */
     public String[] getMessageLines() {
         return messageLines;

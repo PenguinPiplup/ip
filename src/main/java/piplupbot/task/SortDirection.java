@@ -8,8 +8,8 @@ import piplupbot.PiplupBotException;
 // ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
- * Which way round a sort runs: {@code asc} for smallest first, {@code desc} for
- * largest first.
+ * Represents which way round a sort runs: {@code asc} for smallest first,
+ * {@code desc} for largest first.
  *
  * <p>A direction is a word the user types, so it needs the same three things
  * {@link piplupbot.command.CommandWord CommandWord} needs -- the spelling to
@@ -40,7 +40,7 @@ public enum SortDirection {
      * An enum's constructor is implicitly private, so the two constants above
      * are the only instances there will ever be.
      *
-     * @param keyword the word, e.g. {@code "desc"}
+     * @param keyword The word, e.g. {@code "desc"}.
      */
     SortDirection(String keyword) {
         this.keyword = keyword;
@@ -49,7 +49,7 @@ public enum SortDirection {
     /**
      * Returns the word the user types for this direction.
      *
-     * @return the keyword, e.g. {@code "desc"}
+     * @return The keyword, e.g. {@code "desc"}.
      */
     public String getKeyword() {
         return keyword;
@@ -63,8 +63,8 @@ public enum SortDirection {
      * this method, so it survives a {@code desc} that reverses everything
      * else.</p>
      *
-     * @param ascendingOrder the key's own order, smallest first
-     * @return that order, reversed if this direction is {@link #DESC}
+     * @param ascendingOrder The key's own order, smallest first.
+     * @return That order, reversed if this direction is {@link #DESC}.
      */
     Comparator<Task> applyTo(Comparator<Task> ascendingOrder) {
         return this == ASC ? ascendingOrder : ascendingOrder.reversed();
@@ -76,9 +76,9 @@ public enum SortDirection {
      * reads: {@code DESC} and {@code descending} are refused rather than guessed
      * at.
      *
-     * @param keyword the word typed after the sort key
-     * @return the direction it names
-     * @throws PiplupBotException if no direction is spelled that way
+     * @param keyword The word typed after the sort key.
+     * @return The direction it names.
+     * @throws PiplupBotException If no direction is spelled that way.
      */
     public static SortDirection fromKeyword(String keyword) throws PiplupBotException {
         return Arrays.stream(values())
@@ -97,7 +97,7 @@ public enum SortDirection {
      * and always will. Building a list from two constants would also read
      * "asc, or desc", with a comma a two-item list does not want.</p>
      *
-     * @return the line shown to a user whose direction could not be read
+     * @return The line shown to a user whose direction could not be read.
      */
     public static String getKeywordHint() {
         return "Try: " + ASC.keyword + " or " + DESC.keyword + ".";

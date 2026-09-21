@@ -118,7 +118,7 @@ public class CommandTest {
     }
 
     /**
-     * The smallest command that saves. It does nothing else, so a test can watch
+     * Represents the smallest command that saves. It does nothing else, so a test can watch
      * {@link Command#save} on its own, called the way every real command calls
      * it.
      */

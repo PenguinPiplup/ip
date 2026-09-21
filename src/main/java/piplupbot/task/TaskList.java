@@ -8,8 +8,8 @@ import piplupbot.PiplupBotException;
 // ACKNOWLEDGEMENTS: This Java file was written with the help of Claude.
 
 /**
- * The tasks the user has stored, in the order they were added until a
- * {@code sort} puts them into another one.
+ * Represents the tasks the user has stored, in the order they were added until
+ * a {@code sort} puts them into another one.
  *
  * <p>This class owns the collection itself and the one rule that goes with it:
  * the user names a task by the number {@code list} showed, counting from 1,
@@ -49,7 +49,7 @@ public class TaskList {
      * back, which is the whole point of putting the collection in a class. With
      * a handful of tasks the copy costs nothing worth measuring.</p>
      *
-     * @param initialTasks the tasks to start with, in the order to keep them
+     * @param initialTasks The tasks to start with, in the order to keep them.
      */
     public TaskList(ArrayList<Task> initialTasks) {
         this.tasks = new ArrayList<>(initialTasks);
@@ -58,7 +58,7 @@ public class TaskList {
     /**
      * Returns how many tasks are stored.
      *
-     * @return the number of tasks
+     * @return The number of tasks.
      */
     public int size() {
         return tasks.size();
@@ -81,9 +81,9 @@ public class TaskList {
      * hand, and dropping it would lose whatever set the two copies apart -- one
      * of them being done, say. {@code delete} is how to remove it.</p>
      *
-     * @param task the task to remember
-     * @throws PiplupBotException if the list already holds a task with the same
-     *                            details, whether or not that one is done
+     * @param task The task to remember.
+     * @throws PiplupBotException If the list already holds a task with the same
+     *                            details, whether or not that one is done.
      */
     public void add(Task task) throws PiplupBotException {
         assert task != null : "A null task was added to the list";
@@ -101,9 +101,9 @@ public class TaskList {
     /**
      * Returns the task at the given position.
      *
-     * @param taskNumber the task's position as shown by {@code list}, counting from 1
-     * @return the task at that position
-     * @throws PiplupBotException if no stored task has that number
+     * @param taskNumber The task's position as shown by {@code list}, counting from 1.
+     * @return The task at that position.
+     * @throws PiplupBotException If no stored task has that number.
      */
     public Task get(int taskNumber) throws PiplupBotException {
         requireTaskNumber(taskNumber);
@@ -118,9 +118,9 @@ public class TaskList {
      * 3, the old task 4 becomes task 3. It also returns the task it removed,
      * which is what the caller's confirmation shows.</p>
      *
-     * @param taskNumber the task's position as shown by {@code list}, counting from 1
-     * @return the task that was removed
-     * @throws PiplupBotException if no stored task has that number
+     * @param taskNumber The task's position as shown by {@code list}, counting from 1.
+     * @return The task that was removed.
+     * @throws PiplupBotException If no stored task has that number.
      */
     public Task remove(int taskNumber) throws PiplupBotException {
         requireTaskNumber(taskNumber);
@@ -143,8 +143,8 @@ public class TaskList {
      * sorting by date and then by done status leaves each group still in date
      * order. {@link SortKey} therefore needs no tie-breaking rule of its own.</p>
      *
-     * @param key       what to order the tasks by
-     * @param direction whether that order runs forwards or backwards
+     * @param key       What to order the tasks by.
+     * @param direction Whether that order runs forwards or backwards.
      */
     public void sort(SortKey key, SortDirection direction) {
         tasks.sort(key.getComparator(direction));
@@ -159,7 +159,7 @@ public class TaskList {
      * only ways in are {@link #add} and {@link #remove}, which is what keeps
      * the numbering rule above in one place.</p>
      *
-     * @return a copy of the stored tasks, in the order the user sees them
+     * @return A copy of the stored tasks, in the order the user sees them.
      */
     public ArrayList<Task> asList() {
         return new ArrayList<>(tasks);
@@ -184,8 +184,8 @@ public class TaskList {
      * asked of each task in turn. This method decides only which tasks to ask
      * and in what order to keep the answers.</p>
      *
-     * @param keyword the text to look for in each description
-     * @return the matching tasks, possibly none
+     * @param keyword The text to look for in each description.
+     * @return The matching tasks, possibly none.
      */
     public TaskList find(String keyword) {
         return new TaskList(tasks.stream()
@@ -195,7 +195,7 @@ public class TaskList {
 
     /**
      * Returns one line per stored task, each numbered the way the user refers
-     * to it, e.g. {@code "2.[D][ ] return book (by: Oct 15 2019, 6:00 pm)"}.
+     * to it, e.g. {@code "2.[D][ ] return book (by: Oct 15 2019 06:00 PM)"}.
      *
      * <p>The list numbers its own tasks so that the {@code + 1} which turns an
      * index into a task number sits beside the {@code - 1} in {@link #get} and
@@ -206,8 +206,8 @@ public class TaskList {
      * call this list is the caller's decision, which is what lets the same lines
      * appear under different wording.</p>
      *
-     * @return a line per task, in the order the user sees them; empty if there
-     *         are no tasks
+     * @return A line per task, in the order the user sees them; empty if there
+     *         are no tasks.
      */
     public String[] toNumberedLines() {
         String[] lines = new String[tasks.size()];
@@ -223,8 +223,8 @@ public class TaskList {
      * {@link #toNumberedLines()} and the duplicate check in {@link #add} both
      * show a task this way, so the layout is written once for the two.
      *
-     * @param index where the task is in the list, counting from 0
-     * @return the task's number, counting from 1, followed by the task itself
+     * @param index Where the task is in the list, counting from 0.
+     * @return The task's number, counting from 1, followed by the task itself.
      */
     private String toNumberedLine(int index) {
         return (index + 1) + "." + tasks.get(index);
@@ -236,8 +236,8 @@ public class TaskList {
      * index anyway; checking first lets the bot explain the problem in its own
      * words instead of ending the conversation with a stack trace.
      *
-     * @param taskNumber the task's position as shown by {@code list}, counting from 1
-     * @throws PiplupBotException if no stored task has that number
+     * @param taskNumber The task's position as shown by {@code list}, counting from 1.
+     * @throws PiplupBotException If no stored task has that number.
      */
     private void requireTaskNumber(int taskNumber) throws PiplupBotException {
         if (taskNumber < 1 || taskNumber > tasks.size()) {
