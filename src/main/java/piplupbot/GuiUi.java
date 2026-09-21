@@ -52,6 +52,18 @@ public class GuiUi extends Application implements Ui {
     /** How long the goodbye stays on screen before the window closes. */
     private static final Duration GOODBYE_DELAY = Duration.seconds(1.5);
 
+    /**
+     * The narrowest the window can be made, in pixels: just wide enough for the
+     * input box to show its whole hint beside the Send button.
+     */
+    private static final double MIN_WINDOW_WIDTH = 360;
+
+    /**
+     * The shortest the window can be made, in pixels: tall enough to show the
+     * input bar and a few messages above it.
+     */
+    private static final double MIN_WINDOW_HEIGHT = 320;
+
     /** Where the window's layout file is, among the program's own files. */
     private static final String MAIN_WINDOW_PATH = "/view/MainWindow.fxml";
 
@@ -110,6 +122,10 @@ public class GuiUi extends Application implements Ui {
         stage.setTitle("PiplupBot");
         // Without an icon, the title bar and taskbar show the default Java one.
         stage.getIcons().add(botImage);
+        // Stop the window being dragged so small that the pictures, bubbles and
+        // input bar are squashed together. It can still be made as large as wanted.
+        stage.setMinWidth(MIN_WINDOW_WIDTH);
+        stage.setMinHeight(MIN_WINDOW_HEIGHT);
         stage.setScene(new Scene(layout));
         stage.show();
         inputBox.requestFocus();

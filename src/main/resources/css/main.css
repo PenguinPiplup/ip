@@ -51,10 +51,16 @@
     -fx-spacing: 8;
 }
 
+/*
+ * A bubble grows only as wide as its words need, up to a limit: past it, a
+ * long reply wraps onto more lines instead of stretching across a wide window
+ * in one line that is hard to read.
+ */
 .bubble {
     -fx-padding: 8 12 8 12;
     -fx-background-radius: 12;
     -fx-font-size: 13px;
+    -fx-max-width: 320px;
 }
 
 .dialog-box.user .bubble {
