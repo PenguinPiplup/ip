@@ -192,12 +192,12 @@ Puts your tasks in order, then shows them.
 
 Format: `sort KEY [DIRECTION]`
 
-| `KEY` | Order |
-| --- | --- |
-| `date` | Earliest first (an event by its start time). Todos have no date, so they always go last. |
-| `name` | A to Z, ignoring capitals |
-| `type` | Todos, then deadlines, then events |
-| `done` | Unfinished tasks first |
+| `KEY` | Order                                                                                                                      |
+| --- |----------------------------------------------------------------------------------------------------------------------------|
+| `date` | Earliest tasks first (an 'event' task is identified by its start time). 'Todo' tasks have no date, so they always go last. |
+| `name` | A to Z, ignoring capitals                                                                                                  |
+| `type` | 'Todo' tasks are displayed first, followed by 'deadline' tasks, and then 'event' tasks                                     |
+| `done` | Unfinished tasks are displayed first, followed by finished tasks.                                                          |
 
 `DIRECTION` is `asc` (the default) or `desc`, which reverses the order.
 
