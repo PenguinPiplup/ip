@@ -14,6 +14,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -81,6 +82,9 @@ public class GuiUi extends Application implements Ui {
 
     /** The picture shown beside the bot's replies. */
     private final Image botImage = new Image(getResourceUrl(IMAGE_PATH_BOT).toExternalForm());
+
+    /** The commands sent so far, for the Up and Down keys to bring back. */
+    private final CommandHistory history = new CommandHistory();
 
     /** The scrolling area around the conversation. */
     @FXML
@@ -175,8 +179,42 @@ public class GuiUi extends Application implements Ui {
         // remember to update the button -- and none may, since JavaFX refuses
         // to set a value that is bound.
         sendButton.disableProperty().bind(Bindings.createBooleanBinding(
-                () -> inputBox.getText().isBlank() || inputBox.isDisable(),
-                inputBox.textProperty(), inputBox.disableProperty()));
+                this::hasNothingToSend, inputBox.textProperty(), inputBox.disableProperty()));
+
+        // A filter, unlike an ordinary handler, sees each key press before the
+        // input box does, so the box never gets to act on Up or Down itself.
+        inputBox.addEventFilter(KeyEvent.KEY_PRESSED, this::handleHistoryKey);
+    }
+
+    /**
+     * Returns whether there is nothing to send: the input box is empty, holds
+     * only spaces, or has been switched off.
+     */
+    private boolean hasNothingToSend() {
+        return inputBox.getText().isBlank() || inputBox.isDisable();
+    }
+
+    /**
+     * Brings back an earlier command into the input box when Up is pressed, or
+     * a later one when Down is pressed, as in a terminal. Any other key is left
+     * for the input box to handle as usual.
+     *
+     * @param event The key press, before the input box has seen it.
+     */
+    private void handleHistoryKey(KeyEvent event) {
+        switch (event.getCode()) {
+            case UP -> history.moveToOlder(inputBox.getText());
+            case DOWN -> history.moveToNewer(inputBox.getText());
+            default -> {
+                return;
+            }
+        }
+        inputBox.setText(history.getSelected());
+        // Put the cursor after the command, ready for it to be edited or sent.
+        inputBox.end();
+        // Stop the key press here, so JavaFX does not also use Up or Down to move
+        // the focus to the Send button.
+        event.consume();
     }
 
     /**
@@ -199,6 +237,7 @@ public class GuiUi extends Application implements Ui {
             return;
         }
 
+        history.add(input.trim());
         conversation.getChildren().add(DialogBox.getUserDialog(input.trim(), userImage));
         // Handing over this window as the Ui is what makes the reply appear in it.
         bot.respondTo(input, this);
