@@ -84,10 +84,10 @@ public class SortCommandTest {
      */
     @Test
     public void execute_emptyList_showsTheHeadingAloneAndSaves() throws Exception {
-        new SortCommand(SortKey.DONE, SortDirection.ASC)
+        new SortCommand(SortKey.STATUS, SortDirection.ASC)
                 .execute(new TaskList(), ui, new Storage(getSaveFile()));
 
-        assertEquals(List.of("Here are your tasks, sorted by done:"), ui.getReplies());
+        assertEquals(List.of("Here are your tasks, sorted by status:"), ui.getReplies());
         assertEquals("", Files.readString(getSaveFile()));
     }
 }

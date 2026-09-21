@@ -468,7 +468,7 @@ public class ParserTest {
                 assertThrows(PiplupBotException.class, () -> Parser.parse("sort"));
         assertArrayEquals(new String[] {
             "Pip... Please tell me what to sort by, e.g. sort date.",
-            "Try: date, name, type, or done.",
+            "Try: date, name, type, or status.",
         }, exception.getMessageLines());
     }
 

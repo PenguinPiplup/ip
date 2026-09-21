@@ -179,22 +179,22 @@ public class SortKeyTest {
     }
 
     @Test
-    public void getComparator_doneKey_putsUnfinishedWorkFirst() {
+    public void getComparator_statusKey_putsUnfinishedWorkFirst() {
         Todo finished = new Todo("read book");
         finished.markAsDone();
 
         assertEquals(List.of("write notes", "read book"),
-                sortDescriptions(SortKey.DONE, SortDirection.ASC,
+                sortDescriptions(SortKey.STATUS, SortDirection.ASC,
                         finished, new Todo("write notes")));
     }
 
     @Test
-    public void getComparator_doneDescending_putsFinishedWorkFirst() {
+    public void getComparator_statusDescending_putsFinishedWorkFirst() {
         Todo finished = new Todo("read book");
         finished.markAsDone();
 
         assertEquals(List.of("read book", "write notes"),
-                sortDescriptions(SortKey.DONE, SortDirection.DESC,
+                sortDescriptions(SortKey.STATUS, SortDirection.DESC,
                         finished, new Todo("write notes")));
     }
 
@@ -232,6 +232,17 @@ public class SortKeyTest {
     }
 
     /**
+     * {@code done} was the old name of {@link SortKey#STATUS}. It is refused
+     * rather than kept as a second spelling, because it read as "done tasks
+     * first" -- the opposite of the order it gave. A user who types it is shown
+     * the hint, which names {@code status} instead.
+     */
+    @Test
+    public void fromKeyword_oldDoneKeyword_exceptionThrown() {
+        assertThrows(PiplupBotException.class, () -> SortKey.fromKeyword("done"));
+    }
+
+    /**
      * The refusal has to leave the user able to try again, so it quotes what
      * they typed and lists every key. Checking the list in full also checks the
      * grammar that builds it -- the commas, and the "or" before the last one.
@@ -243,12 +254,12 @@ public class SortKeyTest {
 
         assertArrayEquals(new String[] {
             "Pip... I don't know how to sort by \"xyz\".",
-            "Try: date, name, type, or done.",
+            "Try: date, name, type, or status.",
         }, exception.getMessageLines());
     }
 
     @Test
     public void getKeywordHint_namesEveryKeyInDeclarationOrder() {
-        assertEquals("Try: date, name, type, or done.", SortKey.getKeywordHint());
+        assertEquals("Try: date, name, type, or status.", SortKey.getKeywordHint());
     }
 }

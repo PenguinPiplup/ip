@@ -114,7 +114,7 @@ public abstract class Task {
      * Reports whether the task has been completed.
      * {@link #getStatusIcon()} answers the same question for the screen, but in
      * the screen's own words; ordering tasks by {@code " "} before {@code "X"}
-     * would tie {@link SortKey#DONE}'s order to that wording, so that a change
+     * would tie {@link SortKey#STATUS}'s order to that wording, so that a change
      * to the status box would quietly change the sort.
      *
      * <p>It is public because {@code mark} and {@code unmark} ask it too, to

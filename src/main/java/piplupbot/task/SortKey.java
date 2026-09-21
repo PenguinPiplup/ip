@@ -44,8 +44,13 @@ public enum SortKey {
     /** Todos, then deadlines, then events -- the order {@link TaskType} declares them in. */
     TYPE("type", Comparator.comparing(Task::getType)),
 
-    /** Unfinished work first, so what is left to do is at the top. */
-    DONE("done", Comparator.comparing(Task::isDone));
+    /**
+     * Unfinished work first, so what is left to do is at the top.
+     * Like {@code date}, {@code name} and {@code type}, the keyword names what is
+     * compared rather than which tasks come first: the old {@code sort done} read
+     * as "done tasks first", the opposite of what it did.
+     */
+    STATUS("status", Comparator.comparing(Task::isDone));
 
     /**
      * Sorts every dated task before every task without a date.
@@ -140,7 +145,7 @@ public enum SortKey {
 
     /**
      * Returns the hint listing every key, e.g.
-     * {@code "Try: date, name, type, or done."}.
+     * {@code "Try: date, name, type, or status."}.
      * A line naming a key that does not exist and a line naming none at all -- a
      * bare {@code sort} -- are answered with the same hint, so it is built here
      * rather than in either of the two places that show it.
@@ -153,7 +158,7 @@ public enum SortKey {
 
     /**
      * Returns every keyword, listed the way the hint reads them, e.g.
-     * {@code "date, name, type, or done"}.
+     * {@code "date, name, type, or status"}.
      * Built from {@link #values()} for the reason
      * {@link piplupbot.command.CommandWord CommandWord} builds its own that way:
      * a newly added key appears in the hint by itself, so the hint cannot fall

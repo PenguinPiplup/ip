@@ -53,7 +53,7 @@ PiplupBot is a cheerful penguin chatbot that keeps track of your todos, deadline
 | **Mark / unmark** a task  | `mark TASK_NUMBER`, `unmark TASK_NUMBER`<br>e.g. `mark 2`                                                         |
 | **Delete** a task         | `delete TASK_NUMBER`<br>e.g. `delete 3`                                                                           |
 | **Find** tasks by keyword | `find KEYWORD`<br>e.g. `find book`                                                                                |
-| **Sort** tasks            | `sort KEY [DIRECTION]`<br>Available keys: "date", "name", "type", "done"<br>e.g. `sort date`, `sort name desc`     |
+| **Sort** tasks            | `sort KEY [DIRECTION]`<br>Available keys: "date", "name", "type", "status"<br>e.g. `sort date`, `sort name desc`   |
 | **Exit** PiplupBot        | `bye`                                                                                                             |
 
 ## Features
@@ -197,7 +197,7 @@ Format: `sort KEY [DIRECTION]`
 | `date` | Earliest tasks first (an 'event' task is identified by its start time). 'Todo' tasks have no date, so they always go last. |
 | `name` | A to Z, ignoring capitals                                                                                                  |
 | `type` | 'Todo' tasks are displayed first, followed by 'deadline' tasks, and then 'event' tasks                                     |
-| `done` | Unfinished tasks are displayed first, followed by finished tasks.                                                          |
+| `status` | Unfinished tasks are displayed first, followed by finished tasks.                                                        |
 
 `DIRECTION` is `asc` (the default) or `desc`, which reverses the order.
 

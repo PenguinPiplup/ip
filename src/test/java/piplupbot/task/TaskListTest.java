@@ -474,7 +474,7 @@ public class TaskListTest {
         tasks.add(zulu);
 
         tasks.sort(SortKey.DATE, SortDirection.ASC);
-        tasks.sort(SortKey.DONE, SortDirection.ASC);
+        tasks.sort(SortKey.STATUS, SortDirection.ASC);
 
         // The unfinished task first, then the finished two still in date order.
         assertEquals(List.of("pending", "zulu", "alpha"), getDescriptions(tasks));
