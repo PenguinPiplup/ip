@@ -104,6 +104,8 @@ public class GuiUi extends Application implements Ui {
         bot.greet(this);
 
         stage.setTitle("PiplupBot");
+        // Without an icon, the title bar and taskbar show the default Java one.
+        stage.getIcons().add(botImage);
         stage.setScene(new Scene(layout));
         stage.show();
         inputBox.requestFocus();
