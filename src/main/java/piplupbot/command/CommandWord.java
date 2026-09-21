@@ -78,7 +78,7 @@ public enum CommandWord {
      * which is why {@code list now} and {@code bye now} are reported as
      * unknown commands rather than quietly ignoring the extra word.</p>
      */
-    private final boolean takesArgument;
+    private final boolean hasArgument;
 
     /**
      * Creates a command word from the keyword the user types for it.
@@ -86,11 +86,11 @@ public enum CommandWord {
      * above are the only instances there will ever be.
      *
      * @param keyword       the word the user types, e.g. {@code "mark"}
-     * @param takesArgument whether anything may follow the keyword on the same line
+     * @param hasArgument   whether anything may follow the keyword on the same line
      */
-    CommandWord(String keyword, boolean takesArgument) {
+    CommandWord(String keyword, boolean hasArgument) {
         this.keyword = keyword;
-        this.takesArgument = takesArgument;
+        this.hasArgument = hasArgument;
     }
 
     /**
@@ -127,9 +127,9 @@ public enum CommandWord {
      * @param input the whole line the user typed, already trimmed
      * @return {@code true} if the line starts with this command's keyword
      */
-    private boolean matches(String input) {
+    private boolean hasMatch(String input) {
         return input.equals(keyword)
-                || (takesArgument && input.startsWith(keyword + " "));
+                || (hasArgument && input.startsWith(keyword + " "));
     }
 
     /**
@@ -141,7 +141,7 @@ public enum CommandWord {
      */
     public static CommandWord fromInput(String input) throws PiplupBotException {
         return Arrays.stream(values())
-                .filter(commandWord -> commandWord.matches(input))
+                .filter(commandWord -> commandWord.hasMatch(input))
                 .findFirst()
                 .orElseThrow(() -> new PiplupBotException(
                         "Pip... I don't know what \"" + input + "\" means.",
