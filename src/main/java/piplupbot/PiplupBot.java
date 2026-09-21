@@ -80,6 +80,17 @@ public class PiplupBot {
     private final String[] loadWarningLines;
 
     /**
+     * Whether a line handed to {@link #respondTo} has ended the conversation.
+     *
+     * <p>{@link #respondTo} used to hand this back as its return value. Keeping
+     * it here instead lets that method only <em>do</em> things and
+     * {@link #isExit} only <em>answer</em> a question, so neither name has to
+     * cover both jobs. The price is that the bot now remembers something
+     * between lines, which it did not have to before.</p>
+     */
+    private boolean isExit = false;
+
+    /**
      * Creates a bot whose tasks are kept in the given file, reading back
      * whatever the last run left there.
      *
@@ -119,8 +130,8 @@ public class PiplupBot {
     }
 
     /**
-     * Carries out one line the user typed, and reports whether it ended the
-     * conversation.
+     * Carries out one line the user typed. Ask {@link #isExit} afterwards to
+     * find out whether it ended the conversation.
      *
      * <p>This is the one step both faces take for every line, so a command
      * behaves the same whether it was typed in the console or in the window.
@@ -130,13 +141,12 @@ public class PiplupBot {
      *
      * @param input the line the user typed
      * @param ui    where to say what happened
-     * @return {@code true} if the line ended the conversation
      */
-    public boolean respondTo(String input, Ui ui) {
+    public void respondTo(String input, Ui ui) {
         String line = input.trim();
         if (line.isEmpty()) {
             // A blank line names no command, so there is nothing to report.
-            return false;
+            return;
         }
 
         // One try/catch for the whole conversation: the parser and the
@@ -153,13 +163,23 @@ public class PiplupBot {
 
             // Only the command knows whether it was the last one, so it is
             // asked rather than recognised: this method never mentions "bye".
-            return command.isExit();
+            isExit = command.isExit();
         } catch (PiplupBotException e) {
             // The bot explains the problem and carries on with the next line,
             // instead of letting the error stop the conversation.
             ui.showError(e);
-            return false;
         }
+    }
+
+    /**
+     * Returns whether the last line handed to {@link #respondTo} ended the
+     * conversation. A blank line or one the bot could not carry out leaves the
+     * answer as it was.
+     *
+     * @return {@code true} once the conversation is over
+     */
+    public boolean isExit() {
+        return isExit;
     }
 
     /**
@@ -173,9 +193,8 @@ public class PiplupBot {
 
         // Keep reading commands until one of them says the conversation is over,
         // or until the input runs out (e.g. Ctrl-D / piped input).
-        boolean isExit = false;
-        while (!isExit && ui.hasNextCommand()) {
-            isExit = respondTo(ui.readCommand(), ui);
+        while (!isExit() && ui.hasNextCommand()) {
+            respondTo(ui.readCommand(), ui);
         }
     }
 

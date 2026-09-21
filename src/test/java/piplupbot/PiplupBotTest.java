@@ -120,7 +120,9 @@ public class PiplupBotTest {
     public void respondTo_taskCommand_answersAndSavesTheTask() throws Exception {
         PiplupBot bot = new PiplupBot(saveFile());
 
-        assertFalse(bot.respondTo("todo read book", ui));
+        bot.respondTo("todo read book", ui);
+
+        assertFalse(bot.isExit());
         assertEquals(List.of("Piplup! I've tucked this task under my wing:\n"
                         + "  [T][ ] read book\n"
                         + "Now you have 1 task in the list."),
@@ -162,7 +164,9 @@ public class PiplupBotTest {
         bot.respondTo("deadline return book /by 2019-10-15 1800", ui);
         ui.clearReplies();
 
-        assertFalse(bot.respondTo("sort date", ui));
+        bot.respondTo("sort date", ui);
+
+        assertFalse(bot.isExit());
 
         assertEquals(List.of("Here are your tasks, sorted by date:\n"
                         + "1.[D][ ] return book (by: Oct 15 2019 06:00 PM)\n"
@@ -175,7 +179,10 @@ public class PiplupBotTest {
     /** {@code bye} ends the conversation, and still says goodbye first. */
     @Test
     public void respondTo_bye_saysGoodbyeAndEndsConversation() {
-        assertTrue(new PiplupBot(saveFile()).respondTo("bye", ui));
+        PiplupBot bot = new PiplupBot(saveFile());
+        bot.respondTo("bye", ui);
+
+        assertTrue(bot.isExit());
         assertEquals(List.of("Pip-pip! Off for a swim. Hope to see you again soon!"), ui.getReplies());
     }
 
@@ -186,7 +193,10 @@ public class PiplupBotTest {
      */
     @Test
     public void respondTo_unknownCommand_explainsAndCarriesOn() {
-        assertFalse(new PiplupBot(saveFile()).respondTo("blah", ui));
+        PiplupBot bot = new PiplupBot(saveFile());
+        bot.respondTo("blah", ui);
+
+        assertFalse(bot.isExit());
         assertEquals(1, ui.getReplies().size());
         assertTrue(ui.getReplies().get(0).startsWith("Pip... I don't know what \"blah\" means."));
     }
@@ -194,7 +204,10 @@ public class PiplupBotTest {
     /** A blank line names no command, so it gets no reply, not even an error. */
     @Test
     public void respondTo_blankLine_saysNothingAndCarriesOn() {
-        assertFalse(new PiplupBot(saveFile()).respondTo("   ", ui));
+        PiplupBot bot = new PiplupBot(saveFile());
+        bot.respondTo("   ", ui);
+
+        assertFalse(bot.isExit());
         assertEquals(List.of(), ui.getReplies());
     }
 
@@ -206,7 +219,26 @@ public class PiplupBotTest {
      */
     @Test
     public void respondTo_surroundingSpaces_areIgnored() {
-        assertTrue(new PiplupBot(saveFile()).respondTo("  bye  ", ui));
+        PiplupBot bot = new PiplupBot(saveFile());
+        bot.respondTo("  bye  ", ui);
+
+        assertTrue(bot.isExit());
+    }
+
+    /**
+     * Guards the choice to leave {@code isExit} alone on a line that is not
+     * carried out. Once {@code bye} has ended the conversation, a stray line
+     * after it -- a blank one, say -- must not quietly reopen it, which is what
+     * would happen if every line reset the answer to {@code false}.
+     */
+    @Test
+    public void isExit_blankLineAfterBye_staysTrue() {
+        PiplupBot bot = new PiplupBot(saveFile());
+        bot.respondTo("bye", ui);
+
+        bot.respondTo("   ", ui);
+
+        assertTrue(bot.isExit());
     }
 
     // ---------- The console's conversation ----------

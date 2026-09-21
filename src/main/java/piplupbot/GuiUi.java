@@ -164,9 +164,9 @@ public class GuiUi extends Application implements Ui {
 
         conversation.getChildren().add(DialogBox.getUserDialog(input.trim(), userImage));
         // Handing over this window as the Ui is what makes the reply appear in it.
-        boolean isExit = bot.respondTo(input, this);
+        bot.respondTo(input, this);
 
-        if (isExit) {
+        if (bot.isExit()) {
             // Close after a pause rather than at once, so the goodbye can be read.
             inputBox.setDisable(true);
             sendButton.setDisable(true);
